@@ -155,6 +155,23 @@ python -m src.ascend_optimizer.live_optimize \
 The current live MVP accepts `0G` as input. `a0G` remains a distinct
 Ascend-modelled asset and is not treated as an alias for 0G.
 
+By default, the LIVE optimizer excludes strategies whose execution status is
+`MODELLED` or `PARTIAL_MODELLED`, so an experimental Ascend assumption cannot
+silently enter a portfolio presented as live. To run an explicit scenario that
+mixes live routes with Ascend-modelled routes:
+
+~~~bash
+python -m src.ascend_optimizer.live_optimize \
+  --amount 1000 \
+  --horizon-days 90 \
+  --profile Balanced \
+  --include-modelled
+~~~
+
+Modelled rows remain visible in strategy ranking but are labelled
+`SCOPE_EXCLUDED (modelled_strategy_excluded_by_default)` unless that flag is
+supplied.
+
 ## Readiness, tests and demos
 
 After collecting live data, inspect exactly which strategies are return-ready
