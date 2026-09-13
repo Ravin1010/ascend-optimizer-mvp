@@ -28,6 +28,8 @@ DEFAULT_LIVE_PATH = PROJECT_ROOT / "data" / "live_strategy_snapshots.csv"
 
 PriceFn = Callable[[], float]
 
+MODELLED_EXECUTION_STATUSES = frozenset({"MODELLED", "PARTIAL_MODELLED"})
+
 
 @dataclass(frozen=True)
 class LiveOptimizerRun:
@@ -39,6 +41,7 @@ class LiveOptimizerRun:
     horizon_days: float
     profile: str
     pipeline: PipelineRun
+    include_modelled: bool
 
     @property
     def portfolio_value_usd(self) -> float:
@@ -59,6 +62,34 @@ def _positive_finite(name: str, value: float) -> float:
     return converted
 
 
+def _apply_live_scope(
+    strategies: pd.DataFrame,
+    *,
+    include_modelled: bool,
+) -> tuple[pd.DataFrame, set[str]]:
+    """Exclude modelled Ascend routes from LIVE allocation unless opted in."""
+
+    scoped = strategies.copy()
+    excluded_ids: set[str] = set()
+
+    if include_modelled:
+        return scoped, excluded_ids
+
+    mask = scoped["execution_status"].astype(str).isin(
+        MODELLED_EXECUTION_STATUSES
+    )
+    excluded_ids = set(
+        scoped.loc[mask, "strategy_id"].astype(str)
+    )
+
+    scoped.loc[
+        mask,
+        "technical_eligibility",
+    ] = "EXCLUDED_MODELLED_BY_LIVE_SCOPE"
+
+    return scoped, excluded_ids
+
+
 def optimize_live(
     strategies: pd.DataFrame,
     snapshots: pd.DataFrame,
@@ -71,6 +102,7 @@ def optimize_live(
     price_fn: PriceFn = fetch_0g_price_usd,
     management_fee_rate: float = 0.0,
     performance_fee_rate: float = 0.0,
+    include_modelled: bool = False,
 ) -> LiveOptimizerRun:
     """Run one personalized optimizer solve from validated live datasets."""
 
@@ -90,8 +122,13 @@ def optimize_live(
     else:
         resolved_price = _positive_finite("price_usd", price_usd)
 
-    pipeline = run_optimizer_pipeline(
+    scoped_strategies, scope_excluded_ids = _apply_live_scope(
         strategies,
+        include_modelled=include_modelled,
+    )
+
+    pipeline = run_optimizer_pipeline(
+        scoped_strategies,
         snapshots,
         amount=amount,
         asset_price_usd=resolved_price,
@@ -101,6 +138,22 @@ def optimize_live(
         performance_fee_rate=performance_fee_rate,
     )
 
+    annotated = pipeline.candidates.copy()
+    annotated["scope_eligible"] = ~annotated["strategy_id"].astype(str).isin(
+        scope_excluded_ids
+    )
+    annotated["scope_exclusion_reason"] = annotated["strategy_id"].map(
+        lambda strategy_id: (
+            "modelled_strategy_excluded_by_default"
+            if str(strategy_id) in scope_excluded_ids
+            else ""
+        )
+    )
+    pipeline = PipelineRun(
+        candidates=annotated,
+        result=pipeline.result,
+    )
+
     return LiveOptimizerRun(
         asset=normalized_asset,
         amount=amount,
@@ -108,6 +161,7 @@ def optimize_live(
         horizon_days=horizon_days,
         profile=risk_profile.name.value,
         pipeline=pipeline,
+        include_modelled=include_modelled,
     )
 
 
@@ -135,7 +189,15 @@ def print_live_run(run: LiveOptimizerRun) -> None:
         f"@ {_fmt_usd(run.asset_price_usd)} "
         f"= {_fmt_usd(run.portfolio_value_usd)}"
     )
-    print(f"Horizon: {run.horizon_days:g} days | Profile: {run.profile}")
+    scope_label = (
+        "live + modelled Ascend"
+        if run.include_modelled
+        else "live routes only"
+    )
+    print(
+        f"Horizon: {run.horizon_days:g} days | "
+        f"Profile: {run.profile} | Scope: {scope_label}"
+    )
     print()
 
     print("Strategy ranking")
@@ -153,6 +215,14 @@ def print_live_run(run: LiveOptimizerRun) -> None:
                 if runtime_error is None or pd.isna(runtime_error)
                 else str(runtime_error)
             )
+            scope_eligible = bool(row.get("scope_eligible", True))
+            scope_reason = row.get("scope_exclusion_reason")
+            scope_reason = (
+                ""
+                if scope_reason is None or pd.isna(scope_reason)
+                else str(scope_reason)
+            )
+
             profile_eligible = bool(row.get("profile_eligible", False))
             reasons = row.get("profile_exclusion_reasons")
             reasons = (
@@ -161,7 +231,11 @@ def print_live_run(run: LiveOptimizerRun) -> None:
                 else str(reasons)
             )
 
-            if profile_eligible:
+            if not scope_eligible:
+                status = "SCOPE_EXCLUDED"
+                if scope_reason:
+                    status += f" ({scope_reason})"
+            elif profile_eligible:
                 status = "PROFILE_ELIGIBLE"
             else:
                 status = "PROFILE_EXCLUDED"
@@ -237,6 +311,14 @@ def main() -> None:
     parser.add_argument("--management-fee-rate", type=float, default=0.0)
     parser.add_argument("--performance-fee-rate", type=float, default=0.0)
     parser.add_argument(
+        "--include-modelled",
+        action="store_true",
+        help=(
+            "Include MODELLED/PARTIAL_MODELLED Ascend routes in allocation. "
+            "By default, the LIVE optimizer excludes them."
+        ),
+    )
+    parser.add_argument(
         "--snapshots",
         type=Path,
         default=DEFAULT_LIVE_PATH,
@@ -265,6 +347,7 @@ def main() -> None:
             price_usd=args.price_usd,
             management_fee_rate=args.management_fee_rate,
             performance_fee_rate=args.performance_fee_rate,
+            include_modelled=args.include_modelled,
         )
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc
