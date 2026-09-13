@@ -124,3 +124,48 @@ def test_live_optimizer_exposes_profile_specific_status() -> None:
     assert "slippage_exceeds_profile_limit" in oku[
         "profile_exclusion_reasons"
     ]
+
+
+def test_live_optimizer_excludes_modelled_routes_by_default() -> None:
+    strategies, snapshots = _demo_inputs()
+
+    run = optimize_live(
+        strategies,
+        snapshots,
+        amount=1000,
+        horizon_days=90,
+        profile="Balanced",
+        price_usd=1,
+    )
+
+    ascend = run.pipeline.candidates.loc[
+        run.pipeline.candidates["strategy_id"] == "ASCEND_STAKE_A0G"
+    ].iloc[0]
+
+    assert not ascend["scope_eligible"]
+    assert ascend["scope_exclusion_reason"] == (
+        "modelled_strategy_excluded_by_default"
+    )
+    assert "ASCEND_STAKE_A0G" not in run.pipeline.result.allocations
+
+
+def test_live_optimizer_can_include_modelled_routes_explicitly() -> None:
+    strategies, snapshots = _demo_inputs()
+
+    run = optimize_live(
+        strategies,
+        snapshots,
+        amount=1000,
+        horizon_days=90,
+        profile="Balanced",
+        price_usd=1,
+        include_modelled=True,
+    )
+
+    ascend = run.pipeline.candidates.loc[
+        run.pipeline.candidates["strategy_id"] == "ASCEND_STAKE_A0G"
+    ].iloc[0]
+
+    assert ascend["scope_eligible"]
+    assert ascend["scope_exclusion_reason"] == ""
+    assert run.include_modelled
