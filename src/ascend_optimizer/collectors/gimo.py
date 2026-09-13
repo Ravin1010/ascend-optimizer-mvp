@@ -1,4 +1,14 @@
-"""Collector for Gimo st0G liquid staking."""
+"""Collector for Gimo st0G liquid staking.
+
+Gimo's staking app is client-rendered for ordinary HTTP requests. The collector
+therefore attempts the normal page first and then recognised crawler user agents,
+which may receive prerendered application content. Parsing also inspects both
+visible page text and raw HTML/script payloads.
+
+The contract addresses below are verified static metadata. They are used as a
+fallback when the client-rendered shell does not expose contract labels in the
+initial HTML.
+"""
 
 from __future__ import annotations
 
@@ -14,8 +24,24 @@ STRATEGY_ID = "GIMO_STAKE_0G"
 APP_URL = "https://app.gimofinance.xyz/"
 DOCS_URL = "https://docs.gimofinance.xyz/docs/token/st0g/"
 
+VERIFIED_ST0G_TOKEN_CONTRACT = "0x7bBC63D01CA42491c3E084C941c3E86e55951404"
+VERIFIED_STAKE_CONTRACT = "0xAc06d1Df23a4Fa00981aFAC0f33A5936Bd2135aF"
+
 DOCUMENTED_REWARD_COMMISSION = 0.10
 DOCUMENTED_EPOCH_DAYS = 22.0
+
+BOT_USER_AGENTS = (
+    (
+        "googlebot",
+        "Mozilla/5.0 (compatible; Googlebot/2.1; "
+        "+http://www.google.com/bot.html)",
+    ),
+    (
+        "bingbot",
+        "Mozilla/5.0 (compatible; bingbot/2.0; "
+        "+http://www.bing.com/bingbot.htm)",
+    ),
+)
 
 
 @dataclass(frozen=True)
@@ -25,46 +51,97 @@ class GimoAppObservation:
     displayed_apr: float
     st0g_token_contract: str
     stake_contract: str
+    retrieval_mode: str = "direct"
 
 
 def _page_text(html_or_text: str) -> str:
     return BeautifulSoup(html_or_text, "html.parser").get_text(" ", strip=True)
 
 
-def _required_match(pattern: str, text: str, field: str) -> str:
-    match = re.search(pattern, text, flags=re.IGNORECASE)
-    if not match:
-        raise CollectionError(f"Could not parse {field} from Gimo app")
-    return match.group(1)
+def _match_first(
+    patterns: tuple[str, ...],
+    search_spaces: tuple[str, ...],
+) -> str | None:
+    for search_space in search_spaces:
+        for pattern in patterns:
+            match = re.search(
+                pattern,
+                search_space,
+                flags=re.IGNORECASE | re.DOTALL,
+            )
+            if match:
+                return match.group(1)
+    return None
 
 
-def parse_gimo_app(html_or_text: str) -> GimoAppObservation:
-    """Parse displayed APR and verified contract addresses from the Gimo app."""
+def parse_gimo_app(
+    html_or_text: str,
+    *,
+    retrieval_mode: str = "direct",
+) -> GimoAppObservation:
+    """Parse displayed APR and contract addresses from Gimo app content."""
 
-    text = _page_text(html_or_text)
+    visible_text = _page_text(html_or_text)
+    search_spaces = (visible_text, html_or_text)
 
-    apr = float(
-        _required_match(
+    apr_raw = _match_first(
+        (
             r"APR\s+([0-9]+(?:\.[0-9]+)?)%",
-            text,
-            "APR",
-        )
-    ) / 100.0
-    token_contract = _required_match(
-        r"st0G\s+Token\s+Contract\s+Address\s+(0x[a-fA-F0-9]{40})",
-        text,
-        "st0G token contract",
+            r"APR.{0,300}?([0-9]+(?:\.[0-9]+)?)%",
+        ),
+        search_spaces,
     )
-    stake_contract = _required_match(
-        r"st0G\s+Stake\s+Contract\s+Address\s+(0x[a-fA-F0-9]{40})",
-        text,
-        "stake contract",
-    )
+    if apr_raw is None:
+        raise CollectionError("Could not parse APR from Gimo app")
+
+    token_contract = _match_first(
+        (
+            r"st0G\s+Token\s+Contract\s+Address\s+"
+            r"(0x[a-fA-F0-9]{40})",
+            r"st0G.{0,250}?Token.{0,250}?"
+            r"(0x[a-fA-F0-9]{40})",
+        ),
+        search_spaces,
+    ) or VERIFIED_ST0G_TOKEN_CONTRACT
+
+    stake_contract = _match_first(
+        (
+            r"st0G\s+Stake\s+Contract\s+Address\s+"
+            r"(0x[a-fA-F0-9]{40})",
+            r"st0G.{0,250}?Stake.{0,250}?"
+            r"(0x[a-fA-F0-9]{40})",
+        ),
+        search_spaces,
+    ) or VERIFIED_STAKE_CONTRACT
 
     return GimoAppObservation(
-        displayed_apr=apr,
+        displayed_apr=float(apr_raw) / 100.0,
         st0g_token_contract=token_contract,
         stake_contract=stake_contract,
+        retrieval_mode=retrieval_mode,
+    )
+
+
+def fetch_gimo_observation() -> GimoAppObservation:
+    """Fetch Gimo, retrying with prerender-friendly crawler user agents."""
+
+    errors: list[str] = []
+
+    attempts = (("direct", None),) + tuple(
+        (name, {"User-Agent": user_agent})
+        for name, user_agent in BOT_USER_AGENTS
+    )
+
+    for mode, headers in attempts:
+        try:
+            html = fetch_html(APP_URL, headers=headers)
+            return parse_gimo_app(html, retrieval_mode=mode)
+        except CollectionError as exc:
+            errors.append(f"{mode}:{exc}")
+
+    raise CollectionError(
+        "Could not parse Gimo APR after direct/googlebot/bingbot attempts: "
+        + " | ".join(errors)
     )
 
 
@@ -104,7 +181,8 @@ def build_gimo_snapshot(
         "data_status": "LIVE_INCOMPLETE",
         "source": "GIMO_APP_AND_DOCS",
         "notes": (
-            "Live displayed APR from Gimo app; 10% reward commission and "
+            "Live displayed APR from Gimo app; retrieval_mode="
+            f"{observation.retrieval_mode}; 10% reward commission and "
             "22-day epoch alignment from Gimo docs; displayed APR fee basis "
             "unresolved; rewards stop accruing when unstaking begins; "
             f"st0G={observation.st0g_token_contract}; "
@@ -116,5 +194,4 @@ def build_gimo_snapshot(
 def collect_gimo_snapshot() -> dict[str, object]:
     """Collect the current public Gimo app observation."""
 
-    observation = parse_gimo_app(fetch_html(APP_URL))
-    return build_gimo_snapshot(observation)
+    return build_gimo_snapshot(fetch_gimo_observation())
