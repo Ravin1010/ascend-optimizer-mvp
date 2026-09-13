@@ -2,8 +2,10 @@
 
 from pathlib import Path
 
+import pandas as pd
 import pytest
 
+from src.ascend_optimizer.lp_execution import LPExecutionQuote
 from src.ascend_optimizer.data_loader import (
     load_datasets,
     load_snapshots,
@@ -11,6 +13,7 @@ from src.ascend_optimizer.data_loader import (
 )
 from src.ascend_optimizer.pipeline import (
     build_optimizer_candidates,
+    resolve_runtime_lp_exposures,
     run_optimizer_pipeline,
 )
 
@@ -133,3 +136,79 @@ def test_morpho_stays_excluded_even_with_demo_numbers() -> None:
     assert "optimizer_eligible=False" in run.result.excluded_strategies[
         "MORPHO_LEND_0G"
     ]
+
+
+def test_runtime_lp_exposures_use_user_amount_and_modelled_stress() -> None:
+    strategies, snapshots = _demo_inputs()
+
+    snapshots = snapshots.copy()
+    mask = snapshots["strategy_id"] == "JAINE_LP_0G_USDC"
+    snapshots.loc[mask, "entry_slippage_rate"] = pd.NA
+    snapshots.loc[mask, "exit_slippage_rate"] = pd.NA
+    snapshots.loc[mask, "lp_stress_loss_20pct"] = pd.NA
+
+    captured = {}
+
+    def fake_quote_fn(**kwargs):
+        captured.update(kwargs)
+        return LPExecutionQuote(
+            strategy_id=kwargs["strategy_id"],
+            fee_tier=3000,
+            entry_slippage_rate=0.004,
+            exit_slippage_rate=0.006,
+            entry_amount_out_usdc=49.6,
+            exit_amount_out_0g=49.4,
+        )
+
+    latest, errors = resolve_runtime_lp_exposures(
+        snapshots,
+        amount=100,
+        asset_price_usd=2,
+        lp_quote_fn=fake_quote_fn,
+    )
+
+    jaine = latest.loc[
+        latest["strategy_id"] == "JAINE_LP_0G_USDC"
+    ].iloc[0]
+
+    assert errors == {}
+    assert captured["amount_0g"] == pytest.approx(100)
+    assert captured["asset_price_usd"] == pytest.approx(2)
+    assert jaine["entry_slippage_rate"] == pytest.approx(0.004)
+    assert jaine["exit_slippage_rate"] == pytest.approx(0.006)
+    assert jaine["lp_stress_loss_20pct"] == pytest.approx(
+        0.06358893302521518
+    )
+    assert jaine["data_status"] == "PARTIAL_MODELLED"
+
+
+def test_runtime_lp_quote_failure_keeps_strategy_ineligible() -> None:
+    strategies, snapshots = _demo_inputs()
+
+    snapshots = snapshots.copy()
+    mask = snapshots["strategy_id"] == "JAINE_LP_0G_USDC"
+    snapshots.loc[mask, "entry_slippage_rate"] = pd.NA
+    snapshots.loc[mask, "exit_slippage_rate"] = pd.NA
+    snapshots.loc[mask, "lp_stress_loss_20pct"] = pd.NA
+
+    from src.ascend_optimizer.collectors.common import CollectionError
+
+    def failing_quote_fn(**kwargs):
+        raise CollectionError("quote unavailable")
+
+    candidates = build_optimizer_candidates(
+        strategies,
+        snapshots,
+        amount=100,
+        asset_price_usd=2,
+        horizon_days=90,
+        lp_quote_fn=failing_quote_fn,
+    )
+
+    jaine = candidates.loc[
+        candidates["strategy_id"] == "JAINE_LP_0G_USDC"
+    ].iloc[0]
+
+    assert not jaine["optimizer_eligible"]
+    assert "entry_slippage_rate" in jaine["missing_exposures"]
+    assert jaine["runtime_exposure_error"] == "quote unavailable"
