@@ -93,6 +93,34 @@ The Oku route uses the underlying Uniswap V3 deployment on 0G. The collector dis
 
 Oku is treated as the interface rather than a separate AMM protocol. Merkl campaign incentives are queried by the selected pool address, while protocol/native APR components are excluded. At optimizer runtime, Oku's QuoterV2 resolves entry/exit slippage for the actual user portfolio amount. The same transparent `[0.8P0, 1.2P0]` concentrated-liquidity stress assumption is applied as for Jaine.
 
+## Ascend model snapshots
+
+Ascend-specific strategies are generated separately from live protocol
+collectors so model assumptions cannot be confused with observed data.
+
+The editable assumptions live in:
+
+~~~text
+data/ascend_model_assumptions.csv
+~~~
+
+Generate/update the two Ascend rows after collecting Native 0G:
+
+~~~bash
+python -m src.ascend_optimizer.ascend_model
+~~~
+
+`ASCEND_STAKE_A0G` inherits the latest Native 0G staking benchmark and
+underlying staking exposures, while Ascend-specific fees and direct
+mint/redemption slippage come only from the explicit model-assumption file.
+The a0G token here is the Ascend LST capstone concept and is **not A0GI**.
+
+`ASCEND_RESTAKE` inherits the Ascend staking APY and currently assumes zero
+incremental cash APY until a verified reward distribution is available.
+Points are excluded from Net APY. Exact bridge exposure, withdrawal delay, and
+additional restaking slashing stress stay unresolved rather than being guessed,
+so the route remains partial.
+
 ## Personalized live optimizer
 
 After collecting live snapshots, run a personalized 0G allocation:
