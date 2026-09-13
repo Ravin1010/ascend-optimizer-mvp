@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from typing import Mapping
 
 import requests
 
@@ -23,14 +24,27 @@ def utc_now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
 
-def fetch_html(url: str, timeout: int = DEFAULT_TIMEOUT_SECONDS) -> str:
-    """Fetch one public source page with a deterministic user agent."""
+def fetch_html(
+    url: str,
+    timeout: int = DEFAULT_TIMEOUT_SECONDS,
+    *,
+    headers: Mapping[str, str] | None = None,
+) -> str:
+    """Fetch one public source page.
+
+    Callers may override request headers when a site returns different
+    prerendered content to recognised crawler user agents.
+    """
+
+    request_headers = dict(DEFAULT_HEADERS)
+    if headers:
+        request_headers.update(headers)
 
     try:
         response = requests.get(
             url,
             timeout=timeout,
-            headers=DEFAULT_HEADERS,
+            headers=request_headers,
         )
         response.raise_for_status()
     except requests.RequestException as exc:
