@@ -244,4 +244,15 @@ def run_optimizer_pipeline(
         profile=profile,
     )
 
-    return PipelineRun(candidates=candidates, result=result)
+    annotated = candidates.copy()
+    excluded = result.excluded_strategies
+    annotated["profile_eligible"] = annotated["strategy_id"].map(
+        lambda strategy_id: str(strategy_id) not in excluded
+    )
+    annotated["profile_exclusion_reasons"] = annotated["strategy_id"].map(
+        lambda strategy_id: "|".join(
+            excluded.get(str(strategy_id), ())
+        )
+    )
+
+    return PipelineRun(candidates=annotated, result=result)
