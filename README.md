@@ -45,6 +45,16 @@ python -m src.ascend_optimizer.collect --collector oku
 
 The official Explorer exposes validator-level yield. The current collector uses a transparent four-validator sample and calculates a delegation-weighted APY. It is a **sampled benchmark**, not a claim to be the exact network-wide APY.
 
+#### Native 0G exposure completion
+
+The Native collector also resolves the optimizer's exposure inputs:
+
+- `liquidity_usd` is a conservative capacity proxy equal to sampled active-validator delegation depth multiplied by the current W0G USD price;
+- `exit_time_days` is derived from the official staking contract's `minWithdrawabilityDelay` block count and a recent observed 0G block-time window;
+- `slashing_stress_loss` is currently a **modelled 5% severe-slash stress scenario**, based on the default double-sign slash fraction in 0G Foundation's Cosmos SDK fork. It is not represented as a verified current mainnet parameter.
+
+Because the slashing stress is modelled while yield/delegation/withdrawal timing are collected live, a complete Native exposure snapshot is labelled `PARTIAL_MODELLED`.
+
 ### Gimo on-chain yield
 
 The Gimo frontend is client-rendered, so automated collection does not depend on scraping its APR.
