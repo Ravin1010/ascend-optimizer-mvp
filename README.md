@@ -69,13 +69,13 @@ This produces a **realized trailing APY**, not a forward guarantee. Exchange-rat
 
 The Jaine collector discovers W0G/USDC.e pools directly from the Jaine V3 factory across standard fee tiers. It then uses GeckoTerminal pool data for current USD liquidity and 24-hour volume and derives a trailing swap-fee APR proxy.
 
-Merkl campaign incentives are queried by pool address. Only `CAMPAIGN` APR breakdowns are added as incentive yield; Merkl protocol/native APR components are ignored to avoid double counting the separately-derived swap-fee APR. Amount-dependent slippage and concentrated-liquidity +/-20% stress remain unresolved, so the route stays `LIVE_INCOMPLETE`.
+Merkl campaign incentives are queried by pool address. Only `CAMPAIGN` APR breakdowns are added as incentive yield; Merkl protocol/native APR components are ignored to avoid double counting the separately-derived swap-fee APR. At optimizer runtime, Jaine's V1 quoter resolves entry/exit slippage for the actual user portfolio amount. LP +/-20% stress uses a transparent modelled concentrated-liquidity range `[0.8P0, 1.2P0]`; the worse +/-20% shock produces about 6.36% IL versus HODL.
 
 ### Oku / Uniswap V3 0G/USDC.e LP
 
 The Oku route uses the underlying Uniswap V3 deployment on 0G. The collector discovers W0G/USDC.e pools directly from the verified Uniswap V3 factory, then uses GeckoTerminal for current USD liquidity and 24-hour volume and derives the same trailing swap-fee APR proxy used for Jaine.
 
-Oku is treated as the interface rather than a separate AMM protocol. Merkl campaign incentives are queried by the selected pool address, while protocol/native APR components are excluded. Amount-dependent slippage and concentrated-liquidity +/-20% stress remain unresolved, so the strategy stays `LIVE_INCOMPLETE`.
+Oku is treated as the interface rather than a separate AMM protocol. Merkl campaign incentives are queried by the selected pool address, while protocol/native APR components are excluded. At optimizer runtime, Oku's QuoterV2 resolves entry/exit slippage for the actual user portfolio amount. The same transparent `[0.8P0, 1.2P0]` concentrated-liquidity stress assumption is applied as for Jaine.
 
 ## Readiness, tests and demos
 
