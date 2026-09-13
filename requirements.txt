@@ -2,3 +2,5 @@ pandas
 numpy
 scipy
 pytest
+requests
+beautifulsoup4
