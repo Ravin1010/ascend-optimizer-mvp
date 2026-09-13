@@ -2,6 +2,7 @@
 
 import pytest
 
+from src.ascend_optimizer.collectors.merkl import MerklIncentiveObservation
 from src.ascend_optimizer.collectors.jaine import (
     GET_POOL_SELECTOR,
     JAINE_FACTORY,
@@ -143,3 +144,32 @@ def test_jaine_snapshot_preserves_unresolved_lp_risk_fields() -> None:
     assert row["lp_stress_loss_20pct"] is None
     assert row["incentive_apy"] is None
     assert row["data_status"] == "LIVE_INCOMPLETE"
+
+
+def test_jaine_snapshot_includes_merkl_campaign_incentive() -> None:
+    observation = JaineMarketObservation(
+        pool=JainePool(
+            address="0x4444444444444444444444444444444444444444",
+            fee_tier=3000,
+        ),
+        name="W0G / USDC.e",
+        liquidity_usd=10_000,
+        volume_24h_usd=2_000,
+    )
+    incentive = MerklIncentiveObservation(
+        pool_address=observation.pool.address,
+        campaign_apr=0.05,
+        incentive_apy=0.051267,
+        matched_opportunities=1,
+        matched_campaigns=2,
+    )
+
+    row = build_jaine_snapshot(
+        observation,
+        incentive=incentive,
+        timestamp="2026-09-13T00:00:00+00:00",
+    )
+
+    assert row["incentive_apy"] == pytest.approx(0.051267)
+    assert "merkl_campaign_apr=0.05" in row["notes"]
+    assert "merkl_campaigns=2" in row["notes"]
