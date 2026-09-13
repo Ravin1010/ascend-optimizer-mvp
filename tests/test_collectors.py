@@ -20,8 +20,15 @@ from src.ascend_optimizer.collectors.gimo import (
     select_reference_sample,
 )
 from src.ascend_optimizer.collectors.native_staking import (
+    MIN_WITHDRAWABILITY_DELAY_SELECTOR,
+    MODELLED_SEVERE_SLASH_STRESS,
+    RPC_URL as NATIVE_RPC_URL,
+    STAKING_CONTRACT,
+    NativeNetworkObservation,
     ValidatorObservation,
     build_native_snapshot,
+    fetch_0g_price_usd,
+    fetch_withdrawal_delay_observation,
     parse_validator_page,
 )
 from src.ascend_optimizer.data_loader import (
@@ -298,3 +305,96 @@ def test_append_snapshot_rows_preserves_history(tmp_path: Path) -> None:
 
     assert len(combined) == 2
     assert len(validated) == 2
+
+
+def test_native_snapshot_with_network_exposures_is_complete() -> None:
+    observations = [
+        ValidatorObservation(
+            address="A",
+            status="ACTIVE",
+            total_delegations_0g=100,
+            staking_apy=0.14,
+            commission_rate=0.05,
+            source_url="a",
+        ),
+        ValidatorObservation(
+            address="B",
+            status="ACTIVE",
+            total_delegations_0g=300,
+            staking_apy=0.16,
+            commission_rate=0.05,
+            source_url="b",
+        ),
+    ]
+    network = NativeNetworkObservation(
+        price_usd=2.0,
+        withdrawal_delay_blocks=7200,
+        average_block_seconds=1.0,
+        exit_time_days=7200 / 86_400,
+        slashing_stress_loss=MODELLED_SEVERE_SLASH_STRESS,
+    )
+
+    row = build_native_snapshot(
+        observations,
+        network=network,
+        timestamp="2026-09-13T00:00:00+00:00",
+    )
+
+    assert row["liquidity_usd"] == pytest.approx(800.0)
+    assert row["tvl_usd"] == pytest.approx(800.0)
+    assert row["exit_time_days"] == pytest.approx(7200 / 86_400)
+    assert row["slashing_stress_loss"] == pytest.approx(0.05)
+    assert row["data_status"] == "PARTIAL_MODELLED"
+    assert "MODELLED severe scenario" in row["notes"]
+
+
+def test_fetch_native_price_from_geckoterminal() -> None:
+    def fake_json(url, headers=None):
+        return {
+            "data": {
+                "attributes": {
+                    "token_prices": {
+                        "0x1cd0690ff9a693f5ef2dd976660a8dafc81a109c": "1.75"
+                    }
+                }
+            }
+        }
+
+    assert fetch_0g_price_usd(json_fn=fake_json) == pytest.approx(1.75)
+
+
+def test_fetch_withdrawal_delay_observation_uses_staking_getter() -> None:
+    calls = []
+
+    def fake_rpc(url, method, params):
+        calls.append((url, method, params))
+        assert url == NATIVE_RPC_URL
+
+        if method == "eth_call":
+            assert params[0]["to"] == STAKING_CONTRACT
+            assert params[0]["data"] == MIN_WITHDRAWABILITY_DELAY_SELECTOR
+            assert params[1] == "latest"
+            return hex(7200)
+
+        if method == "eth_blockNumber":
+            return hex(10_000)
+
+        if method == "eth_getBlockByNumber":
+            block_number = int(params[0], 16)
+            if block_number == 10_000:
+                return {"timestamp": hex(20_000)}
+            if block_number == 9_000:
+                return {"timestamp": hex(19_000)}
+
+        raise AssertionError((method, params))
+
+    delay_blocks, block_seconds, delay_days = (
+        fetch_withdrawal_delay_observation(
+            rpc_fn=fake_rpc,
+            block_window=1000,
+        )
+    )
+
+    assert delay_blocks == 7200
+    assert block_seconds == pytest.approx(1.0)
+    assert delay_days == pytest.approx(7200 / 86_400)
