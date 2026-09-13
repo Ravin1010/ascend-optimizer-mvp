@@ -80,14 +80,19 @@ def test_demo_balanced_allocation() -> None:
         profile="Balanced",
     ).result
 
+    # Balanced slashing-stress cap is 5%. ASCEND_RESTAKE carries a
+    # 12% slashing-stress assumption in the demo dataset, so its maximum
+    # feasible weight is 0.05 / 0.12 = 5/12 = 41.6667%.
+    # The remaining 58.3333% goes to Jaine LP, which is the next-best
+    # eligible return while remaining within the LP-stress limit.
     assert result.allocations == pytest.approx(
         {
-            "JAINE_LP_0G_USDC": 0.60,
-            "ASCEND_RESTAKE": 0.40,
+            "JAINE_LP_0G_USDC": 7 / 12,
+            "ASCEND_RESTAKE": 5 / 12,
         }
     )
-    assert result.portfolio_lp_il_stress == pytest.approx(0.048)
-    assert result.portfolio_slashing_stress_loss == pytest.approx(0.048)
+    assert result.portfolio_lp_il_stress == pytest.approx((7 / 12) * 0.08)
+    assert result.portfolio_slashing_stress_loss == pytest.approx(0.05)
 
 
 def test_demo_aggressive_allocation() -> None:
