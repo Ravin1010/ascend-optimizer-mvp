@@ -20,9 +20,10 @@ The first executable optimizer pipeline is implemented:
 - `data/strategy_snapshots.csv` — real-data scaffold; unknown values remain blank.
 - `data/demo_strategy_snapshots.csv` — explicitly synthetic/modelled values used only for tests and demonstrations.
 - `data/source_registry.csv` — field-level source/provenance registry.
-- `data/live_strategy_snapshots.csv` — generated locally by the collector CLI and intentionally not committed.
+- `data/live_strategy_snapshots.csv` — generated locally by the collector CLI.
+- `data/gimo_rate_history.csv` — generated local st0G getRate history used to derive realized Gimo APY.
 
-Collector runs append timestamped rows to `live_strategy_snapshots.csv`; existing observations are preserved.
+Generated live files are intentionally not committed.
 
 ## Live collection
 
@@ -44,13 +45,13 @@ The official Explorer exposes validator-level yield. The current collector uses 
 
 ### Gimo on-chain yield
 
-The Gimo frontend is client-rendered, so automated collection no longer scrapes its displayed APR.
+The Gimo frontend is client-rendered, so automated collection does not depend on scraping its APR.
 
-Instead, the Gimo collector calls `getRate()` on the st0G token contract through the official 0G Mainnet RPC. It compares the current exchange rate with the rate approximately seven days earlier and annualizes the realized growth.
+The collector reads the current st0G `getRate()` from the public 0G RPC and stores each observation locally. The public endpoint does not expose sufficiently old contract state for historical `eth_call` queries, so we do not assume archive-node access.
 
-Gimo documentation states that the exchange rate reflects staking rewards after the protocol's 10% reward commission. Therefore these derived returns are marked `NET_OF_PROTOCOL_FEES`; the 10% commission is retained as provenance but is not deducted a second time.
+On the **first successful run**, Gimo is recorded with the current exchange rate but no APY. After at least 24 hours of local history, later runs annualize exchange-rate growth. Once approximately seven days of history exists, the sample closest to the seven-day target is used.
 
-This is a **realized trailing APY**, not a forward guarantee.
+This produces a **realized trailing APY**, not a forward guarantee. Exchange-rate growth is treated as net of protocol reward fees, avoiding a second deduction of the documented commission.
 
 ## Tests and demos
 
