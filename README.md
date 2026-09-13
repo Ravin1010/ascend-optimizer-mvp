@@ -12,7 +12,7 @@ The first executable optimizer pipeline is implemented:
 4. frozen Conservative / Balanced / Aggressive profiles;
 5. SciPy constrained portfolio optimizer;
 6. end-to-end pipeline joining all engines;
-7. provenance registry plus initial live collectors for Native 0G staking and Gimo st0G.
+7. provenance registry plus live collectors for Native 0G staking, Gimo st0G, and Jaine 0G/USDC.e LP.
 
 ## Data files
 
@@ -37,6 +37,7 @@ Or individually:
 ~~~bash
 python -m src.ascend_optimizer.collect --collector native
 python -m src.ascend_optimizer.collect --collector gimo
+python -m src.ascend_optimizer.collect --collector jaine
 ~~~
 
 ### Native 0G benchmark
@@ -52,6 +53,12 @@ The collector reads the current st0G `getRate()` from the public 0G RPC and stor
 On the **first successful run**, Gimo is recorded with the current exchange rate but no APY. After at least 24 hours of local history, later runs annualize exchange-rate growth. Once approximately seven days of history exists, the sample closest to the seven-day target is used.
 
 This produces a **realized trailing APY**, not a forward guarantee. Exchange-rate growth is treated as net of protocol reward fees, avoiding a second deduction of the documented commission.
+
+### Jaine 0G/USDC.e LP
+
+The Jaine collector discovers W0G/USDC.e pools directly from the Jaine V3 factory across standard fee tiers. It then uses GeckoTerminal pool data for current USD liquidity and 24-hour volume and derives a trailing swap-fee APR proxy.
+
+Merkl incentive APY, amount-dependent slippage, and concentrated-liquidity +/-20% stress are intentionally left unresolved. The route therefore remains `LIVE_INCOMPLETE` until those inputs are implemented.
 
 ## Tests and demos
 
