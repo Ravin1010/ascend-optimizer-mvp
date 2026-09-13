@@ -1,0 +1,8 @@
+assumption_id,strategy_id,parameter,value,status,notes
+ASCEND_A0G_PROTOCOL_FEE,ASCEND_STAKE_A0G,protocol_fee_rate,0.0,MODELLED_BASELINE,Zero-fee baseline until Ascend fee economics are specified; editable model input not a live protocol fact
+ASCEND_A0G_ENTRY_SLIPPAGE,ASCEND_STAKE_A0G,entry_slippage_rate,0.0,MODELLED_BASELINE,Direct Ascend mint path baseline; no AMM swap assumed
+ASCEND_A0G_EXIT_SLIPPAGE,ASCEND_STAKE_A0G,exit_slippage_rate,0.0,MODELLED_BASELINE,Direct Ascend redemption path baseline; no AMM swap assumed
+ASCEND_RESTAKE_INCREMENTAL_CASH_APY,ASCEND_RESTAKE,incentive_apy,0.0,MODELLED_CONSERVATIVE,No incremental cash reward is assumed until a verified 0G/Symbiotic reward distribution exists; Symbiotic points are excluded from Net APY
+ASCEND_RESTAKE_PROTOCOL_FEE,ASCEND_RESTAKE,protocol_fee_rate,0.0,MODELLED_BASELINE,Zero-fee baseline until exact Ascend/Symbiotic fee route is specified
+ASCEND_RESTAKE_ENTRY_SLIPPAGE,ASCEND_RESTAKE,entry_slippage_rate,0.0,MODELLED_BASELINE,Direct restaking-deposit baseline; exact execution route remains to be finalized
+ASCEND_RESTAKE_EXIT_SLIPPAGE,ASCEND_RESTAKE,exit_slippage_rate,0.0,MODELLED_BASELINE,Direct withdrawal baseline before route-specific bridge or liquidity costs
