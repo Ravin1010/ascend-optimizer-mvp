@@ -59,13 +59,13 @@ This produces a **realized trailing APY**, not a forward guarantee. Exchange-rat
 
 The Jaine collector discovers W0G/USDC.e pools directly from the Jaine V3 factory across standard fee tiers. It then uses GeckoTerminal pool data for current USD liquidity and 24-hour volume and derives a trailing swap-fee APR proxy.
 
-Merkl incentive APY, amount-dependent slippage, and concentrated-liquidity +/-20% stress are intentionally left unresolved. The route therefore remains `LIVE_INCOMPLETE` until those inputs are implemented.
+Merkl campaign incentives are queried by pool address. Only `CAMPAIGN` APR breakdowns are added as incentive yield; Merkl protocol/native APR components are ignored to avoid double counting the separately-derived swap-fee APR. Amount-dependent slippage and concentrated-liquidity +/-20% stress remain unresolved, so the route stays `LIVE_INCOMPLETE`.
 
 ### Oku / Uniswap V3 0G/USDC.e LP
 
 The Oku route uses the underlying Uniswap V3 deployment on 0G. The collector discovers W0G/USDC.e pools directly from the verified Uniswap V3 factory, then uses GeckoTerminal for current USD liquidity and 24-hour volume and derives the same trailing swap-fee APR proxy used for Jaine.
 
-Oku is treated as the interface rather than a separate AMM protocol. Incentive APY, amount-dependent slippage, and concentrated-liquidity +/-20% stress remain unresolved, so the strategy stays `LIVE_INCOMPLETE`.
+Oku is treated as the interface rather than a separate AMM protocol. Merkl campaign incentives are queried by the selected pool address, while protocol/native APR components are excluded. Amount-dependent slippage and concentrated-liquidity +/-20% stress remain unresolved, so the strategy stays `LIVE_INCOMPLETE`.
 
 ## Tests and demos
 
