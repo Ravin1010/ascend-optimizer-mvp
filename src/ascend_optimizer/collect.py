@@ -15,6 +15,7 @@ from .collectors.common import CollectionError
 from .collectors.gimo import collect_gimo_snapshot
 from .collectors.jaine import collect_jaine_snapshot
 from .collectors.native_staking import collect_native_staking_snapshot
+from .collectors.oku import collect_oku_snapshot
 from .data_loader import SNAPSHOT_COLUMNS, load_strategies, validate_snapshots
 
 
@@ -34,6 +35,9 @@ def collect_rows(collector: str = "all") -> list[dict[str, object]]:
 
     if collector in {"all", "jaine"}:
         rows.append(collect_jaine_snapshot())
+
+    if collector in {"all", "oku"}:
+        rows.append(collect_oku_snapshot())
 
     return rows
 
@@ -66,11 +70,11 @@ def append_snapshot_rows(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Collect live Native 0G / Gimo / Jaine snapshot rows."
+        description="Collect live Native 0G / Gimo / Jaine / Oku snapshot rows."
     )
     parser.add_argument(
         "--collector",
-        choices=("all", "native", "gimo", "jaine"),
+        choices=("all", "native", "gimo", "jaine", "oku"),
         default="all",
     )
     parser.add_argument(
