@@ -12,7 +12,7 @@ The first executable optimizer pipeline is implemented:
 4. frozen Conservative / Balanced / Aggressive profiles;
 5. SciPy constrained portfolio optimizer;
 6. end-to-end pipeline joining all engines;
-7. provenance registry plus live collectors for Native 0G staking, Gimo st0G, and Jaine 0G/USDC.e LP.
+7. provenance registry plus live collectors for Native 0G staking, Gimo st0G, Jaine 0G/USDC.e LP, and Oku / Uniswap V3 0G/USDC.e LP.
 
 ## Data files
 
@@ -38,6 +38,7 @@ Or individually:
 python -m src.ascend_optimizer.collect --collector native
 python -m src.ascend_optimizer.collect --collector gimo
 python -m src.ascend_optimizer.collect --collector jaine
+python -m src.ascend_optimizer.collect --collector oku
 ~~~
 
 ### Native 0G benchmark
@@ -59,6 +60,12 @@ This produces a **realized trailing APY**, not a forward guarantee. Exchange-rat
 The Jaine collector discovers W0G/USDC.e pools directly from the Jaine V3 factory across standard fee tiers. It then uses GeckoTerminal pool data for current USD liquidity and 24-hour volume and derives a trailing swap-fee APR proxy.
 
 Merkl incentive APY, amount-dependent slippage, and concentrated-liquidity +/-20% stress are intentionally left unresolved. The route therefore remains `LIVE_INCOMPLETE` until those inputs are implemented.
+
+### Oku / Uniswap V3 0G/USDC.e LP
+
+The Oku route uses the underlying Uniswap V3 deployment on 0G. The collector discovers W0G/USDC.e pools directly from the verified Uniswap V3 factory, then uses GeckoTerminal for current USD liquidity and 24-hour volume and derives the same trailing swap-fee APR proxy used for Jaine.
+
+Oku is treated as the interface rather than a separate AMM protocol. Incentive APY, amount-dependent slippage, and concentrated-liquidity +/-20% stress remain unresolved, so the strategy stays `LIVE_INCOMPLETE`.
 
 ## Tests and demos
 
