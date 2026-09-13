@@ -111,6 +111,7 @@ def main() -> None:
         print(
             f"- {row['strategy_id']}: "
             f"APR={row['gross_apr']!r}, APY={row['gross_apy']!r}, "
+            f"incentive_APY={row['incentive_apy']!r}, "
             f"status={row['data_status']}"
         )
 
