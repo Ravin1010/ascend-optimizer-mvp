@@ -1,0 +1,101 @@
+"""Tests for the personalized live optimizer helpers."""
+
+from pathlib import Path
+
+import pytest
+
+from src.ascend_optimizer.data_loader import load_snapshots, load_strategies
+from src.ascend_optimizer.live_optimize import optimize_live
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _demo_inputs():
+    strategies = load_strategies(PROJECT_ROOT / "data" / "strategies.csv")
+    snapshots = load_snapshots(
+        strategies,
+        PROJECT_ROOT / "data" / "demo_strategy_snapshots.csv",
+    )
+    return strategies, snapshots
+
+
+def test_live_optimizer_fetches_price_when_not_overridden() -> None:
+    strategies, snapshots = _demo_inputs()
+    calls = 0
+
+    def fake_price():
+        nonlocal calls
+        calls += 1
+        return 2.0
+
+    run = optimize_live(
+        strategies,
+        snapshots,
+        amount=1000,
+        horizon_days=90,
+        profile="Balanced",
+        price_fn=fake_price,
+    )
+
+    assert calls == 1
+    assert run.asset_price_usd == pytest.approx(2.0)
+    assert run.portfolio_value_usd == pytest.approx(2000)
+    assert run.profile == "Balanced"
+    assert run.pipeline.result.deployed_weight == pytest.approx(1.0)
+
+
+def test_live_optimizer_price_override_skips_price_fetch() -> None:
+    strategies, snapshots = _demo_inputs()
+
+    def should_not_run():
+        raise AssertionError("price feed should not be called")
+
+    run = optimize_live(
+        strategies,
+        snapshots,
+        amount=500,
+        horizon_days=30,
+        profile="Aggressive",
+        price_usd=1.25,
+        price_fn=should_not_run,
+    )
+
+    assert run.asset_price_usd == pytest.approx(1.25)
+    assert run.portfolio_value_usd == pytest.approx(625)
+
+
+def test_live_optimizer_rejects_a0g_as_0g_alias() -> None:
+    strategies, snapshots = _demo_inputs()
+
+    with pytest.raises(ValueError, match="a0G remains"):
+        optimize_live(
+            strategies,
+            snapshots,
+            amount=100,
+            horizon_days=90,
+            profile="Balanced",
+            asset="a0G",
+            price_usd=1,
+        )
+
+
+def test_live_optimizer_annualizes_portfolio_horizon_return() -> None:
+    strategies, snapshots = _demo_inputs()
+
+    run = optimize_live(
+        strategies,
+        snapshots,
+        amount=1000,
+        horizon_days=90,
+        profile="Conservative",
+        price_usd=1,
+    )
+
+    expected = (
+        (1 + run.pipeline.result.expected_net_return_horizon)
+        ** (365 / 90)
+        - 1
+    )
+
+    assert run.annualized_expected_net_apy == pytest.approx(expected)
