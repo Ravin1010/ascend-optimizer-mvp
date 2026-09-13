@@ -93,6 +93,11 @@ The command fetches the current 0G USD price automatically unless
 slippage at runtime using the actual portfolio amount, then applies the frozen
 risk-profile constraints.
 
+Strategy-ranking status is profile-specific: `PROFILE_ELIGIBLE` means the
+strategy passes the selected profile's limits, while `PROFILE_EXCLUDED`
+includes the exact exclusion reason (for example,
+`slippage_exceeds_profile_limit`).
+
 For a reproducible run with a manual price:
 
 ~~~bash
