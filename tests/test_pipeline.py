@@ -212,3 +212,33 @@ def test_runtime_lp_quote_failure_keeps_strategy_ineligible() -> None:
     assert not jaine["optimizer_eligible"]
     assert "entry_slippage_rate" in jaine["missing_exposures"]
     assert jaine["runtime_exposure_error"] == "quote unavailable"
+
+
+def test_pipeline_annotates_profile_specific_eligibility() -> None:
+    strategies, snapshots = _demo_inputs()
+
+    run = run_optimizer_pipeline(
+        strategies,
+        snapshots,
+        amount=1000,
+        asset_price_usd=1,
+        horizon_days=90,
+        profile="Balanced",
+    )
+
+    oku = run.candidates.loc[
+        run.candidates["strategy_id"] == "OKU_LP_0G_USDC"
+    ].iloc[0]
+    jaine = run.candidates.loc[
+        run.candidates["strategy_id"] == "JAINE_LP_0G_USDC"
+    ].iloc[0]
+
+    # Oku demo max slippage is 1.2%, above Balanced's 1.0% limit.
+    assert not oku["profile_eligible"]
+    assert "slippage_exceeds_profile_limit" in oku[
+        "profile_exclusion_reasons"
+    ]
+
+    # Jaine demo max slippage is 0.6%, within Balanced's 1.0% limit.
+    assert jaine["profile_eligible"]
+    assert jaine["profile_exclusion_reasons"] == ""
