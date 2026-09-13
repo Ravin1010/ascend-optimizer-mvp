@@ -1,4 +1,8 @@
-"""CLI for collecting the first live optimizer strategy snapshots."""
+"""CLI for collecting live optimizer strategy snapshots.
+
+Each successful run appends timestamped observations to the output CSV. A failed
+collector leaves the existing output file untouched.
+"""
 
 from __future__ import annotations
 
@@ -30,6 +34,32 @@ def collect_rows(collector: str = "all") -> list[dict[str, object]]:
     return rows
 
 
+def append_snapshot_rows(
+    output: Path,
+    frame: pd.DataFrame,
+    *,
+    strategies: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Append new observations and validate the complete time-series file."""
+
+    if output.exists():
+        existing = pd.read_csv(
+            output,
+            dtype="string",
+            keep_default_na=True,
+        )
+        existing = existing.loc[:, list(SNAPSHOT_COLUMNS)]
+        combined = pd.concat(
+            [existing, frame.astype("string")],
+            ignore_index=True,
+        )
+    else:
+        combined = frame.astype("string")
+
+    validated = validate_snapshots(combined, strategies)
+    return combined, validated
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Collect live Native 0G / Gimo snapshot rows."
@@ -52,17 +82,21 @@ def main() -> None:
         raise SystemExit(f"Collection failed: {exc}") from exc
 
     frame = pd.DataFrame(rows, columns=SNAPSHOT_COLUMNS)
-
     strategies = load_strategies(PROJECT_ROOT / "data" / "strategies.csv")
-    validated = validate_snapshots(frame.astype("string"), strategies)
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    combined, validated = append_snapshot_rows(
+        args.output,
+        frame,
+        strategies=strategies,
+    )
 
-    # Preserve the human-readable raw values rather than pandas extension dtypes.
-    frame.to_csv(args.output, index=False)
+    # Write only after successful validation, so a failed validation cannot
+    # corrupt an existing time-series file.
+    combined.to_csv(args.output, index=False)
 
-    print(f"Collected {len(frame)} strategy snapshot row(s).")
-    print(f"Validated {len(validated)} row(s) against the frozen schema.")
+    print(f"Collected {len(frame)} new strategy snapshot row(s).")
+    print(f"Validated {len(validated)} total row(s) against the frozen schema.")
     print(f"Wrote: {args.output}")
 
     for _, row in frame.iterrows():
