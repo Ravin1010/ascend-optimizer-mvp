@@ -219,3 +219,4 @@ __marimo__/
 
 # Generated live market data
 data/live_strategy_snapshots.csv
+data/gimo_rate_history.csv
