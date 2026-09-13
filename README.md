@@ -77,6 +77,35 @@ The Oku route uses the underlying Uniswap V3 deployment on 0G. The collector dis
 
 Oku is treated as the interface rather than a separate AMM protocol. Merkl campaign incentives are queried by the selected pool address, while protocol/native APR components are excluded. At optimizer runtime, Oku's QuoterV2 resolves entry/exit slippage for the actual user portfolio amount. The same transparent `[0.8P0, 1.2P0]` concentrated-liquidity stress assumption is applied as for Jaine.
 
+## Personalized live optimizer
+
+After collecting live snapshots, run a personalized 0G allocation:
+
+~~~bash
+python -m src.ascend_optimizer.live_optimize \
+  --amount 1000 \
+  --horizon-days 90 \
+  --profile Balanced
+~~~
+
+The command fetches the current 0G USD price automatically unless
+`--price-usd` is supplied. It also resolves Jaine/Oku amount-dependent
+slippage at runtime using the actual portfolio amount, then applies the frozen
+risk-profile constraints.
+
+For a reproducible run with a manual price:
+
+~~~bash
+python -m src.ascend_optimizer.live_optimize \
+  --amount 1000 \
+  --horizon-days 90 \
+  --profile Balanced \
+  --price-usd 1.00
+~~~
+
+The current live MVP accepts `0G` as input. `a0G` remains a distinct
+Ascend-modelled asset and is not treated as an alias for 0G.
+
 ## Readiness, tests and demos
 
 After collecting live data, inspect exactly which strategies are return-ready
