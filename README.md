@@ -65,6 +65,22 @@ On the **first successful run**, Gimo is recorded with the current exchange rate
 
 This produces a **realized trailing APY**, not a forward guarantee. Exchange-rate growth is treated as net of protocol reward fees, avoiding a second deduction of the documented commission.
 
+#### Gimo exposure completion
+
+The collector also derives current Gimo capacity from on-chain st0G
+`totalSupply()` multiplied by `getRate()`, then converts the backed 0G
+amount to USD using the same W0G spot-price source used elsewhere. This TVL is
+used as a conservative optimizer capacity proxy.
+
+Gimo does not add a separate protocol slashing mechanism, but st0G remains
+exposed to the underlying 0G validator set. The MVP therefore reuses the same
+**modelled 5% severe underlying-staking stress** used for Native 0G, clearly
+labelled as modelled rather than a verified Gimo-specific mainnet parameter.
+
+After this exposure completion, Gimo should have no remaining exposure-data
+blockers; until the local exchange-rate history is at least 24 hours old, its
+only expected readiness gap is yield.
+
 ### Jaine 0G/USDC.e LP
 
 The Jaine collector discovers W0G/USDC.e pools directly from the Jaine V3 factory across standard fee tiers. It then uses GeckoTerminal pool data for current USD liquidity and 24-hour volume and derives a trailing swap-fee APR proxy.
