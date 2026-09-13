@@ -3,9 +3,11 @@
 from .gimo import collect_gimo_snapshot
 from .jaine import collect_jaine_snapshot
 from .native_staking import collect_native_staking_snapshot
+from .oku import collect_oku_snapshot
 
 __all__ = [
     "collect_gimo_snapshot",
     "collect_jaine_snapshot",
     "collect_native_staking_snapshot",
+    "collect_oku_snapshot",
 ]
