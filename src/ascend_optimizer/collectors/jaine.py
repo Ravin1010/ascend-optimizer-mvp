@@ -21,6 +21,7 @@ from math import isfinite
 from typing import Any, Callable
 
 from .common import CollectionError, fetch_json, rpc_call, utc_now_iso
+from .merkl import MerklIncentiveObservation, fetch_merkl_pool_incentive
 
 
 STRATEGY_ID = "JAINE_LP_0G_USDC"
@@ -257,11 +258,13 @@ def collect_market_observation(
 def build_jaine_snapshot(
     observation: JaineMarketObservation,
     *,
+    incentive: MerklIncentiveObservation | None = None,
     timestamp: str | None = None,
 ) -> dict[str, object]:
     """Build one incomplete-but-live Jaine strategy snapshot."""
 
     fee_apr = observation.fee_apr
+    incentive_apy = incentive.incentive_apy if incentive is not None else None
 
     return {
         "timestamp": timestamp or utc_now_iso(),
@@ -269,7 +272,7 @@ def build_jaine_snapshot(
         "gross_apr": fee_apr,
         "gross_apy": None,
         # Merkl incentive APY is deliberately not guessed.
-        "incentive_apy": None,
+        "incentive_apy": incentive_apy,
         "yield_fee_status": "NET_OF_PROTOCOL_FEES",
         "tvl_usd": observation.liquidity_usd,
         "liquidity_usd": observation.liquidity_usd,
@@ -288,14 +291,17 @@ def build_jaine_snapshot(
         # Concentrated-liquidity IL depends on selected range; model separately.
         "lp_stress_loss_20pct": None,
         "data_status": "LIVE_INCOMPLETE",
-        "source": "JAINE_FACTORY_AND_GECKOTERMINAL",
+        "source": "JAINE_FACTORY_GECKOTERMINAL_MERKL",
         "notes": (
             f"pool={observation.pool.address}; "
             f"fee_tier={observation.pool.fee_tier}; "
             f"pool_fee_rate={observation.pool.fee_rate:.6f}; "
             f"pool_name={observation.name or 'UNKNOWN'}; "
             "gross_apr is a trailing 24h swap-fee APR proxy when liquidity "
-            "and volume are available; Merkl incentives excluded; "
+            "and volume are available; "
+            f"merkl_campaign_apr={incentive.campaign_apr if incentive is not None else 'UNAVAILABLE'}; "
+            f"merkl_campaigns={incentive.matched_campaigns if incentive is not None else 'UNAVAILABLE'}; "
+            "Merkl PROTOCOL/native APR excluded to avoid double counting; "
             "slippage and concentrated-LP +/-20% stress remain unresolved"
         ),
     }
@@ -304,4 +310,10 @@ def build_jaine_snapshot(
 def collect_jaine_snapshot() -> dict[str, object]:
     """Collect current Jaine W0G/USDC.e pool measurements."""
 
-    return build_jaine_snapshot(collect_market_observation())
+    observation = collect_market_observation()
+    try:
+        incentive = fetch_merkl_pool_incentive(observation.pool.address)
+    except CollectionError:
+        incentive = None
+
+    return build_jaine_snapshot(observation, incentive=incentive)
