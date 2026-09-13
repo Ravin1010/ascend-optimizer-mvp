@@ -7,6 +7,7 @@ import pytest
 
 from src.ascend_optimizer.collect import append_snapshot_rows
 from src.ascend_optimizer.collectors.gimo import (
+    GimoNetworkObservation,
     GimoRateObservation,
     GimoRateSample,
     RPC_URL,
@@ -16,6 +17,7 @@ from src.ascend_optimizer.collectors.gimo import (
     build_gimo_observation,
     build_gimo_snapshot,
     fetch_current_gimo_rate_sample,
+    fetch_gimo_network_observation,
     load_rate_history,
     select_reference_sample,
 )
@@ -398,3 +400,60 @@ def test_fetch_withdrawal_delay_observation_uses_staking_getter() -> None:
     assert delay_blocks == 7200
     assert block_seconds == pytest.approx(1.0)
     assert delay_days == pytest.approx(7200 / 86_400)
+
+
+def test_fetch_gimo_network_observation_derives_tvl() -> None:
+    def fake_rpc(url, method, params):
+        assert url == RPC_URL
+        assert method == "eth_call"
+        selector = params[0]["data"]
+        if selector == "0x18160ddd":
+            return hex(2_000 * 10**18)
+        if selector == "0x313ce567":
+            return hex(18)
+        raise AssertionError(selector)
+
+    result = fetch_gimo_network_observation(
+        1.05,
+        rpc_fn=fake_rpc,
+        price_fn=lambda: 2.0,
+    )
+
+    assert result.total_supply_st0g == pytest.approx(2000)
+    assert result.tvl_0g == pytest.approx(2100)
+    assert result.tvl_usd == pytest.approx(4200)
+    assert result.slashing_stress_loss == pytest.approx(
+        MODELLED_SEVERE_SLASH_STRESS
+    )
+
+
+def test_gimo_snapshot_with_network_exposure_is_partial_modelled() -> None:
+    observation = GimoRateObservation(
+        current=GimoRateSample(
+            rate=1.02,
+            block_number=200,
+            block_timestamp=700_000,
+        ),
+        reference=None,
+        realized_apy=None,
+    )
+    network = GimoNetworkObservation(
+        total_supply_st0g=1000,
+        tvl_0g=1020,
+        price_usd=0.25,
+        tvl_usd=255,
+        slashing_stress_loss=0.05,
+    )
+
+    row = build_gimo_snapshot(
+        observation,
+        network=network,
+        timestamp="2026-09-13T00:00:00+00:00",
+    )
+
+    assert row["gross_apy"] is None
+    assert row["liquidity_usd"] == pytest.approx(255)
+    assert row["tvl_usd"] == pytest.approx(255)
+    assert row["slashing_stress_loss"] == pytest.approx(0.05)
+    assert row["data_status"] == "PARTIAL_MODELLED"
+    assert "underlying-validator severe scenario" in row["notes"]
