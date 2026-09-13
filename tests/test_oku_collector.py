@@ -2,6 +2,7 @@
 
 import pytest
 
+from src.ascend_optimizer.collectors.merkl import MerklIncentiveObservation
 from src.ascend_optimizer.collectors.oku import (
     GET_POOL_SELECTOR,
     OKU_SWAP_ROUTER02,
@@ -155,3 +156,32 @@ def test_oku_snapshot_preserves_unresolved_lp_fields() -> None:
     assert row["incentive_apy"] is None
     assert row["data_status"] == "LIVE_INCOMPLETE"
     assert OKU_SWAP_ROUTER02 in row["notes"]
+
+
+def test_oku_snapshot_includes_merkl_campaign_incentive() -> None:
+    observation = OkuMarketObservation(
+        pool=OkuPool(
+            address="0x4444444444444444444444444444444444444444",
+            fee_tier=500,
+        ),
+        name="W0G / USDC.e",
+        liquidity_usd=20_000,
+        volume_24h_usd=5_000,
+    )
+    incentive = MerklIncentiveObservation(
+        pool_address=observation.pool.address,
+        campaign_apr=0.03,
+        incentive_apy=0.030454,
+        matched_opportunities=1,
+        matched_campaigns=1,
+    )
+
+    row = build_oku_snapshot(
+        observation,
+        incentive=incentive,
+        timestamp="2026-09-13T00:00:00+00:00",
+    )
+
+    assert row["incentive_apy"] == pytest.approx(0.030454)
+    assert "merkl_campaign_apr=0.03" in row["notes"]
+    assert "merkl_campaigns=1" in row["notes"]
