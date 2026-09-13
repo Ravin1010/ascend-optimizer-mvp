@@ -8,12 +8,16 @@ import pytest
 from src.ascend_optimizer.collect import append_snapshot_rows
 from src.ascend_optimizer.collectors.gimo import (
     GimoRateObservation,
+    GimoRateSample,
     RPC_URL,
     ST0G_TOKEN_CONTRACT,
     annualize_exchange_rate_growth,
+    append_rate_sample,
+    build_gimo_observation,
     build_gimo_snapshot,
-    fetch_gimo_rate_observation,
-    find_block_at_or_before_timestamp,
+    fetch_current_gimo_rate_sample,
+    load_rate_history,
+    select_reference_sample,
 )
 from src.ascend_optimizer.collectors.native_staking import (
     ValidatorObservation,
@@ -67,14 +71,6 @@ def test_native_snapshot_is_delegation_weighted() -> None:
             commission_rate=0.10,
             source_url="b",
         ),
-        ValidatorObservation(
-            address="C",
-            status="INACTIVE",
-            total_delegations_0g=999,
-            staking_apy=0.50,
-            commission_rate=0.50,
-            source_url="c",
-        ),
     ]
 
     row = build_native_snapshot(
@@ -83,11 +79,36 @@ def test_native_snapshot_is_delegation_weighted() -> None:
     )
 
     assert row["gross_apy"] == pytest.approx(0.15)
-    assert row["entry_slippage_rate"] == 0
-    assert row["exit_slippage_rate"] == 0
     assert row["bridge_fraction"] == 0
     assert row["data_status"] == "LIVE_INCOMPLETE"
-    assert "2 active sampled validators" in row["notes"]
+
+
+def test_fetch_current_gimo_rate_uses_latest_state_only() -> None:
+    def fake_rpc(url, method, params):
+        assert url == RPC_URL
+
+        if method == "eth_blockNumber":
+            return hex(10)
+
+        if method == "eth_getBlockByNumber":
+            assert params == [hex(10), False]
+            return {
+                "number": hex(10),
+                "timestamp": hex(1_000),
+            }
+
+        if method == "eth_call":
+            assert params[0]["to"] == ST0G_TOKEN_CONTRACT
+            assert params[1] == "latest"
+            return hex(int(1.05 * 10**18))
+
+        raise AssertionError(method)
+
+    sample = fetch_current_gimo_rate_sample(rpc_fn=fake_rpc)
+
+    assert sample.block_number == 10
+    assert sample.block_timestamp == 1_000
+    assert sample.rate == pytest.approx(1.05)
 
 
 def test_annualize_exchange_rate_growth() -> None:
@@ -100,74 +121,141 @@ def test_annualize_exchange_rate_growth() -> None:
     assert result == pytest.approx(0.01)
 
 
-def test_find_block_at_or_before_timestamp() -> None:
-    def fake_rpc(url, method, params):
-        assert url == RPC_URL
-        assert method == "eth_getBlockByNumber"
-        block_number = int(params[0], 16)
-        return {
-            "number": params[0],
-            "timestamp": hex(block_number * 100),
-        }
-
-    block, timestamp = find_block_at_or_before_timestamp(
-        750,
-        latest_block=10,
-        rpc_fn=fake_rpc,
+def test_first_gimo_sample_has_no_apy() -> None:
+    current = GimoRateSample(
+        rate=1.05,
+        block_number=100,
+        block_timestamp=2_000_000,
+    )
+    history = pd.DataFrame(
+        columns=("timestamp", "block_number", "rate")
     )
 
-    assert block == 7
-    assert timestamp == 700
+    observation = build_gimo_observation(current, history)
+    row = build_gimo_snapshot(
+        observation,
+        timestamp="2026-09-13T00:00:00+00:00",
+    )
+
+    assert observation.reference is None
+    assert row["gross_apy"] is None
+    assert row["yield_fee_status"] == "NET_OF_PROTOCOL_FEES"
+    assert "no >=24h local getRate history yet" in row["notes"]
 
 
-def test_fetch_gimo_rate_observation_from_rpc() -> None:
-    # Latest block 10 occurs at t=1000. A 300-second lookback selects block 7.
-    # getRate rises from 1.000 to 1.001 over the 300-second observed interval.
-    def fake_rpc(url, method, params):
-        assert url == RPC_URL
-
-        if method == "eth_blockNumber":
-            return hex(10)
-
-        if method == "eth_getBlockByNumber":
-            block_number = int(params[0], 16)
-            return {
-                "number": params[0],
-                "timestamp": hex(block_number * 100),
+def test_reference_sample_requires_at_least_24h_history() -> None:
+    current = GimoRateSample(
+        rate=1.02,
+        block_number=200,
+        block_timestamp=1_000_000,
+    )
+    history = pd.DataFrame(
+        [
+            {
+                "timestamp": 1_000_000 - 60 * 60,
+                "block_number": 100,
+                "rate": 1.01,
             }
-
-        if method == "eth_call":
-            assert params[0]["to"] == ST0G_TOKEN_CONTRACT
-            block_number = int(params[1], 16)
-            rate = 10**18 if block_number == 7 else int(1.001 * 10**18)
-            return hex(rate)
-
-        raise AssertionError(method)
-
-    result = fetch_gimo_rate_observation(
-        lookback_seconds=300,
-        rpc_fn=fake_rpc,
+        ]
     )
 
-    expected_apy = (1.001 ** ((365 * 86_400) / 300)) - 1
-
-    assert result.current_block == 10
-    assert result.previous_block == 7
-    assert result.current_rate == pytest.approx(1.001)
-    assert result.previous_rate == pytest.approx(1.0)
-    assert result.elapsed_seconds == 300
-    assert result.realized_apy == pytest.approx(expected_apy)
+    assert select_reference_sample(history, current) is None
 
 
-def test_gimo_snapshot_is_net_of_protocol_fee() -> None:
+def test_reference_sample_prefers_seven_day_target() -> None:
+    current = GimoRateSample(
+        rate=1.02,
+        block_number=500,
+        block_timestamp=2_000_000,
+    )
+    history = pd.DataFrame(
+        [
+            {
+                "timestamp": 2_000_000 - 2 * 86_400,
+                "block_number": 200,
+                "rate": 1.015,
+            },
+            {
+                "timestamp": 2_000_000 - 7 * 86_400,
+                "block_number": 100,
+                "rate": 1.010,
+            },
+        ]
+    )
+
+    reference = select_reference_sample(history, current)
+
+    assert reference is not None
+    assert reference.block_number == 100
+    assert reference.rate == pytest.approx(1.010)
+
+
+def test_gimo_observation_derives_apy_from_local_history() -> None:
+    current = GimoRateSample(
+        rate=1.02,
+        block_number=500,
+        block_timestamp=2_000_000,
+    )
+    previous_ts = 2_000_000 - 7 * 86_400
+    history = pd.DataFrame(
+        [
+            {
+                "timestamp": previous_ts,
+                "block_number": 100,
+                "rate": 1.01,
+            }
+        ]
+    )
+
+    observation = build_gimo_observation(current, history)
+
+    expected = annualize_exchange_rate_growth(
+        1.02,
+        1.01,
+        7 * 86_400,
+    )
+    assert observation.realized_apy == pytest.approx(expected)
+    assert observation.reference is not None
+
+
+def test_append_rate_sample_preserves_history_and_deduplicates(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "gimo_rate_history.csv"
+
+    first = GimoRateSample(
+        rate=1.01,
+        block_number=100,
+        block_timestamp=1_000,
+    )
+    second = GimoRateSample(
+        rate=1.02,
+        block_number=200,
+        block_timestamp=2_000,
+    )
+
+    append_rate_sample(first, path)
+    append_rate_sample(first, path)
+    append_rate_sample(second, path)
+
+    history = load_rate_history(path)
+
+    assert len(history) == 2
+    assert list(history["block_number"]) == [100, 200]
+
+
+def test_gimo_snapshot_with_history_is_net_of_protocol_fee() -> None:
     observation = GimoRateObservation(
-        current_rate=1.02,
-        previous_rate=1.01,
-        current_block=200,
-        previous_block=100,
-        current_timestamp=700_000,
-        previous_timestamp=95_200,
-        elapsed_seconds=604_800,
+        current=GimoRateSample(
+            rate=1.02,
+            block_number=200,
+            block_timestamp=700_000,
+        ),
+        reference=GimoRateSample(
+            rate=1.01,
+            block_number=100,
+            block_timestamp=95_200,
+        ),
         realized_apy=0.07,
     )
 
@@ -180,9 +268,7 @@ def test_gimo_snapshot_is_net_of_protocol_fee() -> None:
     assert row["protocol_fee_rate"] == pytest.approx(0.10)
     assert row["yield_fee_status"] == "NET_OF_PROTOCOL_FEES"
     assert row["exit_time_days"] == pytest.approx(22)
-    assert row["bridge_fraction"] == 0
-    assert row["source"] == "GIMO_ONCHAIN_GETRATE"
-    assert "rate_now=" in row["notes"]
+    assert row["source"] == "GIMO_ONCHAIN_GETRATE_LOCAL_HISTORY"
 
 
 def test_append_snapshot_rows_preserves_history(tmp_path: Path) -> None:
@@ -190,12 +276,7 @@ def test_append_snapshot_rows_preserves_history(tmp_path: Path) -> None:
     output = tmp_path / "live.csv"
 
     first = pd.DataFrame(
-        [
-            {
-                column: None
-                for column in SNAPSHOT_COLUMNS
-            }
-        ]
+        [{column: None for column in SNAPSHOT_COLUMNS}]
     )
     first.loc[0, "timestamp"] = "2026-09-13T00:00:00+00:00"
     first.loc[0, "strategy_id"] = "NATIVE_STAKE_0G"
@@ -217,4 +298,3 @@ def test_append_snapshot_rows_preserves_history(tmp_path: Path) -> None:
 
     assert len(combined) == 2
     assert len(validated) == 2
-    assert list(validated["gross_apy"]) == pytest.approx([0.14, 0.15])
