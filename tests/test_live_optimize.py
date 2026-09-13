@@ -99,3 +99,28 @@ def test_live_optimizer_annualizes_portfolio_horizon_return() -> None:
     )
 
     assert run.annualized_expected_net_apy == pytest.approx(expected)
+
+
+def test_live_optimizer_exposes_profile_specific_status() -> None:
+    strategies, snapshots = _demo_inputs()
+
+    run = optimize_live(
+        strategies,
+        snapshots,
+        amount=1000,
+        horizon_days=90,
+        profile="Balanced",
+        price_usd=1,
+    )
+
+    assert "profile_eligible" in run.pipeline.candidates.columns
+    assert "profile_exclusion_reasons" in run.pipeline.candidates.columns
+
+    oku = run.pipeline.candidates.loc[
+        run.pipeline.candidates["strategy_id"] == "OKU_LP_0G_USDC"
+    ].iloc[0]
+
+    assert not oku["profile_eligible"]
+    assert "slippage_exceeds_profile_limit" in oku[
+        "profile_exclusion_reasons"
+    ]
