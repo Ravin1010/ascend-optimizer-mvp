@@ -67,7 +67,16 @@ The Oku route uses the underlying Uniswap V3 deployment on 0G. The collector dis
 
 Oku is treated as the interface rather than a separate AMM protocol. Merkl campaign incentives are queried by the selected pool address, while protocol/native APR components are excluded. Amount-dependent slippage and concentrated-liquidity +/-20% stress remain unresolved, so the strategy stays `LIVE_INCOMPLETE`.
 
-## Tests and demos
+## Readiness, tests and demos
+
+After collecting live data, inspect exactly which strategies are return-ready
+and which exposure inputs still block optimizer eligibility:
+
+~~~bash
+python -m src.ascend_optimizer.readiness
+~~~
+
+Then run the test suite and existing demos:
 
 ~~~bash
 pytest -q
