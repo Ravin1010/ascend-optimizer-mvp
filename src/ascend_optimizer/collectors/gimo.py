@@ -21,6 +21,10 @@ from typing import Any, Callable
 import pandas as pd
 
 from .common import CollectionError, rpc_call, utc_now_iso
+from .native_staking import (
+    MODELLED_SEVERE_SLASH_STRESS,
+    fetch_0g_price_usd,
+)
 
 
 STRATEGY_ID = "GIMO_STAKE_0G"
@@ -31,6 +35,8 @@ STAKE_CONTRACT = "0xAc06d1Df23a4Fa00981aFAC0f33A5936Bd2135aF"
 
 # keccak256("getRate()")[:4]
 GET_RATE_SELECTOR = "0x679aefce"
+TOTAL_SUPPLY_SELECTOR = "0x18160ddd"
+DECIMALS_SELECTOR = "0x313ce567"
 
 RATE_SCALE = 10**18
 SECONDS_PER_DAY = 86_400
@@ -70,6 +76,17 @@ class GimoRateObservation:
         if self.reference is None:
             return None
         return self.current.block_timestamp - self.reference.block_timestamp
+
+
+@dataclass(frozen=True)
+class GimoNetworkObservation:
+    """Current st0G supply/depth and modelled underlying staking stress."""
+
+    total_supply_st0g: float
+    tvl_0g: float
+    price_usd: float
+    tvl_usd: float
+    slashing_stress_loss: float
 
 
 def _hex_to_int(value: str, field: str) -> int:
@@ -136,6 +153,68 @@ def fetch_current_gimo_rate_sample(
         rate=rate,
         block_number=latest_block,
         block_timestamp=timestamp,
+    )
+
+
+def fetch_gimo_network_observation(
+    current_rate: float,
+    *,
+    rpc_fn: RpcFn | None = None,
+    price_fn: Callable[[], float] = fetch_0g_price_usd,
+) -> GimoNetworkObservation:
+    """Derive current Gimo depth from st0G supply and the live exchange rate."""
+
+    rpc = rpc_fn or rpc_call
+
+    raw_supply = rpc(
+        RPC_URL,
+        "eth_call",
+        [
+            {
+                "to": ST0G_TOKEN_CONTRACT,
+                "data": TOTAL_SUPPLY_SELECTOR,
+            },
+            "latest",
+        ],
+    )
+    raw_decimals = rpc(
+        RPC_URL,
+        "eth_call",
+        [
+            {
+                "to": ST0G_TOKEN_CONTRACT,
+                "data": DECIMALS_SELECTOR,
+            },
+            "latest",
+        ],
+    )
+
+    supply_integer = _hex_to_int(raw_supply, "st0G totalSupply")
+    decimals = _hex_to_int(raw_decimals, "st0G decimals")
+
+    if decimals < 0 or decimals > 36:
+        raise CollectionError(f"Unexpected st0G decimals: {decimals}")
+
+    total_supply_st0g = supply_integer / (10 ** decimals)
+    if total_supply_st0g < 0:
+        raise CollectionError("st0G total supply cannot be negative")
+
+    price_usd = float(price_fn())
+    if not isfinite(price_usd) or price_usd <= 0:
+        raise CollectionError("0G USD price must be finite and > 0")
+
+    tvl_0g = total_supply_st0g * float(current_rate)
+    tvl_usd = tvl_0g * price_usd
+
+    return GimoNetworkObservation(
+        total_supply_st0g=total_supply_st0g,
+        tvl_0g=tvl_0g,
+        price_usd=price_usd,
+        tvl_usd=tvl_usd,
+        # Gimo has no separate protocol slashing mechanism, but users remain
+        # exposed to the underlying validator set. Reuse the same transparent
+        # severe-staking stress scenario as Native 0G.
+        slashing_stress_loss=MODELLED_SEVERE_SLASH_STRESS,
     )
 
 
@@ -301,6 +380,7 @@ def build_gimo_observation(
 def build_gimo_snapshot(
     observation: GimoRateObservation,
     *,
+    network: GimoNetworkObservation | None = None,
     timestamp: str | None = None,
 ) -> dict[str, object]:
     """Build one optimizer snapshot from the current local-history state."""
@@ -322,6 +402,28 @@ def build_gimo_snapshot(
             f"block_then={observation.reference.block_number}"
         )
 
+    tvl_usd = network.tvl_usd if network is not None else None
+    slashing_stress_loss = (
+        network.slashing_stress_loss
+        if network is not None
+        else None
+    )
+    exposure_complete = (
+        tvl_usd is not None
+        and slashing_stress_loss is not None
+    )
+
+    network_note = ""
+    if network is not None:
+        network_note = (
+            f"; total_supply_st0g={network.total_supply_st0g:.18f}; "
+            f"tvl_0g={network.tvl_0g:.18f}; "
+            f"price_usd={network.price_usd:.8f}; "
+            f"slash_stress={network.slashing_stress_loss:.4f} "
+            "(MODELLED underlying-validator severe scenario; Gimo itself "
+            "does not add a separate slashing mechanism)"
+        )
+
     return {
         "timestamp": timestamp or utc_now_iso(),
         "strategy_id": STRATEGY_ID,
@@ -329,8 +431,9 @@ def build_gimo_snapshot(
         "gross_apy": observation.realized_apy,
         "incentive_apy": 0.0,
         "yield_fee_status": "NET_OF_PROTOCOL_FEES",
-        "tvl_usd": None,
-        "liquidity_usd": None,
+        "tvl_usd": tvl_usd,
+        # Conservative optimizer capacity proxy: current st0G-backed TVL.
+        "liquidity_usd": tvl_usd,
         "volume_24h_usd": None,
         "protocol_fee_rate": DOCUMENTED_REWARD_COMMISSION,
         "gas_cost_usd": None,
@@ -340,10 +443,14 @@ def build_gimo_snapshot(
         "entry_slippage_rate": 0.0,
         "exit_slippage_rate": 0.0,
         "exit_time_days": DOCUMENTED_EPOCH_DAYS,
-        "slashing_stress_loss": None,
+        "slashing_stress_loss": slashing_stress_loss,
         "bridge_fraction": 0.0,
         "lp_stress_loss_20pct": None,
-        "data_status": "LIVE_INCOMPLETE",
+        "data_status": (
+            "PARTIAL_MODELLED"
+            if exposure_complete
+            else "LIVE_INCOMPLETE"
+        ),
         "source": "GIMO_ONCHAIN_GETRATE_LOCAL_HISTORY",
         "notes": (
             f"{lookback_note}; "
@@ -353,6 +460,7 @@ def build_gimo_snapshot(
             "documented reward commission=10%; "
             "withdrawals aligned with 22-day epoch cycle; "
             f"st0G={ST0G_TOKEN_CONTRACT}; stake={STAKE_CONTRACT}"
+            f"{network_note}"
         ),
     }
 
@@ -368,8 +476,16 @@ def collect_gimo_snapshot(
     current = fetch_current_gimo_rate_sample(rpc_fn=rpc_fn)
     observation = build_gimo_observation(current, history)
 
+    network = fetch_gimo_network_observation(
+        current.rate,
+        rpc_fn=rpc_fn,
+    )
+
     # Persist after deriving the observation so the current point cannot be
     # selected as its own reference sample.
     append_rate_sample(current, history_path)
 
-    return build_gimo_snapshot(observation)
+    return build_gimo_snapshot(
+        observation,
+        network=network,
+    )
