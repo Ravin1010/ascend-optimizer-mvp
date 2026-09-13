@@ -153,12 +153,22 @@ def print_live_run(run: LiveOptimizerRun) -> None:
                 if runtime_error is None or pd.isna(runtime_error)
                 else str(runtime_error)
             )
-            status = (
-                "ELIGIBLE"
-                if bool(row["optimizer_eligible"])
-                else "INELIGIBLE"
+            profile_eligible = bool(row.get("profile_eligible", False))
+            reasons = row.get("profile_exclusion_reasons")
+            reasons = (
+                ""
+                if reasons is None or pd.isna(reasons)
+                else str(reasons)
             )
-            if runtime_error:
+
+            if profile_eligible:
+                status = "PROFILE_ELIGIBLE"
+            else:
+                status = "PROFILE_EXCLUDED"
+                if reasons:
+                    status += f" ({reasons})"
+
+            if runtime_error and runtime_error not in reasons:
                 status += f" ({runtime_error})"
 
             print(
