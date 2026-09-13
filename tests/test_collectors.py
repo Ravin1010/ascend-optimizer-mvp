@@ -1,18 +1,19 @@
-"""Tests for Native 0G and Gimo live collector parsing."""
+"""Tests for Native 0G and Gimo live collectors."""
 
 from pathlib import Path
 
 import pandas as pd
 import pytest
 
-import src.ascend_optimizer.collectors.gimo as gimo_module
 from src.ascend_optimizer.collect import append_snapshot_rows
-from src.ascend_optimizer.collectors.common import CollectionError
 from src.ascend_optimizer.collectors.gimo import (
-    GimoAppObservation,
+    GimoRateObservation,
+    RPC_URL,
+    ST0G_TOKEN_CONTRACT,
+    annualize_exchange_rate_growth,
     build_gimo_snapshot,
-    fetch_gimo_observation,
-    parse_gimo_app,
+    fetch_gimo_rate_observation,
+    find_block_at_or_before_timestamp,
 )
 from src.ascend_optimizer.collectors.native_staking import (
     ValidatorObservation,
@@ -89,87 +90,85 @@ def test_native_snapshot_is_delegation_weighted() -> None:
     assert "2 active sampled validators" in row["notes"]
 
 
-def test_parse_gimo_app() -> None:
-    text = """
-    Stake 0G
-    APR 6.84%
-    st0G Token Contract Address
-    0x7bBC63D01CA42491c3E084C941c3E86e55951404
-    st0G Stake Contract Address
-    0xAc06d1Df23a4Fa00981aFAC0f33A5936Bd2135aF
-    """
-
-    result = parse_gimo_app(text)
-
-    assert result.displayed_apr == pytest.approx(0.0684)
-    assert result.st0g_token_contract == (
-        "0x7bBC63D01CA42491c3E084C941c3E86e55951404"
-    )
-    assert result.stake_contract == (
-        "0xAc06d1Df23a4Fa00981aFAC0f33A5936Bd2135aF"
+def test_annualize_exchange_rate_growth() -> None:
+    result = annualize_exchange_rate_growth(
+        current_rate=1.01,
+        previous_rate=1.00,
+        elapsed_seconds=365 * 86_400,
     )
 
-
-def test_parse_gimo_apr_from_raw_script_payload() -> None:
-    html = """
-    <html>
-      <body><div>Loading Gimo Finance</div></body>
-      <script>
-        window.__APP_DATA__ = {
-          "metric": "APR",
-          "display": "6.84%"
-        };
-      </script>
-    </html>
-    """
-
-    result = parse_gimo_app(html, retrieval_mode="raw-script")
-
-    assert result.displayed_apr == pytest.approx(0.0684)
-    assert result.retrieval_mode == "raw-script"
+    assert result == pytest.approx(0.01)
 
 
-def test_gimo_fetch_retries_with_googlebot(monkeypatch) -> None:
-    calls = []
+def test_find_block_at_or_before_timestamp() -> None:
+    def fake_rpc(url, method, params):
+        assert url == RPC_URL
+        assert method == "eth_getBlockByNumber"
+        block_number = int(params[0], 16)
+        return {
+            "number": params[0],
+            "timestamp": hex(block_number * 100),
+        }
 
-    def fake_fetch(url, timeout=20, *, headers=None):
-        calls.append(headers)
-        if headers and "Googlebot" in headers.get("User-Agent", ""):
-            return """
-            APR 6.84%
-            st0G Token Contract Address
-            0x7bBC63D01CA42491c3E084C941c3E86e55951404
-            st0G Stake Contract Address
-            0xAc06d1Df23a4Fa00981aFAC0f33A5936Bd2135aF
-            """
-        return "Loading Gimo Finance"
-
-    monkeypatch.setattr(gimo_module, "fetch_html", fake_fetch)
-
-    result = fetch_gimo_observation()
-
-    assert result.displayed_apr == pytest.approx(0.0684)
-    assert result.retrieval_mode == "googlebot"
-    assert len(calls) == 2
-
-
-def test_gimo_fetch_reports_all_attempts(monkeypatch) -> None:
-    monkeypatch.setattr(
-        gimo_module,
-        "fetch_html",
-        lambda *args, **kwargs: "Loading Gimo Finance",
+    block, timestamp = find_block_at_or_before_timestamp(
+        750,
+        latest_block=10,
+        rpc_fn=fake_rpc,
     )
 
-    with pytest.raises(CollectionError, match="direct/googlebot/bingbot"):
-        fetch_gimo_observation()
+    assert block == 7
+    assert timestamp == 700
 
 
-def test_gimo_snapshot_preserves_fee_ambiguity() -> None:
-    observation = GimoAppObservation(
-        displayed_apr=0.0684,
-        st0g_token_contract="0x7bBC63D01CA42491c3E084C941c3E86e55951404",
-        stake_contract="0xAc06d1Df23a4Fa00981aFAC0f33A5936Bd2135aF",
-        retrieval_mode="googlebot",
+def test_fetch_gimo_rate_observation_from_rpc() -> None:
+    # Latest block 10 occurs at t=1000. A 300-second lookback selects block 7.
+    # getRate rises from 1.000 to 1.001 over the 300-second observed interval.
+    def fake_rpc(url, method, params):
+        assert url == RPC_URL
+
+        if method == "eth_blockNumber":
+            return hex(10)
+
+        if method == "eth_getBlockByNumber":
+            block_number = int(params[0], 16)
+            return {
+                "number": params[0],
+                "timestamp": hex(block_number * 100),
+            }
+
+        if method == "eth_call":
+            assert params[0]["to"] == ST0G_TOKEN_CONTRACT
+            block_number = int(params[1], 16)
+            rate = 10**18 if block_number == 7 else int(1.001 * 10**18)
+            return hex(rate)
+
+        raise AssertionError(method)
+
+    result = fetch_gimo_rate_observation(
+        lookback_seconds=300,
+        rpc_fn=fake_rpc,
+    )
+
+    expected_apy = (1.001 ** ((365 * 86_400) / 300)) - 1
+
+    assert result.current_block == 10
+    assert result.previous_block == 7
+    assert result.current_rate == pytest.approx(1.001)
+    assert result.previous_rate == pytest.approx(1.0)
+    assert result.elapsed_seconds == 300
+    assert result.realized_apy == pytest.approx(expected_apy)
+
+
+def test_gimo_snapshot_is_net_of_protocol_fee() -> None:
+    observation = GimoRateObservation(
+        current_rate=1.02,
+        previous_rate=1.01,
+        current_block=200,
+        previous_block=100,
+        current_timestamp=700_000,
+        previous_timestamp=95_200,
+        elapsed_seconds=604_800,
+        realized_apy=0.07,
     )
 
     row = build_gimo_snapshot(
@@ -177,13 +176,13 @@ def test_gimo_snapshot_preserves_fee_ambiguity() -> None:
         timestamp="2026-09-13T00:00:00+00:00",
     )
 
-    assert row["gross_apr"] == pytest.approx(0.0684)
+    assert row["gross_apy"] == pytest.approx(0.07)
     assert row["protocol_fee_rate"] == pytest.approx(0.10)
-    assert row["yield_fee_status"] == "UNKNOWN"
+    assert row["yield_fee_status"] == "NET_OF_PROTOCOL_FEES"
     assert row["exit_time_days"] == pytest.approx(22)
     assert row["bridge_fraction"] == 0
-    assert "fee basis unresolved" in row["notes"]
-    assert "retrieval_mode=googlebot" in row["notes"]
+    assert row["source"] == "GIMO_ONCHAIN_GETRATE"
+    assert "rate_now=" in row["notes"]
 
 
 def test_append_snapshot_rows_preserves_history(tmp_path: Path) -> None:
