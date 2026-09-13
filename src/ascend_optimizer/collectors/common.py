@@ -89,3 +89,28 @@ def rpc_call(
         )
 
     return body["result"]
+
+
+def fetch_json(
+    url: str,
+    timeout: int = DEFAULT_TIMEOUT_SECONDS,
+    *,
+    headers: Mapping[str, str] | None = None,
+) -> Any:
+    """Fetch one public JSON endpoint and return the decoded payload."""
+
+    request_headers = dict(DEFAULT_HEADERS)
+    request_headers["Accept"] = "application/json"
+    if headers:
+        request_headers.update(headers)
+
+    try:
+        response = requests.get(
+            url,
+            timeout=timeout,
+            headers=request_headers,
+        )
+        response.raise_for_status()
+        return response.json()
+    except (requests.RequestException, ValueError) as exc:
+        raise CollectionError(f"Failed to fetch JSON {url}: {exc}") from exc
