@@ -172,6 +172,29 @@ Modelled rows remain visible in strategy ranking but are labelled
 `SCOPE_EXCLUDED (modelled_strategy_excluded_by_default)` unless that flag is
 supplied.
 
+## Solidity vault foundation
+
+Section 5 implementation has started with a minimal, testable contract boundary:
+
+- `IStrategyAdapter.sol` — common protocol adapter interface;
+- `StrategyManager.sol` — owner-controlled approved-adapter registry plus hard
+  deposit/allocation ceilings;
+- `A0GToken.sol` — non-rebasing Ascend a0G reference token whose mint/burn
+  authority is restricted to the Ascend staking adapter;
+- focused Hardhat tests and a mock adapter.
+
+The optimizer remains off-chain and has no on-chain execution role. The next
+contract phase will add the user-facing `AscendVault` deposit/idle-balance and
+user-authorized allocation flow.
+
+Install and run the Solidity tests with:
+
+~~~bash
+npm install
+npm run contracts:compile
+npm run contracts:test
+~~~
+
 ## Section 6.4 evaluation harness
 
 The proposal's evaluation plan can now be run reproducibly across all three
