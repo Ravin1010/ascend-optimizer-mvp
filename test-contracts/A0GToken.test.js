@@ -43,3 +43,17 @@ describe("A0GToken", function () {
     ).to.be.reverted;
   });
 });
+
+
+  it("rejects zero admin or issuer addresses", async function () {
+    const [admin, adapter] = await ethers.getSigners();
+    const Token = await ethers.getContractFactory("A0GToken");
+
+    await expect(
+      Token.deploy(ethers.ZeroAddress, adapter.address)
+    ).to.be.revertedWithCustomError(Token, "ZeroAdmin");
+
+    await expect(
+      Token.deploy(admin.address, ethers.ZeroAddress)
+    ).to.be.revertedWithCustomError(Token, "ZeroIssuer");
+  });
