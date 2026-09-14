@@ -172,6 +172,30 @@ Modelled rows remain visible in strategy ranking but are labelled
 `SCOPE_EXCLUDED (modelled_strategy_excluded_by_default)` unless that flag is
 supplied.
 
+## Section 6.4 evaluation harness
+
+The proposal's evaluation plan can now be run reproducibly across all three
+frozen risk profiles for the same user case:
+
+~~~bash
+python -m src.ascend_optimizer.evaluation \
+  --amount 1000 \
+  --horizon-days 90
+~~~
+
+To evaluate the explicit Ascend scenario as well:
+
+~~~bash
+python -m src.ascend_optimizer.evaluation \
+  --amount 1000 \
+  --horizon-days 90 \
+  --include-modelled
+~~~
+
+An optional `--csv <path>` writes a report-friendly profile comparison table.
+The harness independently verifies concentration, bridge, LP-stress, and
+slashing-stress limits after each solve.
+
 ## Readiness, tests and demos
 
 After collecting live data, inspect exactly which strategies are return-ready
