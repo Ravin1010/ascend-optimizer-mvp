@@ -1,0 +1,17 @@
+{
+  "name": "ascend-optimizer-mvp-contracts",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Solidity reference contracts for the Ascend optimizer capstone MVP",
+  "scripts": {
+    "contracts:compile": "hardhat compile",
+    "contracts:test": "hardhat test"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "3.0.8",
+    "@openzeppelin/contracts": "5.0.2",
+    "chai": "4.5.0",
+    "ethers": "6.13.2",
+    "hardhat": "2.22.10"
+  }
+}
