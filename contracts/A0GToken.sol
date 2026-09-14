@@ -10,18 +10,18 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract A0GToken is ERC20, AccessControl {
     bytes32 public constant ISSUER_ROLE = keccak256("ISSUER_ROLE");
 
+    error ZeroAdmin();
+    error ZeroIssuer();
+
     constructor(
         address initialAdmin,
         address ascendStakingAdapter
     ) ERC20("Ascend 0G", "a0G") {
         if (initialAdmin == address(0)) {
-            revert AccessControlInvalidDefaultAdmin(address(0));
+            revert ZeroAdmin();
         }
         if (ascendStakingAdapter == address(0)) {
-            revert AccessControlUnauthorizedAccount(
-                address(0),
-                ISSUER_ROLE
-            );
+            revert ZeroIssuer();
         }
 
         _grantRole(DEFAULT_ADMIN_ROLE, initialAdmin);
