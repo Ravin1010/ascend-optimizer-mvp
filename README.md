@@ -213,7 +213,21 @@ The adapter is intentionally fixed to one validator address per deployment;
 multi-validator routing remains an off-chain/registry deployment decision rather
 than an autonomous on-chain optimizer action.
 
-The next contract phase is the Ascend a0G staking/reward-accounting path.
+The reward-accounting layer is now implemented in
+`RewardAccounting.sol` using the accumulative reward-per-share model described
+in Section 5.5. `AscendVault` checkpoints user entitlement before strategy
+shares increase or decrease, and users can claim separately-accounted rewards
+without withdrawing principal. Reward claims remain available while new
+deposits/allocations are paused.
+
+Only separately claimable rewards should be notified to `RewardAccounting`.
+Yield already embedded in strategy share value or receipt-token exchange-rate
+appreciation must not be duplicated here.
+
+The next contract phase is the Ascend a0G staking adapter: 1:1 a0G mint on
+managed 0G staking entry, adapter-held a0G for vault-managed positions, burn on
+redemption, and integration with the existing reward-accounting checkpoint
+flow.
 
 Install and run the Solidity tests with:
 
