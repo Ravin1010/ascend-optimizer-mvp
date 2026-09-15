@@ -36,6 +36,13 @@ contract AscendVault is Ownable2Step, Pausable, ReentrancyGuard {
         bool active;
     }
 
+    struct AdapterWithdrawalResult {
+        bytes32 requestId;
+        uint256 amountOut;
+        uint256 received;
+        bool pending;
+    }
+
     mapping(address user => mapping(address asset => uint256))
         public idleBalanceOf;
 
@@ -385,112 +392,52 @@ contract AscendVault is Ownable2Step, Pausable, ReentrancyGuard {
         StrategyManager.StrategyConfig memory config =
             strategyManager.getStrategy(strategyId);
 
-        uint256 availableShares =
-            strategySharesOf[msg.sender][strategyId];
-
-        if (availableShares < shares) {
-            revert InsufficientUserStrategyShares(
-                msg.sender,
-                strategyId,
-                availableShares,
-                shares
-            );
-        }
-
-        strategySharesOf[msg.sender][strategyId] =
-            availableShares - shares;
-
-        IStrategyAdapter adapter =
-            IStrategyAdapter(config.adapter);
-
-        uint256 beforeBalance =
-            _assetBalance(config.inputAsset);
-
-        bytes32 adapterRequestId;
-        (
-            adapterRequestId,
-            amountOut,
-            pending
-        ) = adapter.requestWithdraw(
-            shares,
-            minAmountOut,
-            data
+        _consumeUserStrategyShares(
+            msg.sender,
+            strategyId,
+            shares
         );
 
-        if (pending != config.asynchronous) {
+        AdapterWithdrawalResult memory result =
+            _requestAdapterWithdrawal(
+                config,
+                shares,
+                minAmountOut,
+                data
+            );
+
+        if (result.pending != config.asynchronous) {
             revert UnexpectedWithdrawalMode(
                 strategyId,
                 config.asynchronous,
-                pending
+                result.pending
             );
         }
 
-        uint256 received =
-            _assetBalance(config.inputAsset) - beforeBalance;
-
-        if (!pending) {
-            _validateWithdrawalReceipt(
-                strategyId,
-                minAmountOut,
-                amountOut,
-                received
-            );
-
-            idleBalanceOf[msg.sender][config.inputAsset] += received;
-
-            emit StrategyWithdrawalCompleted(
+        if (!result.pending) {
+            _completeSynchronousWithdrawal(
                 msg.sender,
                 strategyId,
                 config.inputAsset,
                 shares,
-                received
+                minAmountOut,
+                result
             );
 
-            return (bytes32(0), received, false);
-        }
-
-        if (adapterRequestId == bytes32(0)) {
-            revert ZeroAdapterRequestId();
-        }
-
-        if (amountOut != 0 || received != 0) {
-            revert AdapterAmountMismatch(
-                strategyId,
-                amountOut,
-                received
+            return (
+                bytes32(0),
+                result.received,
+                false
             );
         }
 
-        uint256 nonce = withdrawalNonceOf[msg.sender]++;
-        withdrawalKey = keccak256(
-            abi.encode(
-                address(this),
-                block.chainid,
-                msg.sender,
-                strategyId,
-                adapterRequestId,
-                nonce
-            )
-        );
-
-        pendingWithdrawalOf[withdrawalKey] = PendingWithdrawal({
-            user: msg.sender,
-            strategyId: strategyId,
-            adapterRequestId: adapterRequestId,
-            asset: config.inputAsset,
-            shares: shares,
-            minimumAmountOut: minAmountOut,
-            active: true
-        });
-
-        emit StrategyWithdrawalRequested(
+        withdrawalKey = _recordPendingWithdrawal(
             msg.sender,
             strategyId,
-            withdrawalKey,
-            adapterRequestId,
             config.inputAsset,
             shares,
-            minAmountOut
+            minAmountOut,
+            result
         );
 
         return (withdrawalKey, 0, true);
@@ -617,6 +564,135 @@ contract AscendVault is Ownable2Step, Pausable, ReentrancyGuard {
         onlyOwner
     {
         _unpause();
+    }
+
+    function _consumeUserStrategyShares(
+        address user,
+        bytes32 strategyId,
+        uint256 shares
+    ) private {
+        uint256 availableShares =
+            strategySharesOf[user][strategyId];
+
+        if (availableShares < shares) {
+            revert InsufficientUserStrategyShares(
+                user,
+                strategyId,
+                availableShares,
+                shares
+            );
+        }
+
+        strategySharesOf[user][strategyId] =
+            availableShares - shares;
+    }
+
+    function _requestAdapterWithdrawal(
+        StrategyManager.StrategyConfig memory config,
+        uint256 shares,
+        uint256 minAmountOut,
+        bytes calldata data
+    )
+        private
+        returns (AdapterWithdrawalResult memory result)
+    {
+        IStrategyAdapter adapter =
+            IStrategyAdapter(config.adapter);
+
+        uint256 beforeBalance =
+            _assetBalance(config.inputAsset);
+
+        (
+            result.requestId,
+            result.amountOut,
+            result.pending
+        ) = adapter.requestWithdraw(
+            shares,
+            minAmountOut,
+            data
+        );
+
+        result.received =
+            _assetBalance(config.inputAsset) - beforeBalance;
+    }
+
+    function _completeSynchronousWithdrawal(
+        address user,
+        bytes32 strategyId,
+        address asset,
+        uint256 shares,
+        uint256 minAmountOut,
+        AdapterWithdrawalResult memory result
+    ) private {
+        _validateWithdrawalReceipt(
+            strategyId,
+            minAmountOut,
+            result.amountOut,
+            result.received
+        );
+
+        idleBalanceOf[user][asset] += result.received;
+
+        emit StrategyWithdrawalCompleted(
+            user,
+            strategyId,
+            asset,
+            shares,
+            result.received
+        );
+    }
+
+    function _recordPendingWithdrawal(
+        address user,
+        bytes32 strategyId,
+        address asset,
+        uint256 shares,
+        uint256 minAmountOut,
+        AdapterWithdrawalResult memory result
+    ) private returns (bytes32 withdrawalKey) {
+        if (result.requestId == bytes32(0)) {
+            revert ZeroAdapterRequestId();
+        }
+
+        if (result.amountOut != 0 || result.received != 0) {
+            revert AdapterAmountMismatch(
+                strategyId,
+                result.amountOut,
+                result.received
+            );
+        }
+
+        uint256 nonce = withdrawalNonceOf[user]++;
+        withdrawalKey = keccak256(
+            abi.encode(
+                address(this),
+                block.chainid,
+                user,
+                strategyId,
+                result.requestId,
+                nonce
+            )
+        );
+
+        pendingWithdrawalOf[withdrawalKey] = PendingWithdrawal({
+            user: user,
+            strategyId: strategyId,
+            adapterRequestId: result.requestId,
+            asset: asset,
+            shares: shares,
+            minimumAmountOut: minAmountOut,
+            active: true
+        });
+
+        emit StrategyWithdrawalRequested(
+            user,
+            strategyId,
+            withdrawalKey,
+            result.requestId,
+            asset,
+            shares,
+            minAmountOut
+        );
     }
 
     function _validateWithdrawalReceipt(
