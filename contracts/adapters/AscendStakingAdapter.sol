@@ -285,101 +285,24 @@ contract AscendStakingAdapter is
         if (shares == 0) revert ZeroAmount();
         if (minAmountOut == 0) revert ZeroMinAmountOut();
 
-        uint256 principalBefore = totalPrincipalShares;
-        if (shares > principalBefore) {
-            revert InsufficientPrincipalShares(
-                principalBefore,
-                shares
-            );
-        }
-
         (
-            uint256 validatorShares,
-            uint256 activeAssets
-        ) = _activeStake();
-
-        uint256 redeemable =
-            _previewRedeemFromTotals(
-                shares,
-                principalBefore,
-                activeAssets
-            );
-
-        if (redeemable < minAmountOut) {
-            revert InsufficientRedeemableAmount(
-                minAmountOut,
-                redeemable
-            );
-        }
-
-        uint256 validatorSharesToRedeem =
-            Math.mulDiv(
-                validatorShares,
-                redeemable,
-                activeAssets
-            );
-
-        if (validatorSharesToRedeem == 0) {
-            revert InsufficientValidatorShares(
-                redeemable
-            );
-        }
-
-        uint256 fee = withdrawalFeeWei();
-        if (feeReserveWei < fee) {
-            revert InsufficientFeeReserve(
-                fee,
-                feeReserveWei
-            );
-        }
-
-        feeReserveWei -= fee;
-
-        uint256 queuedAmount =
-            validator.undelegate{value: fee}(
-                address(this),
-                validatorSharesToRedeem
-            );
-
-        if (queuedAmount < minAmountOut) {
-            revert InsufficientQueuedAmount(
-                minAmountOut,
-                queuedAmount
-            );
-        }
-
-        // a0G represents principal only. If a validator conversion would put
-        // reward value into this principal withdrawal, reject the operation.
-        if (queuedAmount > redeemable) {
-            revert PrincipalAmountExceeded(
-                redeemable,
-                queuedAmount
-            );
-        }
-
-        totalPrincipalShares =
-            principalBefore - shares;
-        a0g.burn(address(this), shares);
-
-        uint256 nonce = withdrawalNonce++;
-        requestId = keccak256(
-            abi.encode(
-                address(this),
-                address(validator),
-                shares,
-                validatorSharesToRedeem,
-                queuedAmount,
-                nonce
-            )
+            uint256 validatorSharesToRedeem,
+            uint256 redeemable
+        ) = _quoteWithdrawal(
+            shares,
+            minAmountOut
         );
 
-        pendingWithdrawalAmount[requestId] =
-            queuedAmount;
-        totalPendingWithdrawalAmount +=
-            queuedAmount;
+        (
+            uint256 queuedAmount,
+            uint256 fee
+        ) = _queueValidatorWithdrawal(
+            validatorSharesToRedeem,
+            redeemable,
+            minAmountOut
+        );
 
-        emit AscendUnstakeRequested(
-            requestId,
+        requestId = _recordWithdrawal(
             shares,
             validatorSharesToRedeem,
             queuedAmount,
@@ -494,6 +417,138 @@ contract AscendStakingAdapter is
             shares,
             totalPrincipalShares,
             activeAssets
+        );
+    }
+
+    function _quoteWithdrawal(
+        uint256 shares,
+        uint256 minAmountOut
+    )
+        private
+        view
+        returns (
+            uint256 validatorSharesToRedeem,
+            uint256 redeemable
+        )
+    {
+        uint256 principal = totalPrincipalShares;
+        if (shares > principal) {
+            revert InsufficientPrincipalShares(
+                principal,
+                shares
+            );
+        }
+
+        (
+            uint256 validatorShares,
+            uint256 activeAssets
+        ) = _activeStake();
+
+        redeemable = _previewRedeemFromTotals(
+            shares,
+            principal,
+            activeAssets
+        );
+
+        if (redeemable < minAmountOut) {
+            revert InsufficientRedeemableAmount(
+                minAmountOut,
+                redeemable
+            );
+        }
+
+        validatorSharesToRedeem = Math.mulDiv(
+            validatorShares,
+            redeemable,
+            activeAssets
+        );
+
+        if (validatorSharesToRedeem == 0) {
+            revert InsufficientValidatorShares(
+                redeemable
+            );
+        }
+    }
+
+    function _queueValidatorWithdrawal(
+        uint256 validatorSharesToRedeem,
+        uint256 redeemable,
+        uint256 minAmountOut
+    )
+        private
+        returns (
+            uint256 queuedAmount,
+            uint256 fee
+        )
+    {
+        fee = withdrawalFeeWei();
+        if (feeReserveWei < fee) {
+            revert InsufficientFeeReserve(
+                fee,
+                feeReserveWei
+            );
+        }
+
+        feeReserveWei -= fee;
+
+        queuedAmount =
+            validator.undelegate{value: fee}(
+                address(this),
+                validatorSharesToRedeem
+            );
+
+        if (queuedAmount < minAmountOut) {
+            revert InsufficientQueuedAmount(
+                minAmountOut,
+                queuedAmount
+            );
+        }
+
+        // a0G represents principal only. If validator conversion would include
+        // reward value in this principal exit, reject the whole transaction.
+        if (queuedAmount > redeemable) {
+            revert PrincipalAmountExceeded(
+                redeemable,
+                queuedAmount
+            );
+        }
+    }
+
+    function _recordWithdrawal(
+        uint256 shares,
+        uint256 validatorSharesToRedeem,
+        uint256 queuedAmount,
+        uint256 fee
+    )
+        private
+        returns (bytes32 requestId)
+    {
+        totalPrincipalShares -= shares;
+        a0g.burn(address(this), shares);
+
+        uint256 nonce = withdrawalNonce++;
+        requestId = keccak256(
+            abi.encode(
+                address(this),
+                address(validator),
+                shares,
+                validatorSharesToRedeem,
+                queuedAmount,
+                nonce
+            )
+        );
+
+        pendingWithdrawalAmount[requestId] =
+            queuedAmount;
+        totalPendingWithdrawalAmount +=
+            queuedAmount;
+
+        emit AscendUnstakeRequested(
+            requestId,
+            shares,
+            validatorSharesToRedeem,
+            queuedAmount,
+            fee
         );
     }
 
