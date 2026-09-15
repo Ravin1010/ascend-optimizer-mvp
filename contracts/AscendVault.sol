@@ -14,7 +14,7 @@ import {IStrategyAdapter} from "./interfaces/IStrategyAdapter.sol";
 import {StrategyManager} from "./StrategyManager.sol";
 
 /// @title AscendVault
-/// @notice User-facing custody and user-authorized initial allocation contract.
+/// @notice User-facing custody and user-authorized strategy execution contract.
 /// @dev The optimizer has no role in this contract. Recommendations are executed
 ///      only when the user calls executeAllocation() for their own idle balance.
 contract AscendVault is Ownable2Step, Pausable, ReentrancyGuard {
@@ -26,20 +26,44 @@ contract AscendVault is Ownable2Step, Pausable, ReentrancyGuard {
 
     StrategyManager public immutable strategyManager;
 
+    struct PendingWithdrawal {
+        address user;
+        bytes32 strategyId;
+        bytes32 adapterRequestId;
+        address asset;
+        uint256 shares;
+        uint256 minimumAmountOut;
+        bool active;
+    }
+
     mapping(address user => mapping(address asset => uint256))
         public idleBalanceOf;
 
     mapping(address user => mapping(bytes32 strategyId => uint256))
         public strategySharesOf;
 
+    mapping(bytes32 withdrawalKey => PendingWithdrawal)
+        public pendingWithdrawalOf;
+
+    mapping(address user => uint256)
+        public withdrawalNonceOf;
+
     error ZeroStrategyManager();
     error UnsupportedAsset(address asset);
     error ZeroAmount();
     error ZeroRecipient();
     error ZeroMinShares();
+    error ZeroMinAmountOut();
+    error ZeroAdapterRequestId();
     error InsufficientIdleBalance(
         address user,
         address asset,
+        uint256 available,
+        uint256 requested
+    );
+    error InsufficientUserStrategyShares(
+        address user,
+        bytes32 strategyId,
         uint256 available,
         uint256 requested
     );
@@ -61,6 +85,32 @@ contract AscendVault is Ownable2Step, Pausable, ReentrancyGuard {
         bytes32 strategyId,
         uint256 minimum,
         uint256 received
+    );
+    error InsufficientWithdrawalAmount(
+        bytes32 strategyId,
+        uint256 minimum,
+        uint256 received
+    );
+    error AdapterAmountMismatch(
+        bytes32 strategyId,
+        uint256 reported,
+        uint256 received
+    );
+    error UnexpectedWithdrawalMode(
+        bytes32 strategyId,
+        bool configuredAsync,
+        bool adapterPending
+    );
+    error PendingWithdrawalNotFound(bytes32 withdrawalKey);
+    error PendingWithdrawalNotOwned(
+        bytes32 withdrawalKey,
+        address expectedUser,
+        address caller
+    );
+    error MinimumAmountBelowRequest(
+        bytes32 withdrawalKey,
+        uint256 requestedMinimum,
+        uint256 claimMinimum
     );
 
     event NativeDeposited(
@@ -89,6 +139,33 @@ contract AscendVault is Ownable2Step, Pausable, ReentrancyGuard {
         uint256 sharesReceived
     );
 
+    event StrategyWithdrawalCompleted(
+        address indexed user,
+        bytes32 indexed strategyId,
+        address indexed asset,
+        uint256 shares,
+        uint256 amountOut
+    );
+
+    event StrategyWithdrawalRequested(
+        address indexed user,
+        bytes32 indexed strategyId,
+        bytes32 indexed withdrawalKey,
+        bytes32 adapterRequestId,
+        address asset,
+        uint256 shares,
+        uint256 minimumAmountOut
+    );
+
+    event StrategyWithdrawalClaimed(
+        address indexed user,
+        bytes32 indexed strategyId,
+        bytes32 indexed withdrawalKey,
+        address asset,
+        uint256 shares,
+        uint256 amountOut
+    );
+
     constructor(
         address initialOwner,
         address strategyManager_
@@ -99,6 +176,10 @@ contract AscendVault is Ownable2Step, Pausable, ReentrancyGuard {
 
         strategyManager = StrategyManager(strategyManager_);
     }
+
+    /// @dev Needed so approved adapters can return native 0G to the vault.
+    ///      Direct transfers are accepted but are not credited to user balances.
+    receive() external payable {}
 
     /// @notice Deposit native 0G into the caller's idle balance.
     function depositNative()
@@ -186,11 +267,6 @@ contract AscendVault is Ownable2Step, Pausable, ReentrancyGuard {
     }
 
     /// @notice Execute one optimizer recommendation explicitly authorized by user.
-    /// @param strategyId Approved strategy identifier.
-    /// @param amount Amount of the strategy's input asset to deploy.
-    /// @param minShares Minimum acceptable strategy shares.
-    /// @param deadline Latest timestamp at which this instruction is valid.
-    /// @param data Bounded protocol-specific adapter parameters.
     function executeAllocation(
         bytes32 strategyId,
         uint256 amount,
@@ -243,7 +319,6 @@ contract AscendVault is Ownable2Step, Pausable, ReentrancyGuard {
             amount
         );
 
-        // Effects before the external adapter call.
         idleBalanceOf[msg.sender][asset] = available - amount;
 
         IStrategyAdapter adapter =
@@ -287,8 +362,224 @@ contract AscendVault is Ownable2Step, Pausable, ReentrancyGuard {
         );
     }
 
-    /// @notice Current underlying value of one user's positions for an asset.
-    /// @dev Used for on-chain hard allocation ceilings, not APY/risk optimization.
+    /// @notice Withdraw strategy shares back to the caller's idle balance.
+    /// @dev Synchronous adapters settle immediately. Asynchronous adapters
+    ///      create a pending record that the same user later claims.
+    function requestStrategyWithdraw(
+        bytes32 strategyId,
+        uint256 shares,
+        uint256 minAmountOut,
+        bytes calldata data
+    )
+        external
+        nonReentrant
+        returns (
+            bytes32 withdrawalKey,
+            uint256 amountOut,
+            bool pending
+        )
+    {
+        if (shares == 0) revert ZeroAmount();
+        if (minAmountOut == 0) revert ZeroMinAmountOut();
+
+        StrategyManager.StrategyConfig memory config =
+            strategyManager.getStrategy(strategyId);
+
+        uint256 availableShares =
+            strategySharesOf[msg.sender][strategyId];
+
+        if (availableShares < shares) {
+            revert InsufficientUserStrategyShares(
+                msg.sender,
+                strategyId,
+                availableShares,
+                shares
+            );
+        }
+
+        strategySharesOf[msg.sender][strategyId] =
+            availableShares - shares;
+
+        IStrategyAdapter adapter =
+            IStrategyAdapter(config.adapter);
+
+        uint256 beforeBalance =
+            _assetBalance(config.inputAsset);
+
+        bytes32 adapterRequestId;
+        (
+            adapterRequestId,
+            amountOut,
+            pending
+        ) = adapter.requestWithdraw(
+            shares,
+            minAmountOut,
+            data
+        );
+
+        if (pending != config.asynchronous) {
+            revert UnexpectedWithdrawalMode(
+                strategyId,
+                config.asynchronous,
+                pending
+            );
+        }
+
+        uint256 received =
+            _assetBalance(config.inputAsset) - beforeBalance;
+
+        if (!pending) {
+            _validateWithdrawalReceipt(
+                strategyId,
+                minAmountOut,
+                amountOut,
+                received
+            );
+
+            idleBalanceOf[msg.sender][config.inputAsset] += received;
+
+            emit StrategyWithdrawalCompleted(
+                msg.sender,
+                strategyId,
+                config.inputAsset,
+                shares,
+                received
+            );
+
+            return (bytes32(0), received, false);
+        }
+
+        if (adapterRequestId == bytes32(0)) {
+            revert ZeroAdapterRequestId();
+        }
+
+        if (amountOut != 0 || received != 0) {
+            revert AdapterAmountMismatch(
+                strategyId,
+                amountOut,
+                received
+            );
+        }
+
+        uint256 nonce = withdrawalNonceOf[msg.sender]++;
+        withdrawalKey = keccak256(
+            abi.encode(
+                address(this),
+                block.chainid,
+                msg.sender,
+                strategyId,
+                adapterRequestId,
+                nonce
+            )
+        );
+
+        pendingWithdrawalOf[withdrawalKey] = PendingWithdrawal({
+            user: msg.sender,
+            strategyId: strategyId,
+            adapterRequestId: adapterRequestId,
+            asset: config.inputAsset,
+            shares: shares,
+            minimumAmountOut: minAmountOut,
+            active: true
+        });
+
+        emit StrategyWithdrawalRequested(
+            msg.sender,
+            strategyId,
+            withdrawalKey,
+            adapterRequestId,
+            config.inputAsset,
+            shares,
+            minAmountOut
+        );
+
+        return (withdrawalKey, 0, true);
+    }
+
+    /// @notice Claim an asynchronous strategy withdrawal into idle balance.
+    /// @param minAmountOut Claim-time minimum; may tighten but not lower the
+    ///        minimum established by requestStrategyWithdraw().
+    function claimStrategyWithdraw(
+        bytes32 withdrawalKey,
+        uint256 minAmountOut,
+        bytes calldata data
+    )
+        external
+        nonReentrant
+        returns (uint256 amountOut)
+    {
+        PendingWithdrawal memory pending =
+            pendingWithdrawalOf[withdrawalKey];
+
+        if (!pending.active) {
+            revert PendingWithdrawalNotFound(withdrawalKey);
+        }
+
+        if (pending.user != msg.sender) {
+            revert PendingWithdrawalNotOwned(
+                withdrawalKey,
+                pending.user,
+                msg.sender
+            );
+        }
+
+        if (minAmountOut < pending.minimumAmountOut) {
+            revert MinimumAmountBelowRequest(
+                withdrawalKey,
+                pending.minimumAmountOut,
+                minAmountOut
+            );
+        }
+
+        StrategyManager.StrategyConfig memory config =
+            strategyManager.getStrategy(pending.strategyId);
+
+        if (!config.asynchronous) {
+            revert UnexpectedWithdrawalMode(
+                pending.strategyId,
+                config.asynchronous,
+                true
+            );
+        }
+
+        uint256 beforeBalance =
+            _assetBalance(pending.asset);
+
+        uint256 reported = IStrategyAdapter(
+            config.adapter
+        ).claimWithdraw(
+            pending.adapterRequestId,
+            minAmountOut,
+            data
+        );
+
+        uint256 received =
+            _assetBalance(pending.asset) - beforeBalance;
+
+        _validateWithdrawalReceipt(
+            pending.strategyId,
+            minAmountOut,
+            reported,
+            received
+        );
+
+        delete pendingWithdrawalOf[withdrawalKey];
+
+        idleBalanceOf[msg.sender][pending.asset] += received;
+        amountOut = received;
+
+        emit StrategyWithdrawalClaimed(
+            msg.sender,
+            pending.strategyId,
+            withdrawalKey,
+            pending.asset,
+            pending.shares,
+            received
+        );
+    }
+
+    /// @notice Current active underlying value of one user's positions for an asset.
+    /// @dev Pending asynchronous withdrawals are excluded until claimed into idle.
     function userAssetValue(
         address user,
         address asset
@@ -326,6 +617,41 @@ contract AscendVault is Ownable2Step, Pausable, ReentrancyGuard {
         onlyOwner
     {
         _unpause();
+    }
+
+    function _validateWithdrawalReceipt(
+        bytes32 strategyId,
+        uint256 minimum,
+        uint256 reported,
+        uint256 received
+    ) private pure {
+        if (received < minimum) {
+            revert InsufficientWithdrawalAmount(
+                strategyId,
+                minimum,
+                received
+            );
+        }
+
+        if (reported != received) {
+            revert AdapterAmountMismatch(
+                strategyId,
+                reported,
+                received
+            );
+        }
+    }
+
+    function _assetBalance(address asset)
+        private
+        view
+        returns (uint256)
+    {
+        if (asset == NATIVE_0G) {
+            return address(this).balance;
+        }
+
+        return IERC20(asset).balanceOf(address(this));
     }
 
     function _enforceDepositCap(
