@@ -224,10 +224,21 @@ Only separately claimable rewards should be notified to `RewardAccounting`.
 Yield already embedded in strategy share value or receipt-token exchange-rate
 appreciation must not be duplicated here.
 
-The next contract phase is the Ascend a0G staking adapter: 1:1 a0G mint on
-managed 0G staking entry, adapter-held a0G for vault-managed positions, burn on
-redemption, and integration with the existing reward-accounting checkpoint
-flow.
+The Ascend a0G staking path is now implemented in
+`AscendStakingAdapter.sol`. Native 0G allocated through the vault is delegated
+to a fixed validator, while the adapter mints and holds non-rebasing a0G 1:1
+against managed principal. Vault strategy shares therefore represent a0G
+principal units rather than a user-held transferable receipt token.
+
+On redemption, the corresponding adapter-held a0G is burned when principal
+enters the official asynchronous validator withdrawal queue. Upside from
+validator yield is deliberately excluded from a0G principal redemption so that
+separately claimable staking rewards can be accounted through
+`RewardAccounting.sol` without double counting. Slashing can still reduce the
+principal redemption value pro rata.
+
+The adapter uses the same explicit prefunded validator withdrawal-fee reserve
+pattern as `Native0GStakingAdapter.sol`.
 
 Install and run the Solidity tests with:
 
