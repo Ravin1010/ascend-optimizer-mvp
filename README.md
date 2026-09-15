@@ -240,6 +240,18 @@ principal redemption value pro rata.
 The adapter uses the same explicit prefunded validator withdrawal-fee reserve
 pattern as `Native0GStakingAdapter.sol`.
 
+
+The restaking execution boundary is now implemented with
+`RestakingAdapter.sol` and `IRestakingConnector.sol`. The adapter is fixed to
+one immutable connector and forwards only bounded deposit/withdraw/claim
+operations; it does not expose arbitrary target calls.
+
+This layer is intentionally protocol-agnostic. The current MVP does **not**
+claim a live Symbiotic/0G restaking integration until the concrete deployed
+protocol interface, assets, withdrawal semantics, and addresses are verified.
+A future protocol-specific connector can be added behind
+`IRestakingConnector` without changing `AscendVault` or the optimizer.
+
 Install and run the Solidity tests with:
 
 ~~~bash
