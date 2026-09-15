@@ -12,6 +12,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 
 import {IStrategyAdapter} from "./interfaces/IStrategyAdapter.sol";
 import {StrategyManager} from "./StrategyManager.sol";
+import {RewardAccounting} from "./RewardAccounting.sol";
 
 /// @title AscendVault
 /// @notice User-facing custody and user-authorized strategy execution contract.
@@ -25,6 +26,9 @@ contract AscendVault is Ownable2Step, Pausable, ReentrancyGuard {
     address public constant NATIVE_0G = address(0);
 
     StrategyManager public immutable strategyManager;
+    RewardAccounting public rewardAccounting;
+
+    bool public allocationStarted;
 
     struct PendingWithdrawal {
         address user;
@@ -56,6 +60,18 @@ contract AscendVault is Ownable2Step, Pausable, ReentrancyGuard {
         public withdrawalNonceOf;
 
     error ZeroStrategyManager();
+    error InvalidRewardAccounting(address rewardAccounting);
+    error RewardAccountingAlreadyConfigured();
+    error RewardAccountingConfigurationLocked();
+    error RewardAccountingNotConfigured();
+    error RewardAccountingVaultMismatch(
+        address expectedVault,
+        address configuredVault
+    );
+    error RewardAccountingManagerMismatch(
+        address expectedManager,
+        address configuredManager
+    );
     error UnsupportedAsset(address asset);
     error ZeroAmount();
     error ZeroRecipient();
@@ -120,6 +136,18 @@ contract AscendVault is Ownable2Step, Pausable, ReentrancyGuard {
         uint256 claimMinimum
     );
 
+    event RewardAccountingConfigured(
+        address indexed rewardAccounting
+    );
+
+    event RewardClaimed(
+        address indexed user,
+        bytes32 indexed strategyId,
+        address indexed rewardToken,
+        address recipient,
+        uint256 amount
+    );
+
     event NativeDeposited(
         address indexed user,
         uint256 amount
@@ -182,6 +210,53 @@ contract AscendVault is Ownable2Step, Pausable, ReentrancyGuard {
         }
 
         strategyManager = StrategyManager(strategyManager_);
+    }
+
+    /// @notice Configure reward accounting before the first strategy allocation.
+    /// @dev One-time configuration prevents retroactive reward-share ambiguity.
+    function configureRewardAccounting(
+        address rewardAccounting_
+    ) external onlyOwner {
+        if (address(rewardAccounting) != address(0)) {
+            revert RewardAccountingAlreadyConfigured();
+        }
+        if (allocationStarted) {
+            revert RewardAccountingConfigurationLocked();
+        }
+        if (
+            rewardAccounting_ == address(0)
+            || rewardAccounting_.code.length == 0
+        ) {
+            revert InvalidRewardAccounting(
+                rewardAccounting_
+            );
+        }
+
+        RewardAccounting accounting =
+            RewardAccounting(payable(rewardAccounting_));
+
+        if (accounting.vault() != address(this)) {
+            revert RewardAccountingVaultMismatch(
+                address(this),
+                accounting.vault()
+            );
+        }
+
+        if (
+            address(accounting.strategyManager())
+                != address(strategyManager)
+        ) {
+            revert RewardAccountingManagerMismatch(
+                address(strategyManager),
+                address(accounting.strategyManager())
+            );
+        }
+
+        rewardAccounting = accounting;
+
+        emit RewardAccountingConfigured(
+            rewardAccounting_
+        );
     }
 
     /// @dev Needed so approved adapters can return native 0G to the vault.
@@ -358,7 +433,19 @@ contract AscendVault is Ownable2Step, Pausable, ReentrancyGuard {
             );
         }
 
-        strategySharesOf[msg.sender][strategyId] += sharesReceived;
+        uint256 updatedShares =
+            strategySharesOf[msg.sender][strategyId]
+            + sharesReceived;
+
+        _syncRewardShares(
+            msg.sender,
+            strategyId,
+            updatedShares
+        );
+
+        strategySharesOf[msg.sender][strategyId] =
+            updatedShares;
+        allocationStarted = true;
 
         emit AllocationExecuted(
             msg.sender,
@@ -525,6 +612,61 @@ contract AscendVault is Ownable2Step, Pausable, ReentrancyGuard {
         );
     }
 
+    /// @notice Claim separately-accounted strategy rewards without withdrawing principal.
+    /// @dev Reward claims remain available while deposits/allocations are paused.
+    function claimRewards(
+        bytes32 strategyId,
+        address rewardToken,
+        address payable recipient
+    )
+        external
+        nonReentrant
+        returns (uint256 amount)
+    {
+        if (recipient == address(0)) revert ZeroRecipient();
+
+        RewardAccounting accounting =
+            rewardAccounting;
+
+        if (address(accounting) == address(0)) {
+            revert RewardAccountingNotConfigured();
+        }
+
+        amount = accounting.claimFor(
+            msg.sender,
+            strategyId,
+            rewardToken,
+            recipient
+        );
+
+        emit RewardClaimed(
+            msg.sender,
+            strategyId,
+            rewardToken,
+            recipient,
+            amount
+        );
+    }
+
+    function claimableRewards(
+        address user,
+        bytes32 strategyId,
+        address rewardToken
+    ) external view returns (uint256) {
+        RewardAccounting accounting =
+            rewardAccounting;
+
+        if (address(accounting) == address(0)) {
+            return 0;
+        }
+
+        return accounting.claimable(
+            user,
+            strategyId,
+            rewardToken
+        );
+    }
+
     /// @notice Current active underlying value of one user's positions for an asset.
     /// @dev Pending asynchronous withdrawals are excluded until claimed into idle.
     function userAssetValue(
@@ -583,8 +725,36 @@ contract AscendVault is Ownable2Step, Pausable, ReentrancyGuard {
             );
         }
 
-        strategySharesOf[user][strategyId] =
+        uint256 remainingShares =
             availableShares - shares;
+
+        _syncRewardShares(
+            user,
+            strategyId,
+            remainingShares
+        );
+
+        strategySharesOf[user][strategyId] =
+            remainingShares;
+    }
+
+    function _syncRewardShares(
+        address user,
+        bytes32 strategyId,
+        uint256 newShares
+    ) private {
+        RewardAccounting accounting =
+            rewardAccounting;
+
+        if (address(accounting) == address(0)) {
+            return;
+        }
+
+        accounting.syncUserShares(
+            user,
+            strategyId,
+            newShares
+        );
     }
 
     function _requestAdapterWithdrawal(
