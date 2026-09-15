@@ -198,9 +198,22 @@ The user-facing `AscendVault` now implements:
 - emergency pause for new deposits/allocations while withdrawals remain
   available.
 
-The next contract phase is protocol-specific adapter implementation, beginning
-with a Native 0G staking adapter, followed by the Ascend a0G staking/reward
-accounting path.
+The first protocol-specific adapter is now implemented as
+`Native0GStakingAdapter.sol`. It follows the official 0G validator interface:
+native delegation is credited to adapter-owned validator shares, undelegation
+enters the validator withdrawal queue, and `processWithdrawQueue()` is used
+before a matured request is settled back to `AscendVault`.
+
+Because the official validator interface requires the withdrawal fee to be paid
+when `undelegate()` is called, the adapter keeps an explicit prefunded fee
+reserve. This reserve is accounted separately from user staking proceeds and
+can only be recovered by the adapter owner.
+
+The adapter is intentionally fixed to one validator address per deployment;
+multi-validator routing remains an off-chain/registry deployment decision rather
+than an autonomous on-chain optimizer action.
+
+The next contract phase is the Ascend a0G staking/reward-accounting path.
 
 Install and run the Solidity tests with:
 
