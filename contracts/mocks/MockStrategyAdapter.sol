@@ -15,6 +15,10 @@ contract MockStrategyAdapter is IStrategyAdapter {
     bool public immutable override isAsyncWithdrawal;
 
     uint256 public assets;
+    uint256 public requestNonce;
+
+    mapping(bytes32 requestId => uint256 amount)
+        public pendingAmount;
 
     constructor(address asset_, bool async_) {
         inputAsset = asset_;
@@ -56,18 +60,22 @@ contract MockStrategyAdapter is IStrategyAdapter {
             bool pending
         )
     {
-        if (isAsyncWithdrawal) {
-            return (
-                keccak256(
-                    abi.encode(msg.sender, shares, assets)
-                ),
-                0,
-                true
-            );
-        }
-
-        require(shares >= minAmountOut, "min amount");
         require(shares <= assets, "insufficient assets");
+        require(shares >= minAmountOut, "min amount");
+
+        if (isAsyncWithdrawal) {
+            requestId = keccak256(
+                abi.encode(
+                    address(this),
+                    msg.sender,
+                    shares,
+                    requestNonce++
+                )
+            );
+            pendingAmount[requestId] = shares;
+
+            return (requestId, 0, true);
+        }
 
         assets -= shares;
         _sendAsset(msg.sender, shares);
@@ -76,15 +84,19 @@ contract MockStrategyAdapter is IStrategyAdapter {
     }
 
     function claimWithdraw(
-        bytes32,
+        bytes32 requestId,
         uint256 minAmountOut,
         bytes calldata
     ) external override returns (uint256 amountOut) {
         require(isAsyncWithdrawal, "not async");
-        require(minAmountOut <= assets, "insufficient assets");
 
-        amountOut = minAmountOut;
+        amountOut = pendingAmount[requestId];
+        require(amountOut > 0, "unknown request");
+        require(amountOut >= minAmountOut, "min amount");
+
+        delete pendingAmount[requestId];
         assets -= amountOut;
+
         _sendAsset(msg.sender, amountOut);
     }
 
