@@ -37,6 +37,23 @@ describe("StrategyManager", function () {
     expect(config.active).to.equal(true);
   });
 
+  it("exposes registered strategy IDs for vault accounting", async function () {
+    const { manager, adapter, strategyId } = await deployFixture();
+
+    await manager.registerStrategy(strategyId, {
+      adapter: await adapter.getAddress(),
+      inputAsset: ethers.ZeroAddress,
+      depositCap: 1000,
+      maxAllocationBps: 6000,
+      asynchronous: true,
+      active: true
+    });
+
+    expect(await manager.strategyCount()).to.equal(1n);
+    expect(await manager.strategyIdAt(0)).to.equal(strategyId);
+    expect(await manager.strategyIds()).to.deep.equal([strategyId]);
+  });
+
   it("rejects duplicate strategy IDs", async function () {
     const { manager, adapter, strategyId } = await deployFixture();
 
