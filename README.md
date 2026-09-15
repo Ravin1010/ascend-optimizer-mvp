@@ -183,9 +183,24 @@ Section 5 implementation has started with a minimal, testable contract boundary:
   authority is restricted to the Ascend staking adapter;
 - focused Hardhat tests and a mock adapter.
 
-The optimizer remains off-chain and has no on-chain execution role. The next
-contract phase will add the user-facing `AscendVault` deposit/idle-balance and
-user-authorized allocation flow.
+The optimizer remains off-chain and has no on-chain execution role.
+
+The user-facing `AscendVault` now implements:
+
+- native 0G and approved ERC-20 idle deposits;
+- user-authorized allocation through approved adapters;
+- per-user strategy-share accounting;
+- deadline and minimum-share protection;
+- hard strategy deposit and user-allocation ceilings;
+- synchronous strategy withdrawal back to idle balance;
+- asynchronous request/claim withdrawal records with ownership and
+  minimum-output protection;
+- emergency pause for new deposits/allocations while withdrawals remain
+  available.
+
+The next contract phase is protocol-specific adapter implementation, beginning
+with a Native 0G staking adapter, followed by the Ascend a0G staking/reward
+accounting path.
 
 Install and run the Solidity tests with:
 
