@@ -21,6 +21,7 @@ contract StrategyManager is Ownable2Step {
     }
 
     mapping(bytes32 strategyId => StrategyConfig) private _strategies;
+    bytes32[] private _strategyIds;
 
     error ZeroStrategyId();
     error InvalidAdapter(address adapter);
@@ -66,6 +67,7 @@ contract StrategyManager is Ownable2Step {
         _validateConfig(config);
 
         _strategies[strategyId] = config;
+        _strategyIds.push(strategyId);
 
         emit StrategyRegistered(
             strategyId,
@@ -158,6 +160,26 @@ contract StrategyManager is Ownable2Step {
     {
         StrategyConfig storage config = _strategies[strategyId];
         return config.adapter != address(0) && config.active;
+    }
+
+    function strategyCount() external view returns (uint256) {
+        return _strategyIds.length;
+    }
+
+    function strategyIdAt(uint256 index)
+        external
+        view
+        returns (bytes32)
+    {
+        return _strategyIds[index];
+    }
+
+    function strategyIds()
+        external
+        view
+        returns (bytes32[] memory)
+    {
+        return _strategyIds;
     }
 
     function _validateConfig(
