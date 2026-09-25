@@ -325,7 +325,6 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
 
         totalStrategyShares += sharesReceived;
 
-        _refundDustToVault();
 
         emit LiquidityDeposited(
             amount,
@@ -452,7 +451,6 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
             _closeEmptyPosition();
         }
 
-        _refundDustToVault();
 
         emit LiquidityWithdrawn(
             shares,
@@ -554,21 +552,35 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
             shareLiquidity
         );
 
+        // Any unspent mint/increase-liquidity dust stays inside the pooled
+        // strategy. Value it pro rata instead of sending it to AscendVault
+        // without a corresponding user idle-balance credit.
+        uint256 dustW0G = Math.mulDiv(
+            w0g.balanceOf(address(this)),
+            shares,
+            totalShares
+        );
+        uint256 dustUSDC = Math.mulDiv(
+            usdce.balanceOf(address(this)),
+            shares,
+            totalShares
+        );
+
         if (
             pool.token0()
                 == address(w0g)
         ) {
             return V3PositionMath.valueInToken0(
-                amount0,
-                amount1,
+                amount0 + dustW0G,
+                amount1 + dustUSDC,
                 sqrtPriceX96
             );
         }
 
         // token1 is W0G. Convert token0 (USDC.e) into token1 units.
         return V3PositionMath.valueInToken1(
-            amount0,
-            amount1,
+            amount0 + dustUSDC,
+            amount1 + dustW0G,
             sqrtPriceX96
         );
     }
@@ -665,7 +677,10 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
             uint256 amount1
         )
     {
-        positionManager.decreaseLiquidity(
+        (
+            uint256 principal0,
+            uint256 principal1
+        ) = positionManager.decreaseLiquidity(
             IV3PositionManager.DecreaseLiquidityParams({
                 tokenId: tokenId,
                 liquidity: liquidity,
@@ -675,12 +690,18 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
             })
         );
 
-        return positionManager.collect(
+        // Collect only the principal just released by decreaseLiquidity.
+        // Pre-existing trading fees remain attached to the pooled NFT and are
+        // not accidentally handed to the user who happens to withdraw first.
+        (
+            amount0,
+            amount1
+        ) = positionManager.collect(
             IV3PositionManager.CollectParams({
                 tokenId: tokenId,
                 recipient: address(this),
-                amount0Max: type(uint128).max,
-                amount1Max: type(uint128).max
+                amount0Max: _toUint128(principal0),
+                amount1Max: _toUint128(principal1)
             })
         );
     }
@@ -780,34 +801,15 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
         );
     }
 
-    function _refundDustToVault()
+    function _toUint128(uint256 value)
         private
+        pure
+        returns (uint128)
     {
-        uint256 w0gDust =
-            w0g.balanceOf(address(this));
-
-        if (w0gDust != 0) {
-            w0g.withdraw(w0gDust);
+        if (value > type(uint128).max) {
+            return type(uint128).max;
         }
-
-        uint256 nativeDust =
-            address(this).balance;
-
-        if (nativeDust != 0) {
-            payable(vault).sendValue(
-                nativeDust
-            );
-        }
-
-        uint256 usdcDust =
-            usdce.balanceOf(address(this));
-
-        if (usdcDust != 0) {
-            usdce.safeTransfer(
-                vault,
-                usdcDust
-            );
-        }
+        return uint128(value);
     }
 
     function _decodeExecutionData(
