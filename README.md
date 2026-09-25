@@ -255,6 +255,29 @@ deployment. This preserves AscendVault's per-request accounting and avoids
 cross-user claim ambiguity.
 
 
+The concentrated-liquidity execution layer is now implemented through a shared
+`V3LiquidityAdapter.sol` plus thin venue wrappers:
+`JaineLPAdapter.sol` and `OkuV3Adapter.sol`.
+
+The shared adapter uses one immutable W0G/USDC.e pool, fee tier and tick range
+per deployment. Native 0G is wrapped to W0G, a bounded portion is swapped into
+USDC.e, and liquidity is managed through the venue's V3 NFT position manager.
+Jaine uses its legacy V1-style router ABI while Oku/Uniswap uses Router02.
+
+Vault LP shares are synthetic NAV shares rather than raw V3 liquidity units.
+NAV includes active concentrated liquidity, uncollected LP fees and residual
+W0G/USDC.e dust. Deposits mint shares against pre-deposit NAV, while withdrawals
+take only their pro-rata liquidity, fee and dust entitlement. LP fee growth is
+therefore embedded in strategy-share value and is not separately duplicated in
+`RewardAccounting`.
+
+The Jaine wrapper pins the verified 0G factory, router, position manager, W0G
+and USDC.e addresses. The Oku wrapper pins the already used 0G factory/router
+and requires its position-manager address at deployment; the shared constructor
+rejects the deployment unless that manager reports the expected factory. This
+keeps the implementation fail-closed until the exact 0G NPM is independently
+verified.
+
 The restaking execution boundary is now implemented with
 `RestakingAdapter.sol` and `IRestakingConnector.sol`. The adapter is fixed to
 one immutable connector and forwards only bounded deposit/withdraw/claim
