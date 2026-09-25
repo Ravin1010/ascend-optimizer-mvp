@@ -24,14 +24,15 @@ import {V3PositionMath} from "../libraries/V3PositionMath.sol";
 ///         canonical Uniswap V3 deployments on 0G.
 /// @dev Deployment is fixed to one factory/router/NPM/pool/fee/range.
 ///
-///      Vault share units are internal pooled liquidity units. The first
-///      deposit mints shares equal to V3 liquidity; later deposits mint shares
-///      pro rata to the increase in position liquidity.
+///      Vault shares are synthetic NAV shares denominated against the pooled
+///      position's current W0G-equivalent value. Active liquidity, uncollected
+///      V3 fees, and residual W0G/USDC.e dust are all included in NAV.
 ///
-///      LP trading fees are intentionally left embedded in the NFT position
-///      until withdrawal/harvest logic is added. This first MVP implementation
-///      therefore values principal from active liquidity only and does not
-///      double count fee growth through RewardAccounting.
+///      Withdrawals take only their pro-rata slice of active liquidity, accrued
+///      fees, and dust. This prevents a late depositor from capturing old fees
+///      and prevents an early withdrawer from sweeping fees owed to other users.
+///      LP fees are therefore embedded in strategy-share value and are NOT
+///      duplicated through RewardAccounting.
 ///
 ///      Entry/exit swap protections are supplied as bounded ABI-encoded data:
 ///      deposit: abi.encode(minSwapOutUSDC, minAmount0, minAmount1, deadline)
@@ -83,6 +84,8 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
     error InsufficientShares(uint256 minimum, uint256 received);
     error InsufficientStrategyShares(uint256 available, uint256 requested);
     error ZeroLiquidityMinted();
+    error ZeroContributionValue();
+    error InvalidPoolAccounting();
     error InsufficientWithdrawalAmount(uint256 minimum, uint256 received);
     error ActivePositionRequired();
 
@@ -256,12 +259,17 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
 
         _checkDeadline(deadline);
 
+        uint256 sharesBefore =
+            totalStrategyShares;
+        uint256 navBefore =
+            _grossAssetsValue();
+
         uint256 swapAmount = amount / 2;
         uint256 keepAmount = amount - swapAmount;
 
         w0g.deposit{value: amount}();
 
-        uint256 usdcReceived = 0;
+        uint256 usdcReceived;
         if (swapAmount != 0) {
             usdcReceived = _swap(
                 address(w0g),
@@ -271,9 +279,6 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
                 deadline
             );
         }
-
-        uint256 liquidityBefore =
-            _positionLiquidity();
 
         (
             uint128 liquidityAdded,
@@ -292,27 +297,35 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
 
         if (tokenId == 0) {
             tokenId = positionTokenId;
-            sharesReceived =
-                uint256(liquidityAdded);
-        } else {
-            if (positionTokenId != tokenId) {
-                revert InvalidPositionTokenId(
-                    tokenId,
-                    positionTokenId
-                );
-            }
+        } else if (positionTokenId != tokenId) {
+            revert InvalidPositionTokenId(
+                tokenId,
+                positionTokenId
+            );
+        }
 
-            if (
-                totalStrategyShares == 0
-                || liquidityBefore == 0
-            ) {
-                revert ActivePositionRequired();
+        uint256 navAfter =
+            _grossAssetsValue();
+
+        if (navAfter <= navBefore) {
+            revert ZeroContributionValue();
+        }
+
+        uint256 contributionValue =
+            navAfter - navBefore;
+
+        if (sharesBefore == 0) {
+            sharesReceived =
+                contributionValue;
+        } else {
+            if (navBefore == 0) {
+                revert InvalidPoolAccounting();
             }
 
             sharesReceived = Math.mulDiv(
-                uint256(liquidityAdded),
-                totalStrategyShares,
-                liquidityBefore
+                contributionValue,
+                sharesBefore,
+                navBefore
             );
         }
 
@@ -323,8 +336,8 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
             );
         }
 
-        totalStrategyShares += sharesReceived;
-
+        totalStrategyShares =
+            sharesBefore + sharesReceived;
 
         emit LiquidityDeposited(
             amount,
@@ -352,13 +365,16 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
         if (shares == 0) revert ZeroAmount();
         if (minAmountOut == 0) revert ZeroMinAmountOut();
 
-        uint256 totalShares = totalStrategyShares;
+        uint256 totalShares =
+            totalStrategyShares;
+
         if (
             totalShares == 0
             || tokenId == 0
         ) {
             revert ActivePositionRequired();
         }
+
         if (shares > totalShares) {
             revert InsufficientStrategyShares(
                 totalShares,
@@ -375,16 +391,31 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
 
         _checkDeadline(deadline);
 
+        uint256 dustW0GShare =
+            Math.mulDiv(
+                w0g.balanceOf(address(this)),
+                shares,
+                totalShares
+            );
+
+        uint256 dustUSDCShare =
+            Math.mulDiv(
+                usdce.balanceOf(address(this)),
+                shares,
+                totalShares
+            );
+
         uint128 liquidity =
             _positionLiquidity();
 
-        uint128 removeLiquidity = uint128(
-            Math.mulDiv(
-                uint256(liquidity),
-                shares,
-                totalShares
-            )
-        );
+        uint128 removeLiquidity =
+            uint128(
+                Math.mulDiv(
+                    uint256(liquidity),
+                    shares,
+                    totalShares
+                )
+            );
 
         if (removeLiquidity == 0) {
             revert ZeroLiquidityMinted();
@@ -393,8 +424,10 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
         (
             uint256 amount0,
             uint256 amount1
-        ) = _removeLiquidity(
+        ) = _removeLiquidityProRata(
             removeLiquidity,
+            shares,
+            totalShares,
             amount0Min,
             amount1Min,
             deadline
@@ -410,11 +443,15 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
             pool.token0()
                 == address(w0g)
         ) {
-            w0gAmount = amount0;
-            usdcAmount = amount1;
+            w0gAmount =
+                amount0 + dustW0GShare;
+            usdcAmount =
+                amount1 + dustUSDCShare;
         } else {
-            w0gAmount = amount1;
-            usdcAmount = amount0;
+            w0gAmount =
+                amount1 + dustW0GShare;
+            usdcAmount =
+                amount0 + dustUSDCShare;
         }
 
         if (usdcAmount != 0) {
@@ -445,12 +482,13 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
             );
         }
 
-        payable(vault).sendValue(amountOut);
+        payable(vault).sendValue(
+            amountOut
+        );
 
         if (totalStrategyShares == 0) {
             _closeEmptyPosition();
         }
-
 
         emit LiquidityWithdrawn(
             shares,
@@ -484,17 +522,7 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
         override
         returns (uint256)
     {
-        uint256 shares =
-            totalStrategyShares;
-
-        if (
-            shares == 0
-            || tokenId == 0
-        ) {
-            return 0;
-        }
-
-        return _previewRedeem(shares);
+        return _grossAssetsValue();
     }
 
     function previewRedeem(uint256 shares)
@@ -503,84 +531,84 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
         override
         returns (uint256 amountOut)
     {
-        if (shares == 0) return 0;
-
-        if (shares > totalStrategyShares) {
-            return 0;
-        }
-
-        return _previewRedeem(shares);
-    }
-
-    function _previewRedeem(uint256 shares)
-        private
-        view
-        returns (uint256 amountOut)
-    {
         uint256 totalShares =
             totalStrategyShares;
 
         if (
-            totalShares == 0
-            || tokenId == 0
+            shares == 0
+            || totalShares == 0
+            || shares > totalShares
         ) {
             return 0;
         }
 
-        uint128 liquidity =
-            _positionLiquidity();
-
-        uint128 shareLiquidity = uint128(
-            Math.mulDiv(
-                uint256(liquidity),
-                shares,
-                totalShares
-            )
+        return Math.mulDiv(
+            _grossAssetsValue(),
+            shares,
+            totalShares
         );
+    }
 
+    function _grossAssetsValue()
+        private
+        view
+        returns (uint256)
+    {
         (
             uint160 sqrtPriceX96,,,,,,
         ) = pool.slot0();
 
-        (
-            uint256 amount0,
-            uint256 amount1
-        ) = V3PositionMath.amountsForLiquidity(
-            sqrtPriceX96,
-            sqrtLowerX96,
-            sqrtUpperX96,
-            shareLiquidity
-        );
+        uint256 amount0;
+        uint256 amount1;
 
-        // Any unspent mint/increase-liquidity dust stays inside the pooled
-        // strategy. Value it pro rata instead of sending it to AscendVault
-        // without a corresponding user idle-balance credit.
-        uint256 dustW0G = Math.mulDiv(
-            w0g.balanceOf(address(this)),
-            shares,
-            totalShares
-        );
-        uint256 dustUSDC = Math.mulDiv(
-            usdce.balanceOf(address(this)),
-            shares,
-            totalShares
-        );
+        if (tokenId != 0) {
+            (
+                ,,,,,,,
+                uint128 liquidity,,,
+                uint128 owed0,
+                uint128 owed1
+            ) = positionManager.positions(
+                tokenId
+            );
+
+            (
+                amount0,
+                amount1
+            ) = V3PositionMath.amountsForLiquidity(
+                sqrtPriceX96,
+                sqrtLowerX96,
+                sqrtUpperX96,
+                liquidity
+            );
+
+            amount0 += uint256(owed0);
+            amount1 += uint256(owed1);
+        }
 
         if (
             pool.token0()
                 == address(w0g)
         ) {
+            amount0 +=
+                w0g.balanceOf(address(this));
+            amount1 +=
+                usdce.balanceOf(address(this));
+
             return V3PositionMath.valueInToken0(
-                amount0 + dustW0G,
-                amount1 + dustUSDC,
+                amount0,
+                amount1,
                 sqrtPriceX96
             );
         }
 
-        // token1 is W0G. Convert token0 (USDC.e) into token1 units.
+        amount0 +=
+            usdce.balanceOf(address(this));
+        amount1 +=
+            w0g.balanceOf(address(this));
+
         return V3PositionMath.valueInToken1(
-            amount0 + dustUSDC,
-            amount1 + dustW0G,
+            amount0,
+            amount1,
             sqrtPriceX96
         );
     }
@@ -665,8 +693,10 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
         );
     }
 
-    function _removeLiquidity(
+    function _removeLiquidityProRata(
         uint128 liquidity,
+        uint256 shares,
+        uint256 totalShares,
         uint256 amount0Min,
         uint256 amount1Min,
         uint256 deadline
@@ -690,9 +720,42 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
             })
         );
 
-        // Collect only the principal just released by decreaseLiquidity.
-        // Pre-existing trading fees remain attached to the pooled NFT and are
-        // not accidentally handed to the user who happens to withdraw first.
+        (
+            ,,,,,,,,,,
+            uint128 owed0After,
+            uint128 owed1After
+        ) = positionManager.positions(
+            tokenId
+        );
+
+        if (
+            uint256(owed0After) < principal0
+            || uint256(owed1After) < principal1
+        ) {
+            revert InvalidPoolAccounting();
+        }
+
+        uint256 feePool0 =
+            uint256(owed0After) - principal0;
+        uint256 feePool1 =
+            uint256(owed1After) - principal1;
+
+        uint256 collect0 =
+            principal0
+            + Math.mulDiv(
+                feePool0,
+                shares,
+                totalShares
+            );
+
+        uint256 collect1 =
+            principal1
+            + Math.mulDiv(
+                feePool1,
+                shares,
+                totalShares
+            );
+
         (
             amount0,
             amount1
@@ -700,8 +763,8 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
             IV3PositionManager.CollectParams({
                 tokenId: tokenId,
                 recipient: address(this),
-                amount0Max: _toUint128(principal0),
-                amount1Max: _toUint128(principal1)
+                amount0Max: _toUint128(collect0),
+                amount1Max: _toUint128(collect1)
             })
         );
     }
