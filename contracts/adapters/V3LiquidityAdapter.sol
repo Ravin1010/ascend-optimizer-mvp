@@ -60,6 +60,16 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
         uint256 usdcAmount;
     }
 
+    struct PrincipalAmounts {
+        uint256 amount0;
+        uint256 amount1;
+    }
+
+    struct OwedAmounts {
+        uint256 amount0;
+        uint256 amount1;
+    }
+
     struct DeploymentConfig {
         address vault;
         address factory;
@@ -696,9 +706,49 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
             uint256 amount1
         )
     {
+        PrincipalAmounts memory principal =
+            _decreaseLiquidity(
+                liquidity,
+                amount0Min,
+                amount1Min,
+                deadline
+            );
+
+        OwedAmounts memory owed =
+            _positionOwed();
+
         (
-            uint256 principal0,
-            uint256 principal1
+            uint128 collect0,
+            uint128 collect1
+        ) = _proRataCollectMaximums(
+            principal,
+            owed,
+            shares,
+            totalShares
+        );
+
+        return positionManager.collect(
+            IV3PositionManager.CollectParams({
+                tokenId: tokenId,
+                recipient: address(this),
+                amount0Max: collect0,
+                amount1Max: collect1
+            })
+        );
+    }
+
+    function _decreaseLiquidity(
+        uint128 liquidity,
+        uint256 amount0Min,
+        uint256 amount1Min,
+        uint256 deadline
+    )
+        private
+        returns (PrincipalAmounts memory principal)
+    {
+        (
+            principal.amount0,
+            principal.amount1
         ) = positionManager.decreaseLiquidity(
             IV3PositionManager.DecreaseLiquidityParams({
                 tokenId: tokenId,
@@ -708,54 +758,68 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
                 deadline: deadline
             })
         );
+    }
 
+    function _positionOwed()
+        private
+        view
+        returns (OwedAmounts memory owed)
+    {
         (
             ,,,,,,,,,,
-            uint128 owed0After,
-            uint128 owed1After
+            uint128 owed0,
+            uint128 owed1
         ) = positionManager.positions(
             tokenId
         );
 
+        owed.amount0 = uint256(owed0);
+        owed.amount1 = uint256(owed1);
+    }
+
+    function _proRataCollectMaximums(
+        PrincipalAmounts memory principal,
+        OwedAmounts memory owed,
+        uint256 shares,
+        uint256 totalShares
+    )
+        private
+        pure
+        returns (
+            uint128 collect0,
+            uint128 collect1
+        )
+    {
         if (
-            uint256(owed0After) < principal0
-            || uint256(owed1After) < principal1
+            owed.amount0 < principal.amount0
+            || owed.amount1 < principal.amount1
         ) {
             revert InvalidPoolAccounting();
         }
 
         uint256 feePool0 =
-            uint256(owed0After) - principal0;
+            owed.amount0 - principal.amount0;
         uint256 feePool1 =
-            uint256(owed1After) - principal1;
+            owed.amount1 - principal.amount1;
 
-        uint256 collect0 =
-            principal0
+        uint256 max0 =
+            principal.amount0
             + Math.mulDiv(
                 feePool0,
                 shares,
                 totalShares
             );
 
-        uint256 collect1 =
-            principal1
+        uint256 max1 =
+            principal.amount1
             + Math.mulDiv(
                 feePool1,
                 shares,
                 totalShares
             );
 
-        (
-            amount0,
-            amount1
-        ) = positionManager.collect(
-            IV3PositionManager.CollectParams({
-                tokenId: tokenId,
-                recipient: address(this),
-                amount0Max: _toUint128(collect0),
-                amount1Max: _toUint128(collect1)
-            })
-        );
+        collect0 = _toUint128(max0);
+        collect1 = _toUint128(max1);
     }
 
     function _closeEmptyPosition()
