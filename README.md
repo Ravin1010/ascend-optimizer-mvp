@@ -241,6 +241,20 @@ The adapter uses the same explicit prefunded validator withdrawal-fee reserve
 pattern as `Native0GStakingAdapter.sol`.
 
 
+The Gimo liquid-staking execution path is now implemented in
+`GimoAdapter.sol`. The adapter stakes native 0G into Gimo, measures the actual
+st0G received, and treats those st0G units as the vault's strategy shares.
+Position value is derived from st0G's live `getRate()`, so Gimo staking yield is
+embedded in share value and must not also be sent to `RewardAccounting`.
+
+Gimo withdrawals follow the protocol's `unstake(st0GAmount)` then delayed
+`withdraw()` lifecycle. Because the underlying withdrawal entry point is
+parameterless and can aggregate matured requests for the caller, the MVP adapter
+serializes protocol exits to one outstanding Gimo withdrawal per adapter
+deployment. This preserves AscendVault's per-request accounting and avoids
+cross-user claim ambiguity.
+
+
 The restaking execution boundary is now implemented with
 `RestakingAdapter.sol` and `IRestakingConnector.sol`. The adapter is fixed to
 one immutable connector and forwards only bounded deposit/withdraw/claim
