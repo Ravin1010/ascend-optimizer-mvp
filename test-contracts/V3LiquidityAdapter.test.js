@@ -70,21 +70,21 @@ describe("V3LiquidityAdapter", function () {
       "V3LiquidityAdapter"
     );
 
-    const adapter = await Adapter.deploy(
-      await vault.getAddress(),
-      await factory.getAddress(),
-      await router.getAddress(),
-      await positionManager.getAddress(),
-      await pool.getAddress(),
-      await w0g.getAddress(),
-      await usdce.getAddress(),
-      FEE,
-      TICK_LOWER,
-      TICK_UPPER,
-      SQRT_LOWER,
-      SQRT_UPPER,
+    const adapter = await Adapter.deploy({
+      vault: await vault.getAddress(),
+      factory: await factory.getAddress(),
+      router: await router.getAddress(),
+      positionManager: await positionManager.getAddress(),
+      pool: await pool.getAddress(),
+      w0g: await w0g.getAddress(),
+      usdce: await usdce.getAddress(),
+      feeTier: FEE,
+      tickLower: TICK_LOWER,
+      tickUpper: TICK_UPPER,
+      sqrtLowerX96: SQRT_LOWER,
+      sqrtUpperX96: SQRT_UPPER,
       routerMode
-    );
+    });
 
     const strategyId = ethers.id(
       routerMode === 0
@@ -491,21 +491,21 @@ describe("V3LiquidityAdapter", function () {
     );
 
     await expect(
-      Adapter.deploy(
-        await vault.getAddress(),
-        await factory.getAddress(),
-        await router.getAddress(),
-        await positionManager.getAddress(),
-        await otherPool.getAddress(),
-        await w0g.getAddress(),
-        await usdce.getAddress(),
-        FEE,
-        TICK_LOWER,
-        TICK_UPPER,
-        SQRT_LOWER,
-        SQRT_UPPER,
-        0
-      )
+      Adapter.deploy({
+        vault: await vault.getAddress(),
+        factory: await factory.getAddress(),
+        router: await router.getAddress(),
+        positionManager: await positionManager.getAddress(),
+        pool: await otherPool.getAddress(),
+        w0g: await w0g.getAddress(),
+        usdce: await usdce.getAddress(),
+        feeTier: FEE,
+        tickLower: TICK_LOWER,
+        tickUpper: TICK_UPPER,
+        sqrtLowerX96: SQRT_LOWER,
+        sqrtUpperX96: SQRT_UPPER,
+        routerMode: 0
+      })
     ).to.be.revertedWithCustomError(
       Adapter,
       "InvalidPool"
