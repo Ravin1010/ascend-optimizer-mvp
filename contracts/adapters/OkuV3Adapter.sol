@@ -34,19 +34,21 @@ contract OkuV3Adapter is V3LiquidityAdapter {
         uint160 sqrtUpperX96_
     )
         V3LiquidityAdapter(
-            vault_,
-            UNISWAP_V3_FACTORY,
-            SWAP_ROUTER_02,
-            positionManager_,
-            pool_,
-            W0G,
-            USDCE,
-            feeTier_,
-            tickLower_,
-            tickUpper_,
-            sqrtLowerX96_,
-            sqrtUpperX96_,
-            RouterMode.ROUTER02
+            DeploymentConfig({
+                vault: vault_,
+                factory: UNISWAP_V3_FACTORY,
+                router: SWAP_ROUTER_02,
+                positionManager: positionManager_,
+                pool: pool_,
+                w0g: W0G,
+                usdce: USDCE,
+                feeTier: feeTier_,
+                tickLower: tickLower_,
+                tickUpper: tickUpper_,
+                sqrtLowerX96: sqrtLowerX96_,
+                sqrtUpperX96: sqrtUpperX96_,
+                routerMode: RouterMode.ROUTER02
+            })
         )
     {}
 }
