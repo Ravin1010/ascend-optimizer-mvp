@@ -34,19 +34,21 @@ contract JaineLPAdapter is V3LiquidityAdapter {
         uint160 sqrtUpperX96_
     )
         V3LiquidityAdapter(
-            vault_,
-            JAINE_FACTORY,
-            JAINE_ROUTER,
-            JAINE_POSITION_MANAGER,
-            pool_,
-            W0G,
-            USDCE,
-            feeTier_,
-            tickLower_,
-            tickUpper_,
-            sqrtLowerX96_,
-            sqrtUpperX96_,
-            RouterMode.V1
+            DeploymentConfig({
+                vault: vault_,
+                factory: JAINE_FACTORY,
+                router: JAINE_ROUTER,
+                positionManager: JAINE_POSITION_MANAGER,
+                pool: pool_,
+                w0g: W0G,
+                usdce: USDCE,
+                feeTier: feeTier_,
+                tickLower: tickLower_,
+                tickUpper: tickUpper_,
+                sqrtLowerX96: sqrtLowerX96_,
+                sqrtUpperX96: sqrtUpperX96_,
+                routerMode: RouterMode.V1
+            })
         )
     {}
 }
