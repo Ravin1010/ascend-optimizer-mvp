@@ -9,6 +9,7 @@ import {
     IW0G,
     IV3Factory,
     IV3Pool,
+    IV3PeripheryMetadata,
     IV3PositionManager,
     IV3SwapRouterV1,
     IV3SwapRouter02
@@ -112,10 +113,10 @@ contract MockV3Pool is IV3Pool {
     }
 }
 
-abstract contract MockV3RouterBase {
+abstract contract MockV3RouterBase is IV3PeripheryMetadata {
     using SafeERC20 for IERC20;
 
-    address public immutable factory;
+    address public immutable override factory;
 
     constructor(address factory_) {
         factory = factory_;
