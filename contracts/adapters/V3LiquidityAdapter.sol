@@ -47,6 +47,22 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
         ROUTER02
     }
 
+    struct DeploymentConfig {
+        address vault;
+        address factory;
+        address router;
+        address positionManager;
+        address pool;
+        address w0g;
+        address usdce;
+        uint24 feeTier;
+        int24 tickLower;
+        int24 tickUpper;
+        uint160 sqrtLowerX96;
+        uint160 sqrtUpperX96;
+        RouterMode routerMode;
+    }
+
     uint256 public constant BPS_DENOMINATOR = 10_000;
 
     address public immutable vault;
@@ -108,106 +124,26 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
     }
 
     constructor(
-        address vault_,
-        address factory_,
-        address router_,
-        address positionManager_,
-        address pool_,
-        address w0g_,
-        address usdce_,
-        uint24 feeTier_,
-        int24 tickLower_,
-        int24 tickUpper_,
-        uint160 sqrtLowerX96_,
-        uint160 sqrtUpperX96_,
-        RouterMode routerMode_
+        DeploymentConfig memory config
     ) {
-        if (vault_ == address(0)) revert ZeroVault();
+        _validateDeployment(config);
 
-        _requireContract(factory_);
-        _requireContract(router_);
-        _requireContract(positionManager_);
-        _requireContract(pool_);
-        _requireContract(w0g_);
-        _requireContract(usdce_);
-
-        if (tickLower_ >= tickUpper_) {
-            revert InvalidTicks(tickLower_, tickUpper_);
-        }
-        if (
-            sqrtLowerX96_ == 0
-            || sqrtLowerX96_ >= sqrtUpperX96_
-        ) {
-            revert InvalidSqrtBounds(
-                sqrtLowerX96_,
-                sqrtUpperX96_
-            );
-        }
-
-        address expectedPool = IV3Factory(factory_).getPool(
-            w0g_,
-            usdce_,
-            feeTier_
-        );
-        if (expectedPool != pool_) {
-            revert InvalidPool(
-                expectedPool,
-                pool_
-            );
-        }
-
-        IV3Pool poolContract = IV3Pool(pool_);
-
-        address token0_ = poolContract.token0();
-        address token1_ = poolContract.token1();
-
-        bool correctPair =
-            (token0_ == w0g_ && token1_ == usdce_)
-            || (token0_ == usdce_ && token1_ == w0g_);
-
-        if (
-            !correctPair
-            || poolContract.fee() != feeTier_
-            || poolContract.factory() != factory_
-        ) {
-            revert PoolMetadataMismatch();
-        }
-
-        if (
-            IV3PeripheryMetadata(router_).factory()
-                != factory_
-        ) {
-            revert PeripheryFactoryMismatch(
-                factory_,
-                IV3PeripheryMetadata(router_).factory()
-            );
-        }
-
-        if (
-            IV3PeripheryMetadata(positionManager_).factory()
-                != factory_
-        ) {
-            revert PeripheryFactoryMismatch(
-                factory_,
-                IV3PeripheryMetadata(positionManager_).factory()
-            );
-        }
-
-        vault = vault_;
-        factory = IV3Factory(factory_);
-        router = router_;
+        vault = config.vault;
+        factory = IV3Factory(config.factory);
+        router = config.router;
         positionManager =
-            IV3PositionManager(positionManager_);
-        pool = poolContract;
-        w0g = IW0G(w0g_);
-        usdce = IERC20(usdce_);
-        feeTier = feeTier_;
-        tickLower = tickLower_;
-        tickUpper = tickUpper_;
-        sqrtLowerX96 = sqrtLowerX96_;
-        sqrtUpperX96 = sqrtUpperX96_;
-        routerMode = routerMode_;
+            IV3PositionManager(config.positionManager);
+        pool = IV3Pool(config.pool);
+        w0g = IW0G(config.w0g);
+        usdce = IERC20(config.usdce);
+        feeTier = config.feeTier;
+        tickLower = config.tickLower;
+        tickUpper = config.tickUpper;
+        sqrtLowerX96 = config.sqrtLowerX96;
+        sqrtUpperX96 = config.sqrtUpperX96;
+        routerMode = config.routerMode;
     }
+
 
     receive() external payable {}
 
@@ -910,6 +846,129 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
             revert AllocationExpired(
                 deadline,
                 block.timestamp
+            );
+        }
+    }
+
+    function _validateDeployment(
+        DeploymentConfig memory config
+    )
+        private
+        view
+    {
+        if (config.vault == address(0)) {
+            revert ZeroVault();
+        }
+
+        _requireContract(config.factory);
+        _requireContract(config.router);
+        _requireContract(config.positionManager);
+        _requireContract(config.pool);
+        _requireContract(config.w0g);
+        _requireContract(config.usdce);
+
+        _validateRange(config);
+        _validatePool(config);
+        _validatePeriphery(config);
+    }
+
+    function _validateRange(
+        DeploymentConfig memory config
+    )
+        private
+        pure
+    {
+        if (config.tickLower >= config.tickUpper) {
+            revert InvalidTicks(
+                config.tickLower,
+                config.tickUpper
+            );
+        }
+
+        if (
+            config.sqrtLowerX96 == 0
+            || config.sqrtLowerX96 >= config.sqrtUpperX96
+        ) {
+            revert InvalidSqrtBounds(
+                config.sqrtLowerX96,
+                config.sqrtUpperX96
+            );
+        }
+    }
+
+    function _validatePool(
+        DeploymentConfig memory config
+    )
+        private
+        view
+    {
+        address expectedPool =
+            IV3Factory(config.factory).getPool(
+                config.w0g,
+                config.usdce,
+                config.feeTier
+            );
+
+        if (expectedPool != config.pool) {
+            revert InvalidPool(
+                expectedPool,
+                config.pool
+            );
+        }
+
+        IV3Pool poolContract =
+            IV3Pool(config.pool);
+
+        address token0_ =
+            poolContract.token0();
+        address token1_ =
+            poolContract.token1();
+
+        bool correctPair =
+            (
+                token0_ == config.w0g
+                && token1_ == config.usdce
+            )
+            || (
+                token0_ == config.usdce
+                && token1_ == config.w0g
+            );
+
+        if (
+            !correctPair
+            || poolContract.fee() != config.feeTier
+            || poolContract.factory() != config.factory
+        ) {
+            revert PoolMetadataMismatch();
+        }
+    }
+
+    function _validatePeriphery(
+        DeploymentConfig memory config
+    )
+        private
+        view
+    {
+        address routerFactory =
+            IV3PeripheryMetadata(config.router)
+                .factory();
+
+        if (routerFactory != config.factory) {
+            revert PeripheryFactoryMismatch(
+                config.factory,
+                routerFactory
+            );
+        }
+
+        address managerFactory =
+            IV3PeripheryMetadata(
+                config.positionManager
+            ).factory();
+
+        if (managerFactory != config.factory) {
+            revert PeripheryFactoryMismatch(
+                config.factory,
+                managerFactory
             );
         }
     }
