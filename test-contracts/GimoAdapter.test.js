@@ -379,6 +379,7 @@ describe("GimoAdapter", function () {
     const {
       user,
       vault,
+      adapter,
       strategyId
     } = await deployFixture();
 
@@ -397,10 +398,7 @@ describe("GimoAdapter", function () {
         "0x1234"
       )
     ).to.be.revertedWithCustomError(
-      await ethers.getContractAt(
-        "GimoAdapter",
-        (await (await ethers.getContractFactory("StrategyManager")).attach ? ethers.ZeroAddress : ethers.ZeroAddress)
-      ),
+      adapter,
       "UnexpectedData"
     );
   });
