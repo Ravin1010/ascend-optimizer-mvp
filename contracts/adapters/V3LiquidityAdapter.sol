@@ -47,6 +47,19 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
         ROUTER02
     }
 
+    struct ExecutionData {
+        uint256 swapMinimum;
+        uint256 amount0Min;
+        uint256 amount1Min;
+        uint256 deadline;
+    }
+
+    struct WithdrawalAmounts {
+        uint128 liquidityRemoved;
+        uint256 w0gAmount;
+        uint256 usdcAmount;
+    }
+
     struct DeploymentConfig {
         address vault;
         address factory;
@@ -186,14 +199,10 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
             );
         }
 
-        (
-            uint256 minSwapOutUSDC,
-            uint256 amount0Min,
-            uint256 amount1Min,
-            uint256 deadline
-        ) = _decodeExecutionData(data);
+        ExecutionData memory execution =
+            _decodeExecutionData(data);
 
-        _checkDeadline(deadline);
+        _checkDeadline(execution.deadline);
 
         uint256 sharesBefore =
             totalStrategyShares;
@@ -211,8 +220,8 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
                 address(w0g),
                 address(usdce),
                 swapAmount,
-                minSwapOutUSDC,
-                deadline
+                execution.swapMinimum,
+                execution.deadline
             );
         }
 
@@ -222,9 +231,9 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
         ) = _addLiquidity(
             keepAmount,
             usdcReceived,
-            amount0Min,
-            amount1Min,
-            deadline
+            execution.amount0Min,
+            execution.amount1Min,
+            execution.deadline
         );
 
         if (liquidityAdded == 0) {
@@ -298,118 +307,33 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
             bool pending
         )
     {
-        if (shares == 0) revert ZeroAmount();
-        if (minAmountOut == 0) revert ZeroMinAmountOut();
-
         uint256 totalShares =
-            totalStrategyShares;
+            _validateWithdrawal(
+                shares,
+                minAmountOut
+            );
 
-        if (
-            totalShares == 0
-            || tokenId == 0
-        ) {
-            revert ActivePositionRequired();
-        }
+        ExecutionData memory execution =
+            _decodeExecutionData(data);
 
-        if (shares > totalShares) {
-            revert InsufficientStrategyShares(
+        _checkDeadline(execution.deadline);
+
+        WithdrawalAmounts memory amounts =
+            _withdrawPositionShare(
+                shares,
                 totalShares,
-                shares
+                execution
             );
-        }
-
-        (
-            uint256 minSwapOutW0G,
-            uint256 amount0Min,
-            uint256 amount1Min,
-            uint256 deadline
-        ) = _decodeExecutionData(data);
-
-        _checkDeadline(deadline);
-
-        uint256 dustW0GShare =
-            Math.mulDiv(
-                w0g.balanceOf(address(this)),
-                shares,
-                totalShares
-            );
-
-        uint256 dustUSDCShare =
-            Math.mulDiv(
-                usdce.balanceOf(address(this)),
-                shares,
-                totalShares
-            );
-
-        uint128 liquidity =
-            _positionLiquidity();
-
-        uint128 removeLiquidity =
-            uint128(
-                Math.mulDiv(
-                    uint256(liquidity),
-                    shares,
-                    totalShares
-                )
-            );
-
-        if (removeLiquidity == 0) {
-            revert ZeroLiquidityMinted();
-        }
-
-        (
-            uint256 amount0,
-            uint256 amount1
-        ) = _removeLiquidityProRata(
-            removeLiquidity,
-            shares,
-            totalShares,
-            amount0Min,
-            amount1Min,
-            deadline
-        );
 
         totalStrategyShares =
             totalShares - shares;
 
-        uint256 w0gAmount;
-        uint256 usdcAmount;
-
-        if (
-            pool.token0()
-                == address(w0g)
-        ) {
-            w0gAmount =
-                amount0 + dustW0GShare;
-            usdcAmount =
-                amount1 + dustUSDCShare;
-        } else {
-            w0gAmount =
-                amount1 + dustW0GShare;
-            usdcAmount =
-                amount0 + dustUSDCShare;
-        }
-
-        if (usdcAmount != 0) {
-            w0gAmount += _swap(
-                address(usdce),
-                address(w0g),
-                usdcAmount,
-                minSwapOutW0G,
-                deadline
-            );
-        }
-
-        uint256 nativeBefore =
-            address(this).balance;
-
-        if (w0gAmount != 0) {
-            w0g.withdraw(w0gAmount);
-        }
-
-        amountOut =
-            address(this).balance
-            - nativeBefore;
+        amountOut = _settleWithdrawal(
+            amounts.w0gAmount,
+            amounts.usdcAmount,
+            execution.swapMinimum,
+            execution.deadline
+        );
 
         if (amountOut < minAmountOut) {
             revert InsufficientWithdrawalAmount(
@@ -428,7 +352,7 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
 
         emit LiquidityWithdrawn(
             shares,
-            removeLiquidity,
+            amounts.liquidityRemoved,
             amountOut
         );
 
@@ -436,6 +360,135 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
             bytes32(0),
             amountOut,
             false
+        );
+    }
+
+    function _validateWithdrawal(
+        uint256 shares,
+        uint256 minAmountOut
+    )
+        private
+        view
+        returns (uint256 totalShares)
+    {
+        if (shares == 0) revert ZeroAmount();
+        if (minAmountOut == 0) revert ZeroMinAmountOut();
+
+        totalShares =
+            totalStrategyShares;
+
+        if (
+            totalShares == 0
+            || tokenId == 0
+        ) {
+            revert ActivePositionRequired();
+        }
+
+        if (shares > totalShares) {
+            revert InsufficientStrategyShares(
+                totalShares,
+                shares
+            );
+        }
+    }
+
+    function _withdrawPositionShare(
+        uint256 shares,
+        uint256 totalShares,
+        ExecutionData memory execution
+    )
+        private
+        returns (
+            WithdrawalAmounts memory amounts
+        )
+    {
+        uint256 dustW0GShare =
+            Math.mulDiv(
+                w0g.balanceOf(address(this)),
+                shares,
+                totalShares
+            );
+
+        uint256 dustUSDCShare =
+            Math.mulDiv(
+                usdce.balanceOf(address(this)),
+                shares,
+                totalShares
+            );
+
+        uint128 liquidity =
+            _positionLiquidity();
+
+        amounts.liquidityRemoved =
+            uint128(
+                Math.mulDiv(
+                    uint256(liquidity),
+                    shares,
+                    totalShares
+                )
+            );
+
+        if (amounts.liquidityRemoved == 0) {
+            revert ZeroLiquidityMinted();
+        }
+
+        (
+            uint256 amount0,
+            uint256 amount1
+        ) = _removeLiquidityProRata(
+            amounts.liquidityRemoved,
+            shares,
+            totalShares,
+            execution.amount0Min,
+            execution.amount1Min,
+            execution.deadline
+        );
+
+        if (
+            pool.token0()
+                == address(w0g)
+        ) {
+            amounts.w0gAmount =
+                amount0 + dustW0GShare;
+            amounts.usdcAmount =
+                amount1 + dustUSDCShare;
+        } else {
+            amounts.w0gAmount =
+                amount1 + dustW0GShare;
+            amounts.usdcAmount =
+                amount0 + dustUSDCShare;
+        }
+    }
+
+    function _settleWithdrawal(
+        uint256 w0gAmount,
+        uint256 usdcAmount,
+        uint256 minSwapOutW0G,
+        uint256 deadline
+    )
+        private
+        returns (uint256 amountOut)
+    {
+        if (usdcAmount != 0) {
+            w0gAmount += _swap(
+                address(usdce),
+                address(w0g),
+                usdcAmount,
+                minSwapOutW0G,
+                deadline
+            );
+        }
+
+        uint256 nativeBefore =
+            address(this).balance;
+
+        if (w0gAmount != 0) {
+            w0g.withdraw(w0gAmount);
+        }
+
+        return (
+            address(this).balance
+            - nativeBefore
         );
     }
 
@@ -816,18 +869,18 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
     )
         private
         pure
-        returns (
-            uint256 swapMinimum,
-            uint256 amount0Min,
-            uint256 amount1Min,
-            uint256 deadline
-        )
+        returns (ExecutionData memory execution)
     {
         if (data.length != 128) {
             revert InvalidExecutionData();
         }
 
-        return abi.decode(
+        (
+            execution.swapMinimum,
+            execution.amount0Min,
+            execution.amount1Min,
+            execution.deadline
+        ) = abi.decode(
             data,
             (
                 uint256,
