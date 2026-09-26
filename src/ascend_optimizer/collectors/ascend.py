@@ -33,6 +33,8 @@ from .native_staking import fetch_0g_price_usd
 STRATEGY_ID = "ASCEND_STAKE_A0G"
 
 RPC_URL = "https://evmrpc.0g.ai"
+ETHEREUM_RPC_URL = "https://ethereum-rpc.publicnode.com"
+ETHEREUM_LAYERZERO_EID = 30101
 SOURCE_CORE = "0x4B3c2f55fa67679b382c979A082Df1B32079B4cB"
 W0G = "0x1Cd0690fF9a693f5EF2dD976660a8dAFc81A109c"
 
@@ -85,6 +87,26 @@ class AscendBackingObservation:
     physical_to_oracle_ratio: float
 
 
+@dataclass(frozen=True)
+class AscendTargetObservation:
+    target_core: str
+    target_vault: str
+    target_oft: str
+    target_vault_asset: str
+    symbiotic_vault: str
+    symbiotic_collateral: str
+    symbiotic_withdrawal_queue: str
+    symbiotic_slasher: str
+    symbiotic_epoch_duration_seconds: int
+
+    @property
+    def slashing_enabled(self) -> bool:
+        return (
+            self.symbiotic_slasher.lower()
+            != "0x0000000000000000000000000000000000000000"
+        )
+
+
 def _hex_to_int(value: str, field: str) -> int:
     try:
         return int(value, 16)
@@ -102,6 +124,112 @@ def _selector(rpc: RpcFn, signature: str) -> str:
             f"Invalid web3_sha3 response for {signature}: {digest!r}"
         )
     return digest[:10]
+
+
+def _selector_at(
+    rpc: RpcFn,
+    rpc_url: str,
+    signature: str,
+) -> str:
+    raw = "0x" + signature.encode("utf-8").hex()
+    digest = rpc(rpc_url, "web3_sha3", [raw])
+    if not isinstance(digest, str) or not digest.startswith("0x"):
+        raise CollectionError(
+            f"Invalid web3_sha3 response for {signature}: {digest!r}"
+        )
+    return digest[:10]
+
+
+def _eth_call_uint_at(
+    rpc: RpcFn,
+    rpc_url: str,
+    target: str,
+    signature: str,
+) -> int:
+    raw = rpc(
+        rpc_url,
+        "eth_call",
+        [
+            {
+                "to": target,
+                "data": _selector_at(rpc, rpc_url, signature),
+            },
+            "latest",
+        ],
+    )
+    return _hex_to_int(raw, signature)
+
+
+def _eth_call_address_at(
+    rpc: RpcFn,
+    rpc_url: str,
+    target: str,
+    signature: str,
+) -> str:
+    raw = rpc(
+        rpc_url,
+        "eth_call",
+        [
+            {
+                "to": target,
+                "data": _selector_at(rpc, rpc_url, signature),
+            },
+            "latest",
+        ],
+    )
+    if not isinstance(raw, str) or not raw.startswith("0x"):
+        raise CollectionError(
+            f"Invalid address result for {signature}: {raw!r}"
+        )
+    clean = raw[2:].rjust(64, "0")
+    return "0x" + clean[-40:]
+
+
+def _eth_call_bytes32_at(
+    rpc: RpcFn,
+    rpc_url: str,
+    target: str,
+    signature: str,
+) -> str:
+    raw = rpc(
+        rpc_url,
+        "eth_call",
+        [
+            {
+                "to": target,
+                "data": _selector_at(rpc, rpc_url, signature),
+            },
+            "latest",
+        ],
+    )
+    if not isinstance(raw, str) or not raw.startswith("0x"):
+        raise CollectionError(
+            f"Invalid bytes32 result for {signature}: {raw!r}"
+        )
+    clean = raw[2:].rjust(64, "0")
+    if len(clean) != 64:
+        raise CollectionError(
+            f"Invalid bytes32 length for {signature}: {raw!r}"
+        )
+    return "0x" + clean
+
+
+def _bytes32_to_address(value: str) -> str:
+    clean = value.lower().removeprefix("0x").rjust(64, "0")
+    if len(clean) != 64:
+        raise CollectionError(
+            f"Invalid bytes32 address value: {value!r}"
+        )
+    return "0x" + clean[-40:]
+
+
+def _address_to_bytes32(value: str) -> str:
+    clean = value.lower().removeprefix("0x")
+    if len(clean) != 40:
+        raise CollectionError(
+            f"Invalid address value: {value!r}"
+        )
+    return "0x" + clean.zfill(64)
 
 
 def _eth_call_uint(
@@ -440,6 +568,132 @@ def fetch_ascend_backing_observation(
     )
 
 
+
+def fetch_ascend_target_observation(
+    backing: AscendBackingObservation,
+    *,
+    rpc_fn: RpcFn | None = None,
+) -> AscendTargetObservation:
+    """Fingerprint the live Ethereum Mellow/Symbiotic target configuration."""
+
+    rpc = rpc_fn or rpc_call
+
+    if backing.target_endpoint_id != ETHEREUM_LAYERZERO_EID:
+        raise CollectionError(
+            "Ascend target endpoint is not Ethereum LayerZero EID "
+            f"{ETHEREUM_LAYERZERO_EID}: {backing.target_endpoint_id}"
+        )
+
+    target_core = _bytes32_to_address(
+        backing.target_core_address
+    )
+
+    source_core_remote = _eth_call_bytes32_at(
+        rpc,
+        ETHEREUM_RPC_URL,
+        target_core,
+        "sourceCoreAddress()",
+    )
+
+    if (
+        source_core_remote.lower()
+        != _address_to_bytes32(SOURCE_CORE).lower()
+    ):
+        raise CollectionError(
+            "Ascend TargetCore sourceCoreAddress does not match live 0G "
+            "SourceCore"
+        )
+
+    target_vault = _eth_call_address_at(
+        rpc,
+        ETHEREUM_RPC_URL,
+        target_core,
+        "vault()",
+    )
+    target_oft = _eth_call_address_at(
+        rpc,
+        ETHEREUM_RPC_URL,
+        target_core,
+        "oft()",
+    )
+
+    target_vault_asset = _eth_call_address_at(
+        rpc,
+        ETHEREUM_RPC_URL,
+        target_vault,
+        "asset()",
+    )
+
+    if target_vault_asset.lower() != target_oft.lower():
+        raise CollectionError(
+            "Ascend target vault asset does not match TargetCore OFT"
+        )
+
+    symbiotic_vault = _eth_call_address_at(
+        rpc,
+        ETHEREUM_RPC_URL,
+        target_vault,
+        "symbioticVault()",
+    )
+    symbiotic_collateral = _eth_call_address_at(
+        rpc,
+        ETHEREUM_RPC_URL,
+        target_vault,
+        "symbioticCollateral()",
+    )
+    symbiotic_withdrawal_queue = _eth_call_address_at(
+        rpc,
+        ETHEREUM_RPC_URL,
+        target_vault,
+        "withdrawalQueue()",
+    )
+
+    symbiotic_underlying_collateral = _eth_call_address_at(
+        rpc,
+        ETHEREUM_RPC_URL,
+        symbiotic_vault,
+        "collateral()",
+    )
+
+    if (
+        symbiotic_underlying_collateral.lower()
+        != target_vault_asset.lower()
+    ):
+        raise CollectionError(
+            "Ascend Mellow vault asset does not match Symbiotic vault collateral"
+        )
+
+    symbiotic_slasher = _eth_call_address_at(
+        rpc,
+        ETHEREUM_RPC_URL,
+        symbiotic_vault,
+        "slasher()",
+    )
+    symbiotic_epoch_duration = _eth_call_uint_at(
+        rpc,
+        ETHEREUM_RPC_URL,
+        symbiotic_vault,
+        "epochDuration()",
+    )
+
+    if symbiotic_epoch_duration <= 0:
+        raise CollectionError(
+            "Ascend Symbiotic vault epochDuration must be > 0"
+        )
+
+    return AscendTargetObservation(
+        target_core=target_core,
+        target_vault=target_vault,
+        target_oft=target_oft,
+        target_vault_asset=target_vault_asset,
+        symbiotic_vault=symbiotic_vault,
+        symbiotic_collateral=symbiotic_collateral,
+        symbiotic_withdrawal_queue=symbiotic_withdrawal_queue,
+        symbiotic_slasher=symbiotic_slasher,
+        symbiotic_epoch_duration_seconds=symbiotic_epoch_duration,
+    )
+
+
 def load_rate_history(
     path: Path = DEFAULT_RATE_HISTORY_PATH,
 ) -> pd.DataFrame:
@@ -586,6 +840,7 @@ def build_ascend_snapshot(
     queue: AscendQueueObservation,
     *,
     backing: AscendBackingObservation,
+    target: AscendTargetObservation,
     history: pd.DataFrame,
     price_usd: float,
     timestamp: str | None = None,
@@ -664,6 +919,16 @@ def build_ascend_snapshot(
             f"oft_adapter={backing.oft_adapter}; "
             f"target_endpoint_id={backing.target_endpoint_id}; "
             f"target_core_address={backing.target_core_address}; "
+            f"target_core={target.target_core}; "
+            f"target_vault={target.target_vault}; "
+            f"target_oft={target.target_oft}; "
+            f"target_vault_asset={target.target_vault_asset}; "
+            f"symbiotic_vault={target.symbiotic_vault}; "
+            f"symbiotic_collateral={target.symbiotic_collateral}; "
+            f"symbiotic_withdrawal_queue={target.symbiotic_withdrawal_queue}; "
+            f"symbiotic_slasher={target.symbiotic_slasher}; "
+            f"symbiotic_epoch_duration_seconds={target.symbiotic_epoch_duration_seconds}; "
+            f"slashing_enabled={target.slashing_enabled}; "
             f"source_w0g={backing.source_balance_0g:.18f}; "
             f"oft_adapter_w0g={backing.oft_adapter_balance_0g:.18f}; "
             f"withdrawal_queue_w0g={backing.withdrawal_queue_balance_0g:.18f}; "
@@ -700,12 +965,17 @@ def collect_ascend_snapshot(
         queue,
         rpc_fn=rpc_fn,
     )
+    target = fetch_ascend_target_observation(
+        backing,
+        rpc_fn=rpc_fn,
+    )
     price = price_fn()
 
     snapshot = build_ascend_snapshot(
         sample,
         queue,
         backing=backing,
+        target=target,
         history=history,
         price_usd=price,
     )
