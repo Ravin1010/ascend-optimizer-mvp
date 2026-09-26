@@ -221,12 +221,4 @@ contract MockAscendSourceCore is ERC20 {
         );
     }
 
-    function balanceOf(address account)
-        public
-        view
-        override
-        returns (uint256)
-    {
-        return super.balanceOf(account);
-    }
 }
