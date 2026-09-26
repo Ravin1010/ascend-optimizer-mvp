@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from .collectors.ascend import collect_ascend_snapshot
 from .collectors.common import CollectionError
 from .collectors.gimo import collect_gimo_snapshot
 from .collectors.jaine import collect_jaine_snapshot
@@ -38,6 +39,9 @@ def collect_rows(collector: str = "all") -> list[dict[str, object]]:
 
     if collector in {"all", "oku"}:
         rows.append(collect_oku_snapshot())
+
+    if collector in {"all", "ascend"}:
+        rows.append(collect_ascend_snapshot())
 
     return rows
 
@@ -70,11 +74,11 @@ def append_snapshot_rows(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Collect live Native 0G / Gimo / Jaine / Oku snapshot rows."
+        description="Collect live Native 0G / Gimo / Jaine / Oku / Ascend snapshot rows."
     )
     parser.add_argument(
         "--collector",
-        choices=("all", "native", "gimo", "jaine", "oku"),
+        choices=("all", "native", "gimo", "jaine", "oku", "ascend"),
         default="all",
     )
     parser.add_argument(
