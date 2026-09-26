@@ -1,8 +1,9 @@
-"""Generate transparent Ascend-modelled strategy snapshots.
+"""Legacy reference model for the pre-launch Ascend design.
 
-Ascend a0G is a capstone/product concept, not A0GI and not a currently observed
-live token in this implementation. Modelled snapshots therefore derive only from
-explicit assumptions plus already-collected underlying Native 0G observations.
+Ascend a0G is now a live external protocol and this module MUST NOT be treated
+as a source of live Ascend optimizer data. The functions are retained only so
+earlier capstone experiments remain reproducible. Production/live optimizer
+inputs must come from the live Ascend collector instead.
 
 ASCEND_STAKE_A0G:
 * base gross APY inherits the latest Native 0G staking benchmark;
@@ -293,7 +294,7 @@ def build_ascend_model_rows(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Append transparent Ascend model snapshots."
+        description="Legacy pre-launch Ascend model; not valid live input."
     )
     parser.add_argument(
         "--snapshots",
@@ -306,6 +307,11 @@ def main() -> None:
         default=DEFAULT_ASSUMPTIONS_PATH,
     )
     args = parser.parse_args()
+
+    raise SystemExit(
+        "Ascend a0G is now live. Do not append the legacy model to live "
+        "optimizer data; use the live Ascend collector instead."
+    )
 
     if not args.snapshots.exists():
         raise SystemExit(
