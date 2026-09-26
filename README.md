@@ -22,6 +22,7 @@ The first executable optimizer pipeline is implemented:
 - `data/source_registry.csv` — field-level source/provenance registry.
 - `data/live_strategy_snapshots.csv` — generated locally by the collector CLI.
 - `data/gimo_rate_history.csv` — generated local st0G getRate history used to derive realized Gimo APY.
+- `data/ascend_a0g_rate_history.csv` — generated local a0G exchange-rate history used to derive realized Ascend APY.
 
 Generated live files are intentionally not committed.
 
@@ -39,6 +40,7 @@ python -m src.ascend_optimizer.collect --collector native
 python -m src.ascend_optimizer.collect --collector gimo
 python -m src.ascend_optimizer.collect --collector jaine
 python -m src.ascend_optimizer.collect --collector oku
+python -m src.ascend_optimizer.collect --collector ascend
 ~~~
 
 ### Native 0G benchmark
