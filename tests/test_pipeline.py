@@ -61,14 +61,17 @@ def test_demo_conservative_allocation() -> None:
         profile="Conservative",
     ).result
 
+    # Live Ascend is intentionally excluded until its live risk measurements
+    # are complete. Jaine/Oku exceed Conservative slippage limits, so the two
+    # eligible staking routes each hit the 40% concentration cap and 20% stays
+    # idle.
     assert result.allocations == pytest.approx(
         {
-            "NATIVE_STAKE_0G": 0.20,
+            "NATIVE_STAKE_0G": 0.40,
             "GIMO_STAKE_0G": 0.40,
-            "ASCEND_STAKE_A0G": 0.40,
         }
     )
-    assert result.idle_weight == pytest.approx(0)
+    assert result.idle_weight == pytest.approx(0.20)
 
 
 def test_demo_balanced_allocation() -> None:
@@ -83,19 +86,19 @@ def test_demo_balanced_allocation() -> None:
         profile="Balanced",
     ).result
 
-    # Balanced slashing-stress cap is 5%. ASCEND_RESTAKE carries a
-    # 12% slashing-stress assumption in the demo dataset, so its maximum
-    # feasible weight is 0.05 / 0.12 = 5/12 = 41.6667%.
-    # The remaining 58.3333% goes to Jaine LP, which is the next-best
-    # eligible return while remaining within the LP-stress limit.
+    # Embedded Ascend restaking is no longer a separate allocatable route.
+    # Jaine has the best eligible return and reaches Balanced's 60%
+    # concentration cap; Gimo fills the remaining 40%.
     assert result.allocations == pytest.approx(
         {
-            "JAINE_LP_0G_USDC": 7 / 12,
-            "ASCEND_RESTAKE": 5 / 12,
+            "JAINE_LP_0G_USDC": 0.60,
+            "GIMO_STAKE_0G": 0.40,
         }
     )
-    assert result.portfolio_lp_il_stress == pytest.approx((7 / 12) * 0.08)
-    assert result.portfolio_slashing_stress_loss == pytest.approx(0.05)
+    assert result.portfolio_lp_il_stress == pytest.approx(0.60 * 0.08)
+    assert result.portfolio_slashing_stress_loss == pytest.approx(
+        0.40 * 0.015
+    )
 
 
 def test_demo_aggressive_allocation() -> None:
@@ -110,14 +113,20 @@ def test_demo_aggressive_allocation() -> None:
         profile="Aggressive",
     ).result
 
+    # Oku has the highest eligible demo return and reaches Aggressive's 80%
+    # concentration cap. Jaine fills the remaining 20%; both are non-bridge
+    # LP routes in the demo metadata.
     assert result.allocations == pytest.approx(
         {
             "JAINE_LP_0G_USDC": 0.20,
-            "ASCEND_RESTAKE": 0.80,
+            "OKU_LP_0G_USDC": 0.80,
         }
     )
-    assert result.portfolio_bridge_exposure == pytest.approx(0.20)
-    assert result.portfolio_slashing_stress_loss == pytest.approx(0.096)
+    assert result.portfolio_bridge_exposure == pytest.approx(0)
+    assert result.portfolio_lp_il_stress == pytest.approx(
+        0.20 * 0.08 + 0.80 * 0.10
+    )
+    assert result.portfolio_slashing_stress_loss == pytest.approx(0)
 
 
 def test_morpho_stays_excluded_even_with_demo_numbers() -> None:
