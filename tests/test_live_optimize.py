@@ -68,7 +68,7 @@ def test_live_optimizer_price_override_skips_price_fetch() -> None:
 def test_live_optimizer_rejects_a0g_as_0g_alias() -> None:
     strategies, snapshots = _demo_inputs()
 
-    with pytest.raises(ValueError, match="a0G remains"):
+    with pytest.raises(ValueError, match="a0G is a separate live external"):
         optimize_live(
             strategies,
             snapshots,
