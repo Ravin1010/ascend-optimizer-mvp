@@ -22,6 +22,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from math import isfinite
 import os
+import time
 from pathlib import Path
 from typing import Any, Callable
 
@@ -61,6 +62,38 @@ DEFAULT_RATE_HISTORY_PATH = PROJECT_ROOT / "data" / "ascend_a0g_rate_history.csv
 RATE_HISTORY_COLUMNS = ("timestamp", "block_number", "rate")
 
 RpcFn = Callable[[str, str, list[Any]], Any]
+
+
+BLOCKSCOUT_MIN_INTERVAL_SECONDS = 0.75
+
+
+def _is_transport_failure(exc: Exception) -> bool:
+    message = str(exc).lower()
+    markers = (
+        "rpc request failed",
+        "429",
+        "too many requests",
+        "403",
+        "forbidden",
+        "timed out",
+        "timeout",
+        "connection",
+        "server error",
+    )
+    return any(marker in message for marker in markers)
+
+
+def _ethereum_rpc_call(
+    rpc: RpcFn,
+    rpc_url: str,
+    method: str,
+    params: list[Any],
+) -> Any:
+    # Blockscout is reliable from Codespaces but enforces a relatively tight
+    # unauthenticated rate limit. Pace calls instead of bursting them.
+    if "blockscout.com" in rpc_url:
+        time.sleep(BLOCKSCOUT_MIN_INTERVAL_SECONDS)
+    return rpc(rpc_url, method, params)
 
 
 @dataclass(frozen=True)
@@ -178,7 +211,8 @@ def _eth_call_uint_at(
     target: str,
     signature: str,
 ) -> int:
-    raw = rpc(
+    raw = _ethereum_rpc_call(
+        rpc,
         rpc_url,
         "eth_call",
         [
@@ -198,7 +232,8 @@ def _eth_call_address_at(
     target: str,
     signature: str,
 ) -> str:
-    raw = rpc(
+    raw = _ethereum_rpc_call(
+        rpc,
         rpc_url,
         "eth_call",
         [
@@ -223,7 +258,8 @@ def _eth_call_bytes32_at(
     target: str,
     signature: str,
 ) -> str:
-    raw = rpc(
+    raw = _ethereum_rpc_call(
+        rpc,
         rpc_url,
         "eth_call",
         [
@@ -260,7 +296,8 @@ def _eth_call_raw_at(
             for word in args_words
         )
 
-    raw = rpc(
+    raw = _ethereum_rpc_call(
+        rpc,
         rpc_url,
         "eth_call",
         [
@@ -893,6 +930,8 @@ def _fetch_ascend_target_observation_at(
             target_vault_asset=target_vault_asset,
         )
     except CollectionError as multivault_exc:
+        if _is_transport_failure(multivault_exc):
+            raise
         try:
             symbiotic_vault = _eth_call_address_at(
                 rpc,
@@ -958,6 +997,8 @@ def _fetch_ascend_target_observation_at(
                 symbiotic_epoch_duration_seconds=symbiotic_epoch_duration,
             )
         except CollectionError as legacy_exc:
+            if _is_transport_failure(legacy_exc):
+                raise
             return AscendTargetObservation(
                 target_core=target_core,
                 target_vault=target_vault,
