@@ -67,9 +67,19 @@ def build_readiness_table(
 
         exposure_row = exposure_by_id.loc[strategy_id]
 
+        technical_eligibility = str(
+            strategy["technical_eligibility"]
+        )
+        embedded_explanatory = (
+            technical_eligibility == "EXCLUDED_EMBEDDED"
+        )
+
         base_yield_ready = (
-            _has_value(snapshot.get("gross_apy"))
-            or _has_value(snapshot.get("gross_apr"))
+            not embedded_explanatory
+            and (
+                _has_value(snapshot.get("gross_apy"))
+                or _has_value(snapshot.get("gross_apr"))
+            )
         )
 
         yield_fee_status = str(snapshot.get("yield_fee_status"))
@@ -83,7 +93,9 @@ def build_readiness_table(
         return_ready = base_yield_ready and not unresolved_fee_basis
 
         missing = str(exposure_row["missing_exposures"] or "")
-        if not return_ready:
+        if embedded_explanatory:
+            next_gap = "technical_eligibility"
+        elif not return_ready:
             if not base_yield_ready:
                 next_gap = "yield"
             else:
@@ -100,9 +112,21 @@ def build_readiness_table(
                 "strategy_id": strategy_id,
                 "execution_status": strategy["execution_status"],
                 "data_status": snapshot["data_status"],
-                "gross_apr": snapshot.get("gross_apr"),
-                "gross_apy": snapshot.get("gross_apy"),
-                "incentive_apy": snapshot.get("incentive_apy"),
+                "gross_apr": (
+                    pd.NA
+                    if embedded_explanatory
+                    else snapshot.get("gross_apr")
+                ),
+                "gross_apy": (
+                    pd.NA
+                    if embedded_explanatory
+                    else snapshot.get("gross_apy")
+                ),
+                "incentive_apy": (
+                    pd.NA
+                    if embedded_explanatory
+                    else snapshot.get("incentive_apy")
+                ),
                 "return_ready": return_ready,
                 "optimizer_eligible": bool(exposure_row["optimizer_eligible"])
                 and return_ready,
