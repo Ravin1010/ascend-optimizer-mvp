@@ -144,13 +144,16 @@ def _selector_at(
     rpc_url: str,
     signature: str,
 ) -> str:
-    raw = "0x" + signature.encode("utf-8").hex()
-    digest = rpc(rpc_url, "web3_sha3", [raw])
-    if not isinstance(digest, str) or not digest.startswith("0x"):
-        raise CollectionError(
-            f"Invalid web3_sha3 response for {signature}: {digest!r}"
-        )
-    return digest[:10]
+    """Return a function selector without depending on the target RPC.
+
+    Some public Ethereum RPC providers disable or intermittently fail the
+    non-essential web3_sha3 method. Function selectors are chain-independent,
+    so derive them through the known-working 0G RPC and use the result for
+    Ethereum eth_call requests.
+    """
+
+    del rpc_url
+    return _selector(rpc, signature)
 
 
 def _eth_call_uint_at(
