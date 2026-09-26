@@ -117,3 +117,30 @@ def test_missing_live_snapshot_is_reported_explicitly() -> None:
     assert morpho["data_status"] == "MISSING"
     assert morpho["missing_exposures"] == "no_live_snapshot"
     assert morpho["next_gap"] == "collect_or_model_snapshot"
+
+
+
+def test_embedded_restaking_never_appears_return_ready() -> None:
+    strategies = load_strategies(PROJECT_ROOT / "data" / "strategies.csv")
+
+    frame = pd.DataFrame(
+        [
+            _row(
+                "ASCEND_RESTAKE",
+                gross_apy=0.147,
+                incentive_apy=0,
+            )
+        ],
+        columns=SNAPSHOT_COLUMNS,
+    )
+    snapshots = validate_snapshots(frame.astype("string"), strategies)
+
+    table = build_readiness_table(strategies, snapshots)
+    row = table.loc[
+        table["strategy_id"] == "ASCEND_RESTAKE"
+    ].iloc[0]
+
+    assert not row["return_ready"]
+    assert not row["optimizer_eligible"]
+    assert pd.isna(row["gross_apy"])
+    assert row["next_gap"] == "technical_eligibility"
