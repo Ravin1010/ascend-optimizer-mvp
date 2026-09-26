@@ -3,6 +3,6 @@ timestamp,strategy_id,gross_apr,gross_apy,incentive_apy,yield_fee_status,tvl_usd
 ,GIMO_STAKE_0G,,,,UNKNOWN,,,,,,,,,,,,,,,LIVE_NOT_COLLECTED,Gimo app/documentation/contracts,Populate after verified live data collection
 ,JAINE_LP_0G_USDC,,,,UNKNOWN,,,,,,,,,,,,,,,LIVE_INCOMPLETE,Pool/on-chain data and Merkl,Pool liquidity fee volume and slippage data still require verification
 ,OKU_LP_0G_USDC,,,,UNKNOWN,,,,,,,,,,,,,,,LIVE_INCOMPLETE,Oku/pool contracts and Merkl,Current pool identifier depth and execution data still require verification
-,ASCEND_STAKE_A0G,,,,UNKNOWN,,,,,,,,,,,,,,,MODELLED,Ascend capstone model,Populate only from explicit model assumptions until live Ascend data exists
-,ASCEND_RESTAKE,,,,UNKNOWN,,,,,,,,,,,,,,,PARTIAL_MODELLED,0G/Symbiotic public contracts plus Ascend model,Separate verified protocol observations from Ascend-specific assumptions
+,ASCEND_STAKE_A0G,,,,UNKNOWN,,,,,,,,,,,,,,,LIVE_INCOMPLETE,Ascend live a0G SourceCore / Mellow interop,Live execution exists; return history and risk measurements still need collection before optimizer eligibility
+,ASCEND_RESTAKE,,,,UNKNOWN,,,,,,,,,,,,,,,LIVE_INCOMPLETE,Ascend live a0G / Mellow OFT / target restaking architecture,Embedded underlying restaking exposure only; excluded as a separate allocatable strategy
 ,MORPHO_LEND_0G,,,,UNKNOWN,,,,,,,,,,,,,,,PENDING,Pending exact usable market verification,Excluded from optimizer until a usable market and required data are verified
