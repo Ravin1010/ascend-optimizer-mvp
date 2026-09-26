@@ -184,7 +184,12 @@ describe("AscendProtocolAdapter", function () {
       ethers.parseEther("1.1")
     );
 
-    await w0g.mint(
+    // Model exchange-rate appreciation with fully backed W0G so a later
+    // unwrap has matching native 0G liquidity.
+    await w0g.connect(user).deposit({
+      value: ethers.parseEther("1")
+    });
+    await w0g.connect(user).transfer(
       await sourceCore.getAddress(),
       ethers.parseEther("1")
     );
@@ -276,7 +281,12 @@ describe("AscendProtocolAdapter", function () {
       ethers.parseEther("1.1")
     );
 
-    await w0g.mint(
+    // Model exchange-rate appreciation with fully backed W0G so a later
+    // unwrap has matching native 0G liquidity.
+    await w0g.connect(user).deposit({
+      value: ethers.parseEther("1")
+    });
+    await w0g.connect(user).transfer(
       await sourceCore.getAddress(),
       ethers.parseEther("1")
     );
