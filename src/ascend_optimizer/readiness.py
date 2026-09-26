@@ -17,6 +17,7 @@ import pandas as pd
 
 from .data_loader import load_snapshots, load_strategies
 from .exposure_engine import build_exposure_table, latest_snapshot_rows
+from .lp_execution import LP_ROUTE_CONFIG
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -60,6 +61,7 @@ def build_readiness_table(
                     "return_ready": False,
                     "optimizer_eligible": False,
                     "missing_exposures": "no_live_snapshot",
+                    "runtime_resolvable_exposures": "",
                     "next_gap": "collect_or_model_snapshot",
                 }
             )
@@ -92,7 +94,36 @@ def build_readiness_table(
 
         return_ready = base_yield_ready and not unresolved_fee_basis
 
-        missing = str(exposure_row["missing_exposures"] or "")
+        missing_fields = tuple(
+            field
+            for field in str(
+                exposure_row["missing_exposures"] or ""
+            ).split("|")
+            if field
+        )
+
+        runtime_resolvable_fields: tuple[str, ...] = ()
+        if strategy_id in LP_ROUTE_CONFIG and return_ready:
+            runtime_resolvable_fields = tuple(
+                field
+                for field in missing_fields
+                if field
+                in {
+                    "entry_slippage_rate",
+                    "exit_slippage_rate",
+                    "lp_stress_loss_20pct",
+                }
+            )
+
+        unresolved_fields = tuple(
+            field
+            for field in missing_fields
+            if field not in runtime_resolvable_fields
+        )
+
+        missing = "|".join(unresolved_fields)
+        runtime_resolvable = "|".join(runtime_resolvable_fields)
+
         if embedded_explanatory:
             next_gap = "technical_eligibility"
         elif not return_ready:
@@ -100,8 +131,10 @@ def build_readiness_table(
                 next_gap = "yield"
             else:
                 next_gap = "yield_fee_status"
-        elif missing:
-            next_gap = missing.split("|", 1)[0]
+        elif unresolved_fields:
+            next_gap = unresolved_fields[0]
+        elif runtime_resolvable_fields:
+            next_gap = "runtime_lp_quote"
         elif not bool(exposure_row["technical_eligible"]):
             next_gap = "technical_eligibility"
         else:
@@ -131,6 +164,7 @@ def build_readiness_table(
                 "optimizer_eligible": bool(exposure_row["optimizer_eligible"])
                 and return_ready,
                 "missing_exposures": missing,
+                "runtime_resolvable_exposures": runtime_resolvable,
                 "next_gap": next_gap,
             }
         )
@@ -162,7 +196,8 @@ def print_readiness_report(table: pd.DataFrame) -> None:
         print(
             f"  data={row['data_status']}; "
             f"next_gap={row['next_gap']}; "
-            f"missing={row['missing_exposures'] or '-'}"
+            f"missing={row['missing_exposures'] or '-'}; "
+            f"runtime={row['runtime_resolvable_exposures'] or '-'}"
         )
 
     ready_count = int(table["optimizer_eligible"].sum())
