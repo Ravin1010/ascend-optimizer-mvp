@@ -27,12 +27,23 @@ contract MockAscendW0G is ERC20 {
     }
 }
 
-contract MockAscendSourceCore;
+interface IMockAscendSourceCore {
+    function previewRedeem(uint256 shares)
+        external
+        view
+        returns (uint256 assets);
+
+    function releaseToQueue(
+        address queue,
+        uint256 shares,
+        uint256 assets
+    ) external;
+}
 
 contract MockAscendWithdrawalQueue {
     using SafeERC20 for IERC20;
 
-    MockAscendSourceCore public immutable sourceCore;
+    IMockAscendSourceCore public immutable sourceCore;
     IERC20 public immutable asset;
 
     uint256 public currentEpoch;
@@ -51,7 +62,7 @@ contract MockAscendWithdrawalQueue {
         address sourceCore_,
         address asset_
     ) {
-        sourceCore = MockAscendSourceCore(sourceCore_);
+        sourceCore = IMockAscendSourceCore(sourceCore_);
         asset = IERC20(asset_);
     }
 
