@@ -126,7 +126,7 @@ def test_live_optimizer_exposes_profile_specific_status() -> None:
     ]
 
 
-def test_live_optimizer_excludes_modelled_routes_by_default() -> None:
+def test_live_optimizer_keeps_live_ascend_excluded_until_data_complete() -> None:
     strategies, snapshots = _demo_inputs()
 
     run = optimize_live(
@@ -142,14 +142,16 @@ def test_live_optimizer_excludes_modelled_routes_by_default() -> None:
         run.pipeline.candidates["strategy_id"] == "ASCEND_STAKE_A0G"
     ].iloc[0]
 
-    assert not ascend["scope_eligible"]
-    assert ascend["scope_exclusion_reason"] == (
-        "modelled_strategy_excluded_by_default"
+    assert ascend["scope_eligible"]
+    assert ascend["scope_exclusion_reason"] == ""
+    assert not ascend["profile_eligible"]
+    assert "technical_eligibility=EXCLUDED_LIVE_DATA_INCOMPLETE" in (
+        ascend["profile_exclusion_reasons"]
     )
     assert "ASCEND_STAKE_A0G" not in run.pipeline.result.allocations
 
 
-def test_live_optimizer_can_include_modelled_routes_explicitly() -> None:
+def test_include_modelled_flag_does_not_override_live_ascend_data_guard() -> None:
     strategies, snapshots = _demo_inputs()
 
     run = optimize_live(
@@ -168,4 +170,8 @@ def test_live_optimizer_can_include_modelled_routes_explicitly() -> None:
 
     assert ascend["scope_eligible"]
     assert ascend["scope_exclusion_reason"] == ""
+    assert not ascend["profile_eligible"]
+    assert "technical_eligibility=EXCLUDED_LIVE_DATA_INCOMPLETE" in (
+        ascend["profile_exclusion_reasons"]
+    )
     assert run.include_modelled
