@@ -3,8 +3,8 @@
 The static readiness report only inspects values stored in snapshots. This CLI
 also resolves amount-dependent LP slippage at runtime for the actual user amount.
 
-The MVP currently accepts 0G as the input asset. a0G remains a distinct,
-modelled Ascend asset and is never treated as an alias for 0G.
+The MVP currently accepts native 0G as the user input asset. a0G is a distinct
+live external yield-bearing asset and is never treated as an alias for 0G.
 """
 
 from __future__ import annotations
@@ -67,7 +67,7 @@ def _apply_live_scope(
     *,
     include_modelled: bool,
 ) -> tuple[pd.DataFrame, set[str]]:
-    """Exclude modelled Ascend routes from LIVE allocation unless opted in."""
+    """Exclude explicitly modelled routes from LIVE allocation unless opted in."""
 
     scoped = strategies.copy()
     excluded_ids: set[str] = set()
@@ -110,7 +110,7 @@ def optimize_live(
     if normalized_asset != "0G":
         raise ValueError(
             "Live MVP currently supports input asset '0G' only; "
-            "a0G remains a separate Ascend-modelled asset."
+            "a0G is a separate live external yield-bearing asset."
         )
 
     amount = _positive_finite("amount", amount)
@@ -190,7 +190,7 @@ def print_live_run(run: LiveOptimizerRun) -> None:
         f"= {_fmt_usd(run.portfolio_value_usd)}"
     )
     scope_label = (
-        "live + modelled Ascend"
+        "live + explicitly modelled routes"
         if run.include_modelled
         else "live routes only"
     )
