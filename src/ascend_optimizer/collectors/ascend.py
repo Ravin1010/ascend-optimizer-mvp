@@ -93,14 +93,18 @@ class AscendTargetObservation:
     target_vault: str
     target_oft: str
     target_vault_asset: str
-    symbiotic_vault: str
-    symbiotic_collateral: str
-    symbiotic_withdrawal_queue: str
-    symbiotic_slasher: str
-    symbiotic_epoch_duration_seconds: int
+    restaking_probe_status: str
+    restaking_probe_error: str | None = None
+    symbiotic_vault: str | None = None
+    symbiotic_collateral: str | None = None
+    symbiotic_withdrawal_queue: str | None = None
+    symbiotic_slasher: str | None = None
+    symbiotic_epoch_duration_seconds: int | None = None
 
     @property
-    def slashing_enabled(self) -> bool:
+    def slashing_enabled(self) -> bool | None:
+        if self.symbiotic_slasher is None:
+            return None
         return (
             self.symbiotic_slasher.lower()
             != "0x0000000000000000000000000000000000000000"
@@ -629,69 +633,84 @@ def fetch_ascend_target_observation(
             "Ascend target vault asset does not match TargetCore OFT"
         )
 
-    symbiotic_vault = _eth_call_address_at(
-        rpc,
-        ETHEREUM_RPC_URL,
-        target_vault,
-        "symbioticVault()",
-    )
-    symbiotic_collateral = _eth_call_address_at(
-        rpc,
-        ETHEREUM_RPC_URL,
-        target_vault,
-        "symbioticCollateral()",
-    )
-    symbiotic_withdrawal_queue = _eth_call_address_at(
-        rpc,
-        ETHEREUM_RPC_URL,
-        target_vault,
-        "withdrawalQueue()",
-    )
-
-    symbiotic_underlying_collateral = _eth_call_address_at(
-        rpc,
-        ETHEREUM_RPC_URL,
-        symbiotic_vault,
-        "collateral()",
-    )
-
-    if (
-        symbiotic_underlying_collateral.lower()
-        != target_vault_asset.lower()
-    ):
-        raise CollectionError(
-            "Ascend Mellow vault asset does not match Symbiotic vault collateral"
+    # Ascend's destination is publicly described as a Mellow vault, but
+    # Mellow has multiple vault generations. The TargetCore/vault/OFT link is
+    # mandatory; generation-specific restaking getters are best-effort
+    # enrichment and must not make otherwise valid live collection fail.
+    try:
+        symbiotic_vault = _eth_call_address_at(
+            rpc,
+            ETHEREUM_RPC_URL,
+            target_vault,
+            "symbioticVault()",
+        )
+        symbiotic_collateral = _eth_call_address_at(
+            rpc,
+            ETHEREUM_RPC_URL,
+            target_vault,
+            "symbioticCollateral()",
+        )
+        symbiotic_withdrawal_queue = _eth_call_address_at(
+            rpc,
+            ETHEREUM_RPC_URL,
+            target_vault,
+            "withdrawalQueue()",
         )
 
-    symbiotic_slasher = _eth_call_address_at(
-        rpc,
-        ETHEREUM_RPC_URL,
-        symbiotic_vault,
-        "slasher()",
-    )
-    symbiotic_epoch_duration = _eth_call_uint_at(
-        rpc,
-        ETHEREUM_RPC_URL,
-        symbiotic_vault,
-        "epochDuration()",
-    )
-
-    if symbiotic_epoch_duration <= 0:
-        raise CollectionError(
-            "Ascend Symbiotic vault epochDuration must be > 0"
+        symbiotic_underlying_collateral = _eth_call_address_at(
+            rpc,
+            ETHEREUM_RPC_URL,
+            symbiotic_vault,
+            "collateral()",
         )
 
-    return AscendTargetObservation(
-        target_core=target_core,
-        target_vault=target_vault,
-        target_oft=target_oft,
-        target_vault_asset=target_vault_asset,
-        symbiotic_vault=symbiotic_vault,
-        symbiotic_collateral=symbiotic_collateral,
-        symbiotic_withdrawal_queue=symbiotic_withdrawal_queue,
-        symbiotic_slasher=symbiotic_slasher,
-        symbiotic_epoch_duration_seconds=symbiotic_epoch_duration,
-    )
+        if (
+            symbiotic_underlying_collateral.lower()
+            != target_vault_asset.lower()
+        ):
+            raise CollectionError(
+                "Ascend Mellow vault asset does not match Symbiotic vault collateral"
+            )
+
+        symbiotic_slasher = _eth_call_address_at(
+            rpc,
+            ETHEREUM_RPC_URL,
+            symbiotic_vault,
+            "slasher()",
+        )
+        symbiotic_epoch_duration = _eth_call_uint_at(
+            rpc,
+            ETHEREUM_RPC_URL,
+            symbiotic_vault,
+            "epochDuration()",
+        )
+
+        if symbiotic_epoch_duration <= 0:
+            raise CollectionError(
+                "Ascend Symbiotic vault epochDuration must be > 0"
+            )
+
+        return AscendTargetObservation(
+            target_core=target_core,
+            target_vault=target_vault,
+            target_oft=target_oft,
+            target_vault_asset=target_vault_asset,
+            restaking_probe_status="SIMPLE_LRT_SYMBIOTIC_VERIFIED",
+            symbiotic_vault=symbiotic_vault,
+            symbiotic_collateral=symbiotic_collateral,
+            symbiotic_withdrawal_queue=symbiotic_withdrawal_queue,
+            symbiotic_slasher=symbiotic_slasher,
+            symbiotic_epoch_duration_seconds=symbiotic_epoch_duration,
+        )
+    except CollectionError as exc:
+        return AscendTargetObservation(
+            target_core=target_core,
+            target_vault=target_vault,
+            target_oft=target_oft,
+            target_vault_asset=target_vault_asset,
+            restaking_probe_status="VAULT_GENERATION_UNRESOLVED",
+            restaking_probe_error=str(exc),
+        )
 
 
 def load_rate_history(
@@ -923,6 +942,8 @@ def build_ascend_snapshot(
             f"target_vault={target.target_vault}; "
             f"target_oft={target.target_oft}; "
             f"target_vault_asset={target.target_vault_asset}; "
+            f"restaking_probe_status={target.restaking_probe_status}; "
+            f"restaking_probe_error={target.restaking_probe_error}; "
             f"symbiotic_vault={target.symbiotic_vault}; "
             f"symbiotic_collateral={target.symbiotic_collateral}; "
             f"symbiotic_withdrawal_queue={target.symbiotic_withdrawal_queue}; "
