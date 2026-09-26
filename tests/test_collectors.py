@@ -6,6 +6,13 @@ import pandas as pd
 import pytest
 
 from src.ascend_optimizer.collect import append_snapshot_rows
+from src.ascend_optimizer.collectors.ascend import (
+    AscendBackingObservation,
+    AscendQueueObservation,
+    AscendRateSample,
+    build_ascend_snapshot,
+    derive_bridge_fraction,
+)
 from src.ascend_optimizer.collectors.gimo import (
     GimoNetworkObservation,
     GimoRateObservation,
@@ -457,3 +464,72 @@ def test_gimo_snapshot_with_network_exposure_is_partial_modelled() -> None:
     assert row["slashing_stress_loss"] == pytest.approx(0.05)
     assert row["data_status"] == "PARTIAL_MODELLED"
     assert "underlying-validator severe scenario" in row["notes"]
+
+
+def test_ascend_bridge_fraction_uses_remote_nav_not_raw_adapter_balance() -> None:
+    fraction = derive_bridge_fraction(
+        total_assets_0g=110.0,
+        source_balance_0g=5.0,
+        withdrawal_queue_balance_0g=5.0,
+    )
+
+    # 100 of 110 NAV is economically remote. This deliberately differs from
+    # raw OFT principal if the target vault has accrued yield.
+    assert fraction == pytest.approx(100 / 110)
+
+
+def test_ascend_bridge_fraction_rejects_inconsistent_local_backing() -> None:
+    with pytest.raises(
+        Exception,
+        match="local W0G balances exceed oracle-valued totalAssets",
+    ):
+        derive_bridge_fraction(
+            total_assets_0g=10.0,
+            source_balance_0g=8.0,
+            withdrawal_queue_balance_0g=3.0,
+        )
+
+
+def test_ascend_snapshot_records_measured_bridge_exposure_but_keeps_slash_unknown() -> None:
+    sample = AscendRateSample(
+        rate=1.10,
+        total_assets_0g=110.0,
+        total_supply_a0g=100.0,
+        block_number=123,
+        block_timestamp=2_000_000,
+    )
+    queue = AscendQueueObservation(
+        queue_address="0x00000000000000000000000000000000000000aa",
+        epoch_duration_seconds=7 * 86_400,
+        withdrawal_delay_seconds=2 * 86_400,
+    )
+    backing = AscendBackingObservation(
+        oft_adapter="0x00000000000000000000000000000000000000bb",
+        target_endpoint_id=30101,
+        target_core_address="0x" + "00" * 12 + "11" * 20,
+        source_balance_0g=5.0,
+        oft_adapter_balance_0g=95.0,
+        withdrawal_queue_balance_0g=5.0,
+        bridge_fraction=100 / 110,
+        physical_backing_0g=105.0,
+        physical_to_oracle_ratio=105 / 110,
+    )
+    history = pd.DataFrame(
+        columns=("timestamp", "block_number", "rate")
+    )
+
+    row = build_ascend_snapshot(
+        sample,
+        queue,
+        backing=backing,
+        history=history,
+        price_usd=2.0,
+        timestamp="2026-09-26T00:00:00+00:00",
+    )
+
+    assert row["bridge_fraction"] == pytest.approx(100 / 110)
+    assert row["slashing_stress_loss"] is None
+    assert row["tvl_usd"] == pytest.approx(220.0)
+    assert row["exit_time_days"] == pytest.approx(9.0)
+    assert row["data_status"] == "LIVE_INCOMPLETE"
+    assert "target_endpoint_id=30101" in row["notes"]
