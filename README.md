@@ -93,33 +93,42 @@ The Oku route uses the underlying Uniswap V3 deployment on 0G. The collector dis
 
 Oku is treated as the interface rather than a separate AMM protocol. Merkl campaign incentives are queried by the selected pool address, while protocol/native APR components are excluded. At optimizer runtime, Oku's QuoterV2 resolves entry/exit slippage for the actual user portfolio amount. The same transparent `[0.8P0, 1.2P0]` concentrated-liquidity stress assumption is applied as for Jaine.
 
-## Ascend model snapshots
+## Live Ascend a0G integration
 
-Ascend-specific strategies are generated separately from live protocol
-collectors so model assumptions cannot be confused with observed data.
+Ascend a0G is now treated as a live external protocol rather than a capstone-
+defined synthetic receipt token.
 
-The editable assumptions live in:
+The live 0G SourceCore/a0G vault is:
 
 ~~~text
-data/ascend_model_assumptions.csv
+0x4B3c2f55fa67679b382c979A082Df1B32079B4cB
 ~~~
 
-Generate/update the two Ascend rows after collecting Native 0G:
+Its underlying asset is W0G
+`0x1Cd0690fF9a693f5EF2dD976660a8dAFc81A109c`.
 
-~~~bash
-python -m src.ascend_optimizer.ascend_model
-~~~
+`AscendProtocolAdapter.sol` wraps native 0G to W0G, deposits W0G into the live
+a0G SourceCore, and treats the actual a0G shares received as AscendVault
+strategy shares. a0G appreciation is exchange-rate yield, so it must not also be
+notified through `RewardAccounting`.
 
-`ASCEND_STAKE_A0G` inherits the latest Native 0G staking benchmark and
-underlying staking exposures, while Ascend-specific fees and direct
-mint/redemption slippage come only from the explicit model-assumption file.
-The a0G token here is the Ascend LST capstone concept and is **not A0GI**.
+The live SourceCore is ERC-4626-style for deposits but uses an asynchronous
+Mellow withdrawal queue rather than normal synchronous `redeem()`. The adapter
+therefore calls `requestWithdrawal(shares)`, records the protocol epoch, and
+settles the epoch through `withdrawalQueue.claim(epoch, receiver)`. Multiple
+AscendVault users can share one underlying protocol epoch; assets from that
+epoch are distributed pro rata across their adapter request IDs.
 
-`ASCEND_RESTAKE` inherits the Ascend staking APY and currently assumes zero
-incremental cash APY until a verified reward distribution is available.
-Points are excluded from Net APY. Exact bridge exposure, withdrawal delay, and
-additional restaking slashing stress stay unresolved rather than being guessed,
-so the route remains partial.
+The underlying Mellow/OFT/restaking path is treated as **embedded backing of
+a0G**, not as a second independent optimizer allocation. `ASCEND_RESTAKE`
+therefore remains in the strategy registry only as an explanatory exposure row
+and is marked `EXCLUDED_EMBEDDED`.
+
+Live a0G execution exists, but optimizer allocation remains disabled until
+defensible exchange-rate history, exit timing, capacity, and bridge-risk
+measurements have been collected. The old `ascend_model.py` functions are kept
+only to reproduce pre-launch experiments; its CLI now refuses to append those
+model rows to live data.
 
 ## Personalized live optimizer
 
@@ -152,8 +161,8 @@ python -m src.ascend_optimizer.live_optimize \
   --price-usd 1.00
 ~~~
 
-The current live MVP accepts `0G` as input. `a0G` remains a distinct
-Ascend-modelled asset and is not treated as an alias for 0G.
+The current live MVP accepts `0G` as input. a0G remains a distinct external
+yield-bearing asset and is not treated as an alias for native 0G.
 
 By default, the LIVE optimizer excludes strategies whose execution status is
 `MODELLED` or `PARTIAL_MODELLED`, so an experimental Ascend assumption cannot
@@ -224,21 +233,14 @@ Only separately claimable rewards should be notified to `RewardAccounting`.
 Yield already embedded in strategy share value or receipt-token exchange-rate
 appreciation must not be duplicated here.
 
-The Ascend a0G staking path is now implemented in
-`AscendStakingAdapter.sol`. Native 0G allocated through the vault is delegated
-to a fixed validator, while the adapter mints and holds non-rebasing a0G 1:1
-against managed principal. Vault strategy shares therefore represent a0G
-principal units rather than a user-held transferable receipt token.
+`AscendStakingAdapter.sol` and `A0GToken.sol` are retained as the earlier
+**reference/pre-launch Ascend design**. They model direct validator delegation
+plus a locally-issued 1:1 a0G receipt and are not the live production Ascend
+integration.
 
-On redemption, the corresponding adapter-held a0G is burned when principal
-enters the official asynchronous validator withdrawal queue. Upside from
-validator yield is deliberately excluded from a0G principal redemption so that
-separately claimable staking rewards can be accounted through
-`RewardAccounting.sol` without double counting. Slashing can still reduce the
-principal redemption value pro rata.
-
-The adapter uses the same explicit prefunded validator withdrawal-fee reserve
-pattern as `Native0GStakingAdapter.sol`.
+The executable live path is now `AscendProtocolAdapter.sol`, which integrates
+the external a0G SourceCore described above. Deployment work should target the
+live adapter, not the reference token/adapter pair.
 
 
 The Gimo liquid-staking execution path is now implemented in
@@ -272,22 +274,21 @@ therefore embedded in strategy-share value and is not separately duplicated in
 `RewardAccounting`.
 
 The Jaine wrapper pins the verified 0G factory, router, position manager, W0G
-and USDC.e addresses. The Oku wrapper pins the already used 0G factory/router
-and requires its position-manager address at deployment; the shared constructor
-rejects the deployment unless that manager reports the expected factory. This
-keeps the implementation fail-closed until the exact 0G NPM is independently
-verified.
+and USDC.e addresses. The Oku wrapper now also pins Oku's published 0G factory,
+Router02, and NonfungiblePositionManager addresses. For both venues, the exact
+W0G/USDC.e pool, fee tier, and tick range remain deployment-time choices and
+must be refreshed from live pool data immediately before deployment.
 
 The restaking execution boundary is now implemented with
 `RestakingAdapter.sol` and `IRestakingConnector.sol`. The adapter is fixed to
 one immutable connector and forwards only bounded deposit/withdraw/claim
 operations; it does not expose arbitrary target calls.
 
-This layer is intentionally protocol-agnostic. The current MVP does **not**
-claim a live Symbiotic/0G restaking integration until the concrete deployed
-protocol interface, assets, withdrawal semantics, and addresses are verified.
-A future protocol-specific connector can be added behind
-`IRestakingConnector` without changing `AscendVault` or the optimizer.
+This generic layer remains useful for future independently investable
+restaking routes. It is **not** currently used to represent Ascend's production
+a0G backing, because the live a0G SourceCore already embeds the Mellow/OFT/
+restaking path beneath the vault share. A separate Symbiotic connector should
+only be added if a distinct user-depositable route is verified later.
 
 Install and run the Solidity tests with:
 
