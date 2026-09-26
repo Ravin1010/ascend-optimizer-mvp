@@ -29,7 +29,10 @@ from typing import Any, Callable
 import pandas as pd
 
 from .common import CollectionError, rpc_call, utc_now_iso
-from .native_staking import fetch_0g_price_usd
+from .native_staking import (
+    MODELLED_SEVERE_SLASH_STRESS,
+    fetch_0g_price_usd,
+)
 
 
 STRATEGY_ID = "ASCEND_STAKE_A0G"
@@ -50,6 +53,13 @@ ETHEREUM_RPC_URLS = tuple(
 ETHEREUM_LAYERZERO_EID = 30101
 SOURCE_CORE = "0x4B3c2f55fa67679b382c979A082Df1B32079B4cB"
 W0G = "0x1Cd0690fF9a693f5EF2dD976660a8dAFc81A109c"
+
+# Last verified Ethereum target identifiers, captured from the live SourceCore /
+# TargetCore path on 2026-09-26. These are informational only in the default
+# collector and are never required for live collection to succeed.
+LAST_VERIFIED_TARGET_CORE = "0xd46e464c82643e6937838a94d40fd8d014a2ea26"
+LAST_VERIFIED_TARGET_VAULT = "0x0ff6ea4cad58b9e54535ae1ea2452cdbffb9bfab"
+LAST_VERIFIED_TARGET_OFT = "0xe42215bd71e190b3864267569c2f66077260eae4"
 
 RATE_SCALE = 10**18
 SECONDS_PER_DAY = 86_400
@@ -470,6 +480,43 @@ def _eth_call_balance(
         ],
     )
     return _hex_to_int(raw, f"balanceOf({owner})")
+
+
+def derive_modelled_slashing_stress(
+    bridge_fraction: float,
+    *,
+    severity: float = MODELLED_SEVERE_SLASH_STRESS,
+) -> float:
+    """Return a transparent MVP slashing stress for live a0G.
+
+    The live Symbiotic stack does not expose one fixed protocol-wide slash
+    percentage. For cross-strategy comparability, the MVP reuses the 5% severe
+    slashing scenario already used by Native 0G/Gimo and conservatively applies
+    it to the entire measured bridged share of a0G NAV.
+    """
+
+    bridge_fraction = float(bridge_fraction)
+    severity = float(severity)
+
+    if (
+        not isfinite(bridge_fraction)
+        or bridge_fraction < 0
+        or bridge_fraction > 1
+    ):
+        raise CollectionError(
+            f"Invalid bridge fraction for slash stress: {bridge_fraction}"
+        )
+
+    if (
+        not isfinite(severity)
+        or severity < 0
+        or severity > 1
+    ):
+        raise CollectionError(
+            f"Invalid slash severity: {severity}"
+        )
+
+    return bridge_fraction * severity
 
 
 def derive_bridge_fraction(
@@ -1253,13 +1300,16 @@ def build_ascend_snapshot(
         "entry_slippage_rate": 0.0,
         "exit_slippage_rate": 0.0,
         "exit_time_days": queue.max_exit_time_days,
-        # Underlying target restaking/slashing configuration is not yet
-        # measured defensibly for the live a0G route.
-        "slashing_stress_loss": None,
+        # Modelled severe scenario: assume the entire measured bridged NAV is
+        # slash-exposed and apply the same 5% severe-slash calibration used by
+        # Native 0G/Gimo. This is a scenario input, not a live protocol limit.
+        "slashing_stress_loss": derive_modelled_slashing_stress(
+            backing.bridge_fraction
+        ),
         # Measured live from SourceCore NAV less source-side liquid/queue W0G.
         "bridge_fraction": backing.bridge_fraction,
         "lp_stress_loss_20pct": None,
-        "data_status": "LIVE_INCOMPLETE",
+        "data_status": "PARTIAL_MODELLED",
         "source": "ASCEND_SOURCECORE_0G_RPC_LOCAL_RATE_HISTORY",
         "notes": (
             f"{history_note}; "
@@ -1304,8 +1354,9 @@ def build_ascend_snapshot(
             f"epoch_duration_seconds={queue.epoch_duration_seconds}; "
             f"withdrawal_delay_seconds={queue.withdrawal_delay_seconds}; "
             "max exit time conservatively equals epoch duration + "
-            "withdrawal delay; underlying restaking slashing stress "
-            "intentionally unresolved"
+            "withdrawal delay; slash_stress_method=MODELLED_5PCT_X_FULL_"
+            "BRIDGED_NAV; slash_severity=0.05; this is a transparent MVP "
+            "stress scenario and not asserted as the live Symbiotic maximum"
         ),
     }
 
@@ -1331,10 +1382,49 @@ def collect_ascend_snapshot(
         queue,
         rpc_fn=rpc_fn,
     )
-    target = fetch_ascend_target_observation(
-        backing,
-        rpc_fn=rpc_fn,
-    )
+    deep_probe = os.getenv(
+        "ASCEND_DEEP_ETHEREUM_PROBE",
+        "",
+    ).strip().lower() in {"1", "true", "yes", "on"}
+
+    if deep_probe:
+        target = fetch_ascend_target_observation(
+            backing,
+            rpc_fn=rpc_fn,
+        )
+    else:
+        live_target_core = _bytes32_to_address(
+            backing.target_core_address
+        )
+        identifiers_match = (
+            live_target_core.lower()
+            == LAST_VERIFIED_TARGET_CORE.lower()
+        )
+        target = AscendTargetObservation(
+            target_core=live_target_core,
+            target_vault=(
+                LAST_VERIFIED_TARGET_VAULT
+                if identifiers_match
+                else "UNRESOLVED"
+            ),
+            target_oft=(
+                LAST_VERIFIED_TARGET_OFT
+                if identifiers_match
+                else "UNRESOLVED"
+            ),
+            target_vault_asset=(
+                LAST_VERIFIED_TARGET_OFT
+                if identifiers_match
+                else "UNRESOLVED"
+            ),
+            restaking_probe_status=(
+                "SKIPPED_OPTIONAL_USING_LAST_VERIFIED_IDENTIFIERS"
+                if identifiers_match
+                else "SKIPPED_OPTIONAL_TARGET_CHANGED"
+            ),
+            restaking_probe_error=None,
+        )
+
     price = price_fn()
 
     snapshot = build_ascend_snapshot(
