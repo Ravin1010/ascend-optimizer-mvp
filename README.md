@@ -132,9 +132,16 @@ queue is treated as local liquidity, while the remaining oracle-valued NAV is
 target-side/OFT economic exposure. The raw W0G balance locked in the OFT adapter
 is retained as a bridged-principal reconciliation check.
 
-Optimizer allocation remains disabled until a defensible underlying
-restaking/slashing stress is derived from the exact live target vault and enough
-exchange-rate history exists for realized APY. The old `ascend_model.py` functions are kept
+The default live collector does not depend on Ethereum RPC availability.
+Ethereum target-vault composition probing is optional research diagnostics
+enabled with `ASCEND_DEEP_ETHEREUM_PROBE=1`.
+
+For optimizer risk inputs, the MVP uses a transparent conservative slashing
+scenario: the same 5% severe-slash calibration used for Native 0G/Gimo is
+applied to the entire measured bridged share of a0G NAV. This is explicitly a
+modelled stress scenario, not an asserted live Symbiotic slashing parameter.
+Ascend remains excluded until sufficient exchange-rate history exists for a
+realized APY and the live-data technical gate is deliberately lifted. The old `ascend_model.py` functions are kept
 only to reproduce pre-launch experiments; its CLI now refuses to append those
 model rows to live data.
 
