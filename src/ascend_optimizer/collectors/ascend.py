@@ -107,20 +107,33 @@ class AscendTargetObservation:
     target_vault_asset: str
     restaking_probe_status: str
     restaking_probe_error: str | None = None
+    multivault_subvaults_count: int | None = None
+    symbiotic_subvaults_count: int | None = None
+    target_total_assets: float | None = None
+    symbiotic_active_assets: float | None = None
+    symbiotic_active_fraction: float | None = None
     symbiotic_vault: str | None = None
+    symbiotic_vaults: str | None = None
     symbiotic_collateral: str | None = None
     symbiotic_withdrawal_queue: str | None = None
     symbiotic_slasher: str | None = None
+    symbiotic_slashers: str | None = None
     symbiotic_epoch_duration_seconds: int | None = None
 
     @property
     def slashing_enabled(self) -> bool | None:
-        if self.symbiotic_slasher is None:
+        slashers = self.symbiotic_slashers or self.symbiotic_slasher
+        if slashers is None:
             return None
-        return (
-            self.symbiotic_slasher.lower()
-            != "0x0000000000000000000000000000000000000000"
-        )
+        values = [
+            value.strip().lower()
+            for value in slashers.split(",")
+            if value.strip()
+        ]
+        if not values:
+            return None
+        zero = "0x0000000000000000000000000000000000000000"
+        return any(value != zero for value in values)
 
 
 def _hex_to_int(value: str, field: str) -> int:
@@ -231,6 +244,76 @@ def _eth_call_bytes32_at(
             f"Invalid bytes32 length for {signature}: {raw!r}"
         )
     return "0x" + clean
+
+
+def _eth_call_raw_at(
+    rpc: RpcFn,
+    rpc_url: str,
+    target: str,
+    signature: str,
+    args_words: list[str] | None = None,
+) -> str:
+    data = _selector_at(rpc, rpc_url, signature)
+    if args_words:
+        data += "".join(
+            word.lower().removeprefix("0x").zfill(64)
+            for word in args_words
+        )
+
+    raw = rpc(
+        rpc_url,
+        "eth_call",
+        [
+            {
+                "to": target,
+                "data": data,
+            },
+            "latest",
+        ],
+    )
+
+    if not isinstance(raw, str) or not raw.startswith("0x"):
+        raise CollectionError(
+            f"Invalid raw eth_call result for {signature}: {raw!r}"
+        )
+    return raw
+
+
+def _decode_subvault(raw: str) -> tuple[int, str, str]:
+    clean = raw.removeprefix("0x")
+    if len(clean) < 64 * 3:
+        raise CollectionError(
+            f"Invalid MultiVault subvault tuple: {raw!r}"
+        )
+
+    protocol = int(clean[0:64], 16)
+    vault = "0x" + clean[64 + 24:128]
+    withdrawal_queue = "0x" + clean[128 + 24:192]
+
+    return protocol, vault, withdrawal_queue
+
+
+def _eth_call_uint_with_address_at(
+    rpc: RpcFn,
+    rpc_url: str,
+    target: str,
+    signature: str,
+    account: str,
+) -> int:
+    clean = account.lower().removeprefix("0x")
+    if len(clean) != 40:
+        raise CollectionError(
+            f"Invalid address argument for {signature}: {account!r}"
+        )
+
+    raw = _eth_call_raw_at(
+        rpc,
+        rpc_url,
+        target,
+        signature,
+        [clean],
+    )
+    return _hex_to_int(raw, signature)
 
 
 def _bytes32_to_address(value: str) -> str:
@@ -588,6 +671,154 @@ def fetch_ascend_backing_observation(
 
 
 
+def _probe_multivault_target(
+    rpc: RpcFn,
+    ethereum_rpc_url: str,
+    *,
+    target_core: str,
+    target_vault: str,
+    target_oft: str,
+    target_vault_asset: str,
+) -> AscendTargetObservation:
+    """Probe the MultiVault generation pinned by Mellow Interop.
+
+    Protocol enum:
+      0 = SYMBIOTIC
+      1 = EIGEN_LAYER
+      2 = ERC4626
+    """
+
+    count = _eth_call_uint_at(
+        rpc,
+        ethereum_rpc_url,
+        target_vault,
+        "subvaultsCount()",
+    )
+    total_assets_raw = _eth_call_uint_at(
+        rpc,
+        ethereum_rpc_url,
+        target_vault,
+        "totalAssets()",
+    )
+
+    symbiotic_vaults: list[str] = []
+    symbiotic_slashers: list[str] = []
+    symbiotic_active_raw = 0
+    max_epoch = 0
+
+    for index in range(count):
+        raw = _eth_call_raw_at(
+            rpc,
+            ethereum_rpc_url,
+            target_vault,
+            "subvaultAt(uint256)",
+            [hex(index)],
+        )
+        protocol, subvault, _withdrawal_queue = _decode_subvault(raw)
+
+        if protocol != 0:
+            continue
+
+        collateral = _eth_call_address_at(
+            rpc,
+            ethereum_rpc_url,
+            subvault,
+            "collateral()",
+        )
+        if collateral.lower() != target_vault_asset.lower():
+            raise CollectionError(
+                "Ascend Symbiotic subvault collateral does not match "
+                "MultiVault asset"
+            )
+
+        slasher = _eth_call_address_at(
+            rpc,
+            ethereum_rpc_url,
+            subvault,
+            "slasher()",
+        )
+        epoch = _eth_call_uint_at(
+            rpc,
+            ethereum_rpc_url,
+            subvault,
+            "epochDuration()",
+        )
+        active = _eth_call_uint_with_address_at(
+            rpc,
+            ethereum_rpc_url,
+            subvault,
+            "activeBalanceOf(address)",
+            target_vault,
+        )
+
+        symbiotic_vaults.append(subvault)
+        symbiotic_slashers.append(slasher)
+        symbiotic_active_raw += active
+        max_epoch = max(max_epoch, epoch)
+
+    target_total_assets = total_assets_raw / RATE_SCALE
+    symbiotic_active_assets = symbiotic_active_raw / RATE_SCALE
+
+    if total_assets_raw == 0:
+        symbiotic_active_fraction = 0.0
+    else:
+        symbiotic_active_fraction = (
+            symbiotic_active_raw / total_assets_raw
+        )
+
+    tolerance = 1e-9
+    if (
+        symbiotic_active_fraction < -tolerance
+        or symbiotic_active_fraction > 1 + tolerance
+    ):
+        raise CollectionError(
+            "Ascend Symbiotic active stake exceeds MultiVault totalAssets"
+        )
+
+    symbiotic_active_fraction = min(
+        1.0,
+        max(0.0, symbiotic_active_fraction),
+    )
+
+    first_vault = (
+        symbiotic_vaults[0]
+        if symbiotic_vaults
+        else None
+    )
+    first_slasher = (
+        symbiotic_slashers[0]
+        if symbiotic_slashers
+        else None
+    )
+
+    return AscendTargetObservation(
+        target_core=target_core,
+        target_vault=target_vault,
+        target_oft=target_oft,
+        target_vault_asset=target_vault_asset,
+        restaking_probe_status="MULTIVAULT_COMPOSITION_VERIFIED",
+        multivault_subvaults_count=count,
+        symbiotic_subvaults_count=len(symbiotic_vaults),
+        target_total_assets=target_total_assets,
+        symbiotic_active_assets=symbiotic_active_assets,
+        symbiotic_active_fraction=symbiotic_active_fraction,
+        symbiotic_vault=first_vault,
+        symbiotic_vaults=",".join(symbiotic_vaults) or None,
+        symbiotic_collateral=(
+            target_vault_asset
+            if symbiotic_vaults
+            else None
+        ),
+        symbiotic_slasher=first_slasher,
+        symbiotic_slashers=",".join(symbiotic_slashers) or None,
+        symbiotic_epoch_duration_seconds=(
+            max_epoch
+            if symbiotic_vaults
+            else None
+        ),
+    )
+
+
 def _fetch_ascend_target_observation_at(
     backing: AscendBackingObservation,
     ethereum_rpc_url: str,
@@ -649,84 +880,95 @@ def _fetch_ascend_target_observation_at(
             "Ascend target vault asset does not match TargetCore OFT"
         )
 
-    # Ascend's destination is publicly described as a Mellow vault, but
-    # Mellow has multiple vault generations. The TargetCore/vault/OFT link is
-    # mandatory; generation-specific restaking getters are best-effort
-    # enrichment and must not make otherwise valid live collection fail.
+    # Mellow Interop pins the target-side dependency to the MultiVault
+    # generation of simple-lrt. Probe that composition first. Retain the
+    # single-Symbiotic-vault path only as compatibility fallback.
     try:
-        symbiotic_vault = _eth_call_address_at(
+        return _probe_multivault_target(
             rpc,
             ethereum_rpc_url,
-            target_vault,
-            "symbioticVault()",
-        )
-        symbiotic_collateral = _eth_call_address_at(
-            rpc,
-            ethereum_rpc_url,
-            target_vault,
-            "symbioticCollateral()",
-        )
-        symbiotic_withdrawal_queue = _eth_call_address_at(
-            rpc,
-            ethereum_rpc_url,
-            target_vault,
-            "withdrawalQueue()",
-        )
-
-        symbiotic_underlying_collateral = _eth_call_address_at(
-            rpc,
-            ethereum_rpc_url,
-            symbiotic_vault,
-            "collateral()",
-        )
-
-        if (
-            symbiotic_underlying_collateral.lower()
-            != target_vault_asset.lower()
-        ):
-            raise CollectionError(
-                "Ascend Mellow vault asset does not match Symbiotic vault collateral"
-            )
-
-        symbiotic_slasher = _eth_call_address_at(
-            rpc,
-            ethereum_rpc_url,
-            symbiotic_vault,
-            "slasher()",
-        )
-        symbiotic_epoch_duration = _eth_call_uint_at(
-            rpc,
-            ethereum_rpc_url,
-            symbiotic_vault,
-            "epochDuration()",
-        )
-
-        if symbiotic_epoch_duration <= 0:
-            raise CollectionError(
-                "Ascend Symbiotic vault epochDuration must be > 0"
-            )
-
-        return AscendTargetObservation(
             target_core=target_core,
             target_vault=target_vault,
             target_oft=target_oft,
             target_vault_asset=target_vault_asset,
-            restaking_probe_status="SIMPLE_LRT_SYMBIOTIC_VERIFIED",
-            symbiotic_vault=symbiotic_vault,
-            symbiotic_collateral=symbiotic_collateral,
-            symbiotic_withdrawal_queue=symbiotic_withdrawal_queue,
-            symbiotic_slasher=symbiotic_slasher,
-            symbiotic_epoch_duration_seconds=symbiotic_epoch_duration,
         )
-    except CollectionError as exc:
-        return AscendTargetObservation(
-            target_core=target_core,
-            target_vault=target_vault,
-            target_oft=target_oft,
-            target_vault_asset=target_vault_asset,
-            restaking_probe_status="VAULT_GENERATION_UNRESOLVED",
-            restaking_probe_error=str(exc),
-        )
+    except CollectionError as multivault_exc:
+        try:
+            symbiotic_vault = _eth_call_address_at(
+                rpc,
+                ethereum_rpc_url,
+                target_vault,
+                "symbioticVault()",
+            )
+            symbiotic_collateral = _eth_call_address_at(
+                rpc,
+                ethereum_rpc_url,
+                target_vault,
+                "symbioticCollateral()",
+            )
+            symbiotic_withdrawal_queue = _eth_call_address_at(
+                rpc,
+                ethereum_rpc_url,
+                target_vault,
+                "withdrawalQueue()",
+            )
+
+            symbiotic_underlying_collateral = _eth_call_address_at(
+                rpc,
+                ethereum_rpc_url,
+                symbiotic_vault,
+                "collateral()",
+            )
+
+            if (
+                symbiotic_underlying_collateral.lower()
+                != target_vault_asset.lower()
+            ):
+                raise CollectionError(
+                    "Ascend Mellow vault asset does not match "
+                    "Symbiotic vault collateral"
+                )
+
+            symbiotic_slasher = _eth_call_address_at(
+                rpc,
+                ethereum_rpc_url,
+                symbiotic_vault,
+                "slasher()",
+            )
+            symbiotic_epoch_duration = _eth_call_uint_at(
+                rpc,
+                ethereum_rpc_url,
+                symbiotic_vault,
+                "epochDuration()",
+            )
+
+            return AscendTargetObservation(
+                target_core=target_core,
+                target_vault=target_vault,
+                target_oft=target_oft,
+                target_vault_asset=target_vault_asset,
+                restaking_probe_status="SIMPLE_LRT_SYMBIOTIC_VERIFIED",
+                symbiotic_subvaults_count=1,
+                symbiotic_vault=symbiotic_vault,
+                symbiotic_vaults=symbiotic_vault,
+                symbiotic_collateral=symbiotic_collateral,
+                symbiotic_withdrawal_queue=symbiotic_withdrawal_queue,
+                symbiotic_slasher=symbiotic_slasher,
+                symbiotic_slashers=symbiotic_slasher,
+                symbiotic_epoch_duration_seconds=symbiotic_epoch_duration,
+            )
+        except CollectionError as legacy_exc:
+            return AscendTargetObservation(
+                target_core=target_core,
+                target_vault=target_vault,
+                target_oft=target_oft,
+                target_vault_asset=target_vault_asset,
+                restaking_probe_status="VAULT_GENERATION_UNRESOLVED",
+                restaking_probe_error=(
+                    f"multivault={multivault_exc}; "
+                    f"legacy={legacy_exc}"
+                ),
+            )
 
 
 
@@ -994,10 +1236,22 @@ def build_ascend_snapshot(
             f"target_vault_asset={target.target_vault_asset}; "
             f"restaking_probe_status={target.restaking_probe_status}; "
             f"restaking_probe_error={target.restaking_probe_error}; "
+            f"multivault_subvaults_count={target.multivault_subvaults_count}; "
+            f"symbiotic_subvaults_count={target.symbiotic_subvaults_count}; "
+            f"target_total_assets={target.target_total_assets}; "
+            f"symbiotic_active_assets={target.symbiotic_active_assets}; "
+            f"symbiotic_active_fraction={target.symbiotic_active_fraction}; "
+            f"a0g_symbiotic_active_fraction={(
+                None
+                if target.symbiotic_active_fraction is None
+                else backing.bridge_fraction * target.symbiotic_active_fraction
+            )}; "
             f"symbiotic_vault={target.symbiotic_vault}; "
+            f"symbiotic_vaults={target.symbiotic_vaults}; "
             f"symbiotic_collateral={target.symbiotic_collateral}; "
             f"symbiotic_withdrawal_queue={target.symbiotic_withdrawal_queue}; "
             f"symbiotic_slasher={target.symbiotic_slasher}; "
+            f"symbiotic_slashers={target.symbiotic_slashers}; "
             f"symbiotic_epoch_duration_seconds={target.symbiotic_epoch_duration_seconds}; "
             f"slashing_enabled={target.slashing_enabled}; "
             f"source_w0g={backing.source_balance_0g:.18f}; "
