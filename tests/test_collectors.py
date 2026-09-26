@@ -13,6 +13,7 @@ from src.ascend_optimizer.collectors.ascend import (
     AscendTargetObservation,
     build_ascend_snapshot,
     derive_bridge_fraction,
+    derive_modelled_slashing_stress,
 )
 from src.ascend_optimizer.collectors.gimo import (
     GimoNetworkObservation,
@@ -97,7 +98,7 @@ def test_native_snapshot_is_delegation_weighted() -> None:
 
     assert row["gross_apy"] == pytest.approx(0.15)
     assert row["bridge_fraction"] == 0
-    assert row["data_status"] == "LIVE_INCOMPLETE"
+    assert row["data_status"] == "PARTIAL_MODELLED"
 
 
 def test_fetch_current_gimo_rate_uses_latest_state_only() -> None:
@@ -491,7 +492,7 @@ def test_ascend_bridge_fraction_rejects_inconsistent_local_backing() -> None:
         )
 
 
-def test_ascend_snapshot_records_measured_bridge_exposure_but_keeps_slash_unknown() -> None:
+def test_ascend_snapshot_records_measured_bridge_exposure_and_modelled_slash_stress() -> None:
     sample = AscendRateSample(
         rate=1.10,
         total_assets_0g=110.0,
@@ -543,9 +544,18 @@ def test_ascend_snapshot_records_measured_bridge_exposure_but_keeps_slash_unknow
     )
 
     assert row["bridge_fraction"] == pytest.approx(100 / 110)
-    assert row["slashing_stress_loss"] is None
+    assert row["slashing_stress_loss"] == pytest.approx((100 / 110) * 0.05)
     assert row["tvl_usd"] == pytest.approx(220.0)
     assert row["exit_time_days"] == pytest.approx(9.0)
     assert row["data_status"] == "LIVE_INCOMPLETE"
     assert "target_endpoint_id=30101" in row["notes"]
     assert "slashing_enabled=True" in row["notes"]
+
+
+
+def test_ascend_modelled_slash_stress_scales_with_bridge_fraction() -> None:
+    assert derive_modelled_slashing_stress(0.0) == 0.0
+    assert derive_modelled_slashing_stress(1.0) == pytest.approx(0.05)
+    assert derive_modelled_slashing_stress(0.9669427519071436) == pytest.approx(
+        0.04834713759535718
+    )
