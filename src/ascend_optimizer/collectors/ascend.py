@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import isfinite
+import os
 from pathlib import Path
 from typing import Any, Callable
 
@@ -33,7 +34,15 @@ from .native_staking import fetch_0g_price_usd
 STRATEGY_ID = "ASCEND_STAKE_A0G"
 
 RPC_URL = "https://evmrpc.0g.ai"
-ETHEREUM_RPC_URL = "https://ethereum-rpc.publicnode.com"
+ETHEREUM_RPC_URLS = tuple(
+    url
+    for url in (
+        os.getenv("ASCEND_ETHEREUM_RPC_URL"),
+        "https://ethereum-rpc.publicnode.com",
+        "https://cloudflare-eth.com",
+    )
+    if url
+)
 ETHEREUM_LAYERZERO_EID = 30101
 SOURCE_CORE = "0x4B3c2f55fa67679b382c979A082Df1B32079B4cB"
 W0G = "0x1Cd0690fF9a693f5EF2dD976660a8dAFc81A109c"
@@ -573,12 +582,13 @@ def fetch_ascend_backing_observation(
 
 
 
-def fetch_ascend_target_observation(
+def _fetch_ascend_target_observation_at(
     backing: AscendBackingObservation,
+    ethereum_rpc_url: str,
     *,
     rpc_fn: RpcFn | None = None,
 ) -> AscendTargetObservation:
-    """Fingerprint the live Ethereum Mellow/Symbiotic target configuration."""
+    """Fingerprint the target configuration through one Ethereum RPC."""
 
     rpc = rpc_fn or rpc_call
 
@@ -594,7 +604,7 @@ def fetch_ascend_target_observation(
 
     source_core_remote = _eth_call_bytes32_at(
         rpc,
-        ETHEREUM_RPC_URL,
+        ethereum_rpc_url,
         target_core,
         "sourceCoreAddress()",
     )
@@ -610,20 +620,20 @@ def fetch_ascend_target_observation(
 
     target_vault = _eth_call_address_at(
         rpc,
-        ETHEREUM_RPC_URL,
+        ethereum_rpc_url,
         target_core,
         "vault()",
     )
     target_oft = _eth_call_address_at(
         rpc,
-        ETHEREUM_RPC_URL,
+        ethereum_rpc_url,
         target_core,
         "oft()",
     )
 
     target_vault_asset = _eth_call_address_at(
         rpc,
-        ETHEREUM_RPC_URL,
+        ethereum_rpc_url,
         target_vault,
         "asset()",
     )
@@ -640,26 +650,26 @@ def fetch_ascend_target_observation(
     try:
         symbiotic_vault = _eth_call_address_at(
             rpc,
-            ETHEREUM_RPC_URL,
+            ethereum_rpc_url,
             target_vault,
             "symbioticVault()",
         )
         symbiotic_collateral = _eth_call_address_at(
             rpc,
-            ETHEREUM_RPC_URL,
+            ethereum_rpc_url,
             target_vault,
             "symbioticCollateral()",
         )
         symbiotic_withdrawal_queue = _eth_call_address_at(
             rpc,
-            ETHEREUM_RPC_URL,
+            ethereum_rpc_url,
             target_vault,
             "withdrawalQueue()",
         )
 
         symbiotic_underlying_collateral = _eth_call_address_at(
             rpc,
-            ETHEREUM_RPC_URL,
+            ethereum_rpc_url,
             symbiotic_vault,
             "collateral()",
         )
@@ -674,13 +684,13 @@ def fetch_ascend_target_observation(
 
         symbiotic_slasher = _eth_call_address_at(
             rpc,
-            ETHEREUM_RPC_URL,
+            ethereum_rpc_url,
             symbiotic_vault,
             "slasher()",
         )
         symbiotic_epoch_duration = _eth_call_uint_at(
             rpc,
-            ETHEREUM_RPC_URL,
+            ethereum_rpc_url,
             symbiotic_vault,
             "epochDuration()",
         )
@@ -711,6 +721,40 @@ def fetch_ascend_target_observation(
             restaking_probe_status="VAULT_GENERATION_UNRESOLVED",
             restaking_probe_error=str(exc),
         )
+
+
+
+def fetch_ascend_target_observation(
+    backing: AscendBackingObservation,
+    *,
+    rpc_fn: RpcFn | None = None,
+) -> AscendTargetObservation:
+    """Probe the live Ethereum target with RPC failover.
+
+    ASCEND_ETHEREUM_RPC_URL, when set, is tried first. Public fallback RPCs are
+    then tried in order. Contract/interface validation failures and transport
+    failures are both retried because a public RPC can return incomplete or
+    transiently inconsistent responses.
+    """
+
+    failures: list[str] = []
+
+    for ethereum_rpc_url in ETHEREUM_RPC_URLS:
+        try:
+            return _fetch_ascend_target_observation_at(
+                backing,
+                ethereum_rpc_url,
+                rpc_fn=rpc_fn,
+            )
+        except CollectionError as exc:
+            failures.append(
+                f"{ethereum_rpc_url}: {exc}"
+            )
+
+    raise CollectionError(
+        "All Ethereum RPC endpoints failed while probing Ascend TargetCore: "
+        + " | ".join(failures)
+    )
 
 
 def load_rate_history(
