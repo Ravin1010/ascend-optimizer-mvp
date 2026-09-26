@@ -6,10 +6,15 @@ withdrawal-queue timing, and stores local exchange-rate history. A trailing APY
 is derived only after at least 24 hours of local observations.
 
 The live a0G architecture bridges backing toward the target restaking layer.
-Until the exact live bridged fraction and an appropriate underlying
-restaking/slashing stress are measured, those exposure fields remain blank.
-That deliberately keeps ASCEND_STAKE_A0G optimizer-ineligible even when a
-trailing APY becomes available.
+Bridge exposure is measured from the live SourceCore accounting decomposition:
+source-side W0G held by SourceCore and the withdrawal queue is local liquidity;
+the remaining SourceCore NAV is economically deployed through the LayerZero
+OFT path. The OFT-adapter W0G balance is recorded as a bridged-principal
+reconciliation check.
+
+Underlying restaking/slashing stress remains unresolved until the live target
+vault's slashing configuration is verified. That deliberately keeps
+ASCEND_STAKE_A0G optimizer-ineligible even after bridge exposure is measured.
 """
 
 from __future__ import annotations
@@ -65,6 +70,19 @@ class AscendQueueObservation:
             self.epoch_duration_seconds
             + self.withdrawal_delay_seconds
         ) / SECONDS_PER_DAY
+
+
+@dataclass(frozen=True)
+class AscendBackingObservation:
+    oft_adapter: str
+    target_endpoint_id: int
+    target_core_address: str
+    source_balance_0g: float
+    oft_adapter_balance_0g: float
+    withdrawal_queue_balance_0g: float
+    bridge_fraction: float
+    physical_backing_0g: float
+    physical_to_oracle_ratio: float
 
 
 def _hex_to_int(value: str, field: str) -> int:
@@ -127,6 +145,120 @@ def _eth_call_address(
         )
     clean = raw[2:].rjust(64, "0")
     return "0x" + clean[-40:]
+
+
+def _eth_call_bytes32(
+    rpc: RpcFn,
+    target: str,
+    signature: str,
+) -> str:
+    raw = rpc(
+        RPC_URL,
+        "eth_call",
+        [
+            {
+                "to": target,
+                "data": _selector(rpc, signature),
+            },
+            "latest",
+        ],
+    )
+    if not isinstance(raw, str) or not raw.startswith("0x"):
+        raise CollectionError(
+            f"Invalid bytes32 result for {signature}: {raw!r}"
+        )
+    clean = raw[2:].rjust(64, "0")
+    if len(clean) != 64:
+        raise CollectionError(
+            f"Invalid bytes32 length for {signature}: {raw!r}"
+        )
+    return "0x" + clean
+
+
+def _eth_call_balance(
+    rpc: RpcFn,
+    token: str,
+    owner: str,
+) -> int:
+    clean_owner = owner.lower().removeprefix("0x")
+    if len(clean_owner) != 40:
+        raise CollectionError(
+            f"Invalid balanceOf owner address: {owner!r}"
+        )
+
+    calldata = (
+        "0x70a08231"
+        + clean_owner.zfill(64)
+    )
+
+    raw = rpc(
+        RPC_URL,
+        "eth_call",
+        [
+            {
+                "to": token,
+                "data": calldata,
+            },
+            "latest",
+        ],
+    )
+    return _hex_to_int(raw, f"balanceOf({owner})")
+
+
+def derive_bridge_fraction(
+    *,
+    total_assets_0g: float,
+    source_balance_0g: float,
+    withdrawal_queue_balance_0g: float,
+) -> float:
+    """Return the share of a0G NAV economically exposed through the OFT path.
+
+    SourceCore.totalAssets() is oracle-valued total NAV. W0G still held by
+    SourceCore or already sitting in the withdrawal queue is local/source-side
+    liquidity. The residual NAV is therefore the target-side economic exposure,
+    including target-vault yield rather than only bridged principal.
+    """
+
+    values = (
+        total_assets_0g,
+        source_balance_0g,
+        withdrawal_queue_balance_0g,
+    )
+    if any(
+        not isfinite(float(value)) or float(value) < 0
+        for value in values
+    ):
+        raise CollectionError(
+            "Ascend backing values must be finite and non-negative"
+        )
+
+    if total_assets_0g <= 0:
+        raise CollectionError(
+            "Ascend total assets must be > 0"
+        )
+
+    remote_nav = (
+        total_assets_0g
+        - source_balance_0g
+        - withdrawal_queue_balance_0g
+    )
+
+    # Tiny negative differences can occur through integer rounding.
+    tolerance = total_assets_0g * 1e-12
+    if remote_nav < -tolerance:
+        raise CollectionError(
+            "Ascend local W0G balances exceed oracle-valued totalAssets"
+        )
+
+    remote_nav = max(0.0, remote_nav)
+    fraction = remote_nav / total_assets_0g
+
+    if fraction < 0 or fraction > 1:
+        raise CollectionError(
+            f"Invalid Ascend bridge fraction: {fraction}"
+        )
+
+    return fraction
 
 
 def _block_timestamp(
@@ -223,6 +355,88 @@ def fetch_ascend_queue_observation(
         queue_address=queue,
         epoch_duration_seconds=epoch_duration,
         withdrawal_delay_seconds=withdrawal_delay,
+    )
+
+
+
+def fetch_ascend_backing_observation(
+    sample: AscendRateSample,
+    queue: AscendQueueObservation,
+    *,
+    rpc_fn: RpcFn | None = None,
+) -> AscendBackingObservation:
+    """Measure source-local versus OFT/target economic backing."""
+
+    rpc = rpc_fn or rpc_call
+
+    oft_adapter = _eth_call_address(
+        rpc,
+        SOURCE_CORE,
+        "oftAdapter()",
+    )
+    target_endpoint_id = _eth_call_uint(
+        rpc,
+        SOURCE_CORE,
+        "targetEndpointId()",
+    )
+    target_core_address = _eth_call_bytes32(
+        rpc,
+        SOURCE_CORE,
+        "targetCoreAddress()",
+    )
+
+    source_balance_wei = _eth_call_balance(
+        rpc,
+        W0G,
+        SOURCE_CORE,
+    )
+    adapter_balance_wei = _eth_call_balance(
+        rpc,
+        W0G,
+        oft_adapter,
+    )
+    queue_balance_wei = _eth_call_balance(
+        rpc,
+        W0G,
+        queue.queue_address,
+    )
+
+    source_balance_0g = source_balance_wei / RATE_SCALE
+    adapter_balance_0g = adapter_balance_wei / RATE_SCALE
+    queue_balance_0g = queue_balance_wei / RATE_SCALE
+
+    bridge_fraction = derive_bridge_fraction(
+        total_assets_0g=sample.total_assets_0g,
+        source_balance_0g=source_balance_0g,
+        withdrawal_queue_balance_0g=queue_balance_0g,
+    )
+
+    physical_backing_0g = (
+        source_balance_0g
+        + adapter_balance_0g
+        + queue_balance_0g
+    )
+
+    physical_to_oracle_ratio = (
+        physical_backing_0g
+        / sample.total_assets_0g
+    )
+
+    if not isfinite(physical_to_oracle_ratio):
+        raise CollectionError(
+            "Invalid Ascend physical/oracle backing ratio"
+        )
+
+    return AscendBackingObservation(
+        oft_adapter=oft_adapter,
+        target_endpoint_id=target_endpoint_id,
+        target_core_address=target_core_address,
+        source_balance_0g=source_balance_0g,
+        oft_adapter_balance_0g=adapter_balance_0g,
+        withdrawal_queue_balance_0g=queue_balance_0g,
+        bridge_fraction=bridge_fraction,
+        physical_backing_0g=physical_backing_0g,
+        physical_to_oracle_ratio=physical_to_oracle_ratio,
     )
 
 
@@ -371,6 +585,7 @@ def build_ascend_snapshot(
     sample: AscendRateSample,
     queue: AscendQueueObservation,
     *,
+    backing: AscendBackingObservation,
     history: pd.DataFrame,
     price_usd: float,
     timestamp: str | None = None,
@@ -434,9 +649,8 @@ def build_ascend_snapshot(
         # Underlying target restaking/slashing configuration is not yet
         # measured defensibly for the live a0G route.
         "slashing_stress_loss": None,
-        # The architecture uses an OFT bridge, but the fraction of backing
-        # currently exposed to the target chain is dynamic and not guessed.
-        "bridge_fraction": None,
+        # Measured live from SourceCore NAV less source-side liquid/queue W0G.
+        "bridge_fraction": backing.bridge_fraction,
         "lp_stress_loss_20pct": None,
         "data_status": "LIVE_INCOMPLETE",
         "source": "ASCEND_SOURCECORE_0G_RPC_LOCAL_RATE_HISTORY",
@@ -447,11 +661,20 @@ def build_ascend_snapshot(
             f"total_supply_a0g={sample.total_supply_a0g:.18f}; "
             f"price_usd={price_usd:.8f}; "
             f"withdrawal_queue={queue.queue_address}; "
+            f"oft_adapter={backing.oft_adapter}; "
+            f"target_endpoint_id={backing.target_endpoint_id}; "
+            f"target_core_address={backing.target_core_address}; "
+            f"source_w0g={backing.source_balance_0g:.18f}; "
+            f"oft_adapter_w0g={backing.oft_adapter_balance_0g:.18f}; "
+            f"withdrawal_queue_w0g={backing.withdrawal_queue_balance_0g:.18f}; "
+            f"bridge_fraction={backing.bridge_fraction:.8f}; "
+            f"physical_backing_0g={backing.physical_backing_0g:.18f}; "
+            f"physical_to_oracle_ratio={backing.physical_to_oracle_ratio:.8f}; "
             f"epoch_duration_seconds={queue.epoch_duration_seconds}; "
             f"withdrawal_delay_seconds={queue.withdrawal_delay_seconds}; "
             "max exit time conservatively equals epoch duration + "
-            "withdrawal delay; bridge fraction and underlying restaking "
-            "slashing stress intentionally unresolved"
+            "withdrawal delay; underlying restaking slashing stress "
+            "intentionally unresolved"
         ),
     }
 
@@ -472,11 +695,17 @@ def collect_ascend_snapshot(
     queue = fetch_ascend_queue_observation(
         rpc_fn=rpc_fn
     )
+    backing = fetch_ascend_backing_observation(
+        sample,
+        queue,
+        rpc_fn=rpc_fn,
+    )
     price = price_fn()
 
     snapshot = build_ascend_snapshot(
         sample,
         queue,
+        backing=backing,
         history=history,
         price_usd=price,
     )
