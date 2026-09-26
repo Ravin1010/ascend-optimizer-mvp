@@ -524,6 +524,7 @@ def test_ascend_snapshot_records_measured_bridge_exposure_but_keeps_slash_unknow
         target_vault="0x00000000000000000000000000000000000000dd",
         target_oft="0x00000000000000000000000000000000000000ee",
         target_vault_asset="0x00000000000000000000000000000000000000ee",
+        restaking_probe_status="SIMPLE_LRT_SYMBIOTIC_VERIFIED",
         symbiotic_vault="0x00000000000000000000000000000000000000ff",
         symbiotic_collateral="0x0000000000000000000000000000000000000011",
         symbiotic_withdrawal_queue="0x0000000000000000000000000000000000000022",
