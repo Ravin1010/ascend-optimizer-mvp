@@ -126,9 +126,15 @@ a0G**, not as a second independent optimizer allocation. `ASCEND_RESTAKE`
 therefore remains in the strategy registry only as an explanatory exposure row
 and is marked `EXCLUDED_EMBEDDED`.
 
-Live a0G execution exists, but optimizer allocation remains disabled until
-defensible exchange-rate history, exit timing, capacity, and bridge-risk
-measurements have been collected. The old `ascend_model.py` functions are kept
+Live a0G execution exists. The collector now measures bridge exposure directly
+from SourceCore accounting: source-side W0G in SourceCore and the withdrawal
+queue is treated as local liquidity, while the remaining oracle-valued NAV is
+target-side/OFT economic exposure. The raw W0G balance locked in the OFT adapter
+is retained as a bridged-principal reconciliation check.
+
+Optimizer allocation remains disabled until a defensible underlying
+restaking/slashing stress is derived from the exact live target vault and enough
+exchange-rate history exists for realized APY. The old `ascend_model.py` functions are kept
 only to reproduce pre-launch experiments; its CLI now refuses to append those
 model rows to live data.
 
