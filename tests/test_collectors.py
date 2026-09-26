@@ -98,7 +98,7 @@ def test_native_snapshot_is_delegation_weighted() -> None:
 
     assert row["gross_apy"] == pytest.approx(0.15)
     assert row["bridge_fraction"] == 0
-    assert row["data_status"] == "PARTIAL_MODELLED"
+    assert row["data_status"] == "LIVE_INCOMPLETE"
 
 
 def test_fetch_current_gimo_rate_uses_latest_state_only() -> None:
@@ -547,7 +547,7 @@ def test_ascend_snapshot_records_measured_bridge_exposure_and_modelled_slash_str
     assert row["slashing_stress_loss"] == pytest.approx((100 / 110) * 0.05)
     assert row["tvl_usd"] == pytest.approx(220.0)
     assert row["exit_time_days"] == pytest.approx(9.0)
-    assert row["data_status"] == "LIVE_INCOMPLETE"
+    assert row["data_status"] == "PARTIAL_MODELLED"
     assert "target_endpoint_id=30101" in row["notes"]
     assert "slashing_enabled=True" in row["notes"]
 
