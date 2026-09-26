@@ -90,8 +90,11 @@ def test_readiness_separates_return_and_exposure_gaps() -> None:
     ].iloc[0]
     assert jaine["return_ready"]
     assert not jaine["optimizer_eligible"]
-    assert "entry_slippage_rate" in jaine["missing_exposures"]
-    assert "lp_stress_loss_20pct" in jaine["missing_exposures"]
+    assert jaine["missing_exposures"] == ""
+    assert jaine["next_gap"] == "runtime_lp_quote"
+    assert "entry_slippage_rate" in jaine["runtime_resolvable_exposures"]
+    assert "exit_slippage_rate" in jaine["runtime_resolvable_exposures"]
+    assert "lp_stress_loss_20pct" in jaine["runtime_resolvable_exposures"]
 
 
 def test_missing_live_snapshot_is_reported_explicitly() -> None:
@@ -144,3 +147,39 @@ def test_embedded_restaking_never_appears_return_ready() -> None:
     assert not row["optimizer_eligible"]
     assert pd.isna(row["gross_apy"])
     assert row["next_gap"] == "technical_eligibility"
+
+
+
+def test_runtime_lp_fields_do_not_look_like_collection_gaps() -> None:
+    strategies = load_strategies(PROJECT_ROOT / "data" / "strategies.csv")
+
+    frame = pd.DataFrame(
+        [
+            _row(
+                "OKU_LP_0G_USDC",
+                gross_apr=0.08,
+                liquidity_usd=100_000,
+                entry_slippage_rate=None,
+                exit_slippage_rate=None,
+                exit_time_days=0,
+                bridge_fraction=0,
+                lp_stress_loss_20pct=None,
+            )
+        ],
+        columns=SNAPSHOT_COLUMNS,
+    )
+    snapshots = validate_snapshots(frame.astype("string"), strategies)
+
+    table = build_readiness_table(strategies, snapshots)
+    oku = table.loc[
+        table["strategy_id"] == "OKU_LP_0G_USDC"
+    ].iloc[0]
+
+    assert oku["return_ready"]
+    assert not oku["optimizer_eligible"]
+    assert oku["missing_exposures"] == ""
+    assert oku["next_gap"] == "runtime_lp_quote"
+    assert (
+        oku["runtime_resolvable_exposures"]
+        == "entry_slippage_rate|exit_slippage_rate|lp_stress_loss_20pct"
+    )
