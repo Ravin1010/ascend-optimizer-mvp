@@ -10,6 +10,7 @@ from src.ascend_optimizer.collectors.ascend import (
     AscendBackingObservation,
     AscendQueueObservation,
     AscendRateSample,
+    AscendTargetObservation,
     build_ascend_snapshot,
     derive_bridge_fraction,
 )
@@ -518,10 +519,23 @@ def test_ascend_snapshot_records_measured_bridge_exposure_but_keeps_slash_unknow
         columns=("timestamp", "block_number", "rate")
     )
 
+    target = AscendTargetObservation(
+        target_core="0x00000000000000000000000000000000000000cc",
+        target_vault="0x00000000000000000000000000000000000000dd",
+        target_oft="0x00000000000000000000000000000000000000ee",
+        target_vault_asset="0x00000000000000000000000000000000000000ee",
+        symbiotic_vault="0x00000000000000000000000000000000000000ff",
+        symbiotic_collateral="0x0000000000000000000000000000000000000011",
+        symbiotic_withdrawal_queue="0x0000000000000000000000000000000000000022",
+        symbiotic_slasher="0x0000000000000000000000000000000000000033",
+        symbiotic_epoch_duration_seconds=7 * 86_400,
+    )
+
     row = build_ascend_snapshot(
         sample,
         queue,
         backing=backing,
+        target=target,
         history=history,
         price_usd=2.0,
         timestamp="2026-09-26T00:00:00+00:00",
@@ -533,3 +547,4 @@ def test_ascend_snapshot_records_measured_bridge_exposure_but_keeps_slash_unknow
     assert row["exit_time_days"] == pytest.approx(9.0)
     assert row["data_status"] == "LIVE_INCOMPLETE"
     assert "target_endpoint_id=30101" in row["notes"]
+    assert "slashing_enabled=True" in row["notes"]
