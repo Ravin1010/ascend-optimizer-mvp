@@ -38,10 +38,11 @@ ETHEREUM_RPC_URLS = tuple(
     url
     for url in (
         os.getenv("ASCEND_ETHEREUM_RPC_URL"),
-        "https://rpc.flashbots.net",
-        "https://eth.llamarpc.com",
+        "https://eth.blockscout.com/api/eth-rpc",
         "https://ethereum-rpc.publicnode.com",
         "https://cloudflare-eth.com",
+        "https://rpc.flashbots.net",
+        "https://eth.llamarpc.com",
     )
     if url
 )
