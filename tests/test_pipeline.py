@@ -113,18 +113,19 @@ def test_demo_aggressive_allocation() -> None:
         profile="Aggressive",
     ).result
 
-    # Oku has the highest eligible demo return and reaches Aggressive's 80%
-    # concentration cap. Jaine fills the remaining 20%; both are non-bridge
-    # LP routes in the demo metadata.
+    # After amount-dependent execution/slippage costs, Jaine has the higher
+    # demo Net Return even though Oku has the higher gross APY. Aggressive
+    # therefore places the 80% concentration cap in Jaine and the remaining
+    # 20% in Oku.
     assert result.allocations == pytest.approx(
         {
-            "JAINE_LP_0G_USDC": 0.20,
-            "OKU_LP_0G_USDC": 0.80,
+            "JAINE_LP_0G_USDC": 0.80,
+            "OKU_LP_0G_USDC": 0.20,
         }
     )
     assert result.portfolio_bridge_exposure == pytest.approx(0)
     assert result.portfolio_lp_il_stress == pytest.approx(
-        0.20 * 0.08 + 0.80 * 0.10
+        0.80 * 0.08 + 0.20 * 0.10
     )
     assert result.portfolio_slashing_stress_loss == pytest.approx(0)
 
