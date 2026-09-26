@@ -171,6 +171,18 @@ def _row_eligibility(
     if not optimizer_eligible:
         reasons.append("optimizer_eligible=False")
 
+        # Preserve the Exposure Engine's concrete reason instead of reducing
+        # every technical/data exclusion to a generic boolean. This keeps
+        # user-facing diagnostics actionable (for example,
+        # technical_eligibility=EXCLUDED_LIVE_DATA_INCOMPLETE).
+        eligibility_reasons = row.get("eligibility_reasons")
+        if eligibility_reasons is not None and not pd.isna(eligibility_reasons):
+            reasons.extend(
+                reason
+                for reason in str(eligibility_reasons).split("|")
+                if reason
+            )
+
     net_return = _optional_finite_float(row["net_return_horizon"])
     if net_return is None:
         reasons.append("missing_net_return_horizon")
