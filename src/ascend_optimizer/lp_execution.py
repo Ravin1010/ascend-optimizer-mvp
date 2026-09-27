@@ -265,6 +265,7 @@ def estimate_lp_execution_slippage(
     amount_0g: float,
     asset_price_usd: float,
     rpc_fn: RpcFn | None = None,
+    target_usdc_bps: int | None = None,
 ) -> LPExecutionQuote:
     """Estimate entry/exit slippage for the actual user portfolio amount."""
 
@@ -281,10 +282,15 @@ def estimate_lp_execution_slippage(
         )
 
     fee_tier = extract_fee_tier(snapshot)
-    target_usdc_bps = resolve_target_usdc_bps(
-        snapshot,
-        rpc_fn=rpc_fn,
-    )
+    if target_usdc_bps is None:
+        target_usdc_bps = resolve_target_usdc_bps(
+            snapshot,
+            rpc_fn=rpc_fn,
+        )
+    if target_usdc_bps <= 0 or target_usdc_bps >= 10_000:
+        raise CollectionError(
+            f"target_usdc_bps must be between 1 and 9999, got {target_usdc_bps}"
+        )
     target_usdc_fraction = target_usdc_bps / 10_000.0
 
     portfolio_value_usd = amount_0g * asset_price_usd
