@@ -664,6 +664,34 @@ button:disabled {
   text-align: right;
 }
 
+.headroomCallout {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: center;
+  gap: 10px;
+  margin: 2px 0 10px;
+  padding: 10px 12px;
+  border: 1px solid #3e4b2e;
+  border-radius: 10px;
+  background: rgba(201, 255, 74, 0.055);
+}
+
+.headroomCallout span,
+.headroomCallout small {
+  color: #8d98a7;
+  font-size: 9px;
+}
+
+.headroomCallout strong {
+  color: var(--accent);
+  font-size: 12px;
+}
+
+.headroomCallout small {
+  justify-self: end;
+  text-align: right;
+}
+
 .detailGrid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -746,22 +774,22 @@ button:disabled {
   color: #687181;
 }
 
-.constraintChip.binding {
+.constraintChip.atLimit {
   border-color: #4a5a31;
   background: rgba(201, 255, 74, 0.08);
 }
 
-.constraintChip.binding strong,
-.constraintChip.binding small {
+.constraintChip.atLimit strong,
+.constraintChip.atLimit small {
   color: var(--accent);
 }
 
-.constraintChip.triggered:not(.binding) {
+.constraintChip.triggered:not(.atLimit) {
   border-color: #4a352d;
   background: rgba(255, 153, 102, 0.05);
 }
 
-.constraintChip.triggered:not(.binding) small {
+.constraintChip.triggered:not(.atLimit) small {
   color: #dca07c;
 }
 
