@@ -385,3 +385,33 @@ The demo dataset is not a claim about current protocol yields or risk.
 For the frozen linear program, each strategy's horizon Net Return coefficient is evaluated at the user's full portfolio notional. This is a deliberate first-order approximation. Fixed execution costs can later be refined with a nonlinear or mixed-integer formulation that recomputes costs at the actual allocated amount.
 
 No secrets or private keys should be committed to the repository.
+
+
+## Next.js frontend
+
+The optimizer UI lives in `frontend/` and consumes the Python live optimizer
+through the Next.js `/api/optimize` route. The Python optimizer remains the
+single source of truth; the frontend does not duplicate portfolio logic.
+
+Run locally:
+
+~~~bash
+cd frontend
+npm install
+npm run dev
+~~~
+
+Then open `http://localhost:3000`.
+
+The API route executes the existing structured optimizer command:
+
+~~~bash
+python -m src.ascend_optimizer.live_optimize \
+  --amount 1000 \
+  --horizon-days 90 \
+  --profile Balanced \
+  --json
+~~~
+
+The UI is intentionally inspired by Ascend's dark DeFi application aesthetic,
+but uses original implementation, layout, styling and assets.
