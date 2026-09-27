@@ -42,6 +42,24 @@ export interface OptimizerResponse {
     profile: RiskProfile;
     include_modelled: boolean;
   };
+  profile_constraints: {
+    max_strategy_concentration: number;
+    max_bridge_exposure: number;
+    max_entry_exit_slippage: number;
+    max_portfolio_lp_il_stress: number;
+    max_exit_time_days: number;
+    max_slashing_stress_loss: number;
+    binding_constraints: string[];
+    triggered_constraints: string[];
+    observed: {
+      max_allocated_strategy_weight: number;
+      max_allocated_slippage: number;
+      max_allocated_exit_time_days: number;
+      portfolio_bridge_exposure: number;
+      portfolio_lp_il_stress: number;
+      portfolio_slashing_stress_loss: number;
+    };
+  };
   portfolio: {
     allocations: OptimizerAllocation[];
     idle: {
