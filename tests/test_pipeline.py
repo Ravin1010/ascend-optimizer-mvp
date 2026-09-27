@@ -97,18 +97,18 @@ def test_demo_balanced_allocation() -> None:
         profile="Balanced",
     ).result
 
-    # Embedded Ascend restaking is no longer a separate allocatable route.
-    # Jaine has the best eligible return and reaches Balanced's 60%
-    # concentration cap; Gimo fills the remaining 40%.
+    # Jaine is production-excluded for insufficient live liquidity and Oku's
+    # demo slippage exceeds the Balanced profile limit. Gimo therefore reaches
+    # the 60% concentration cap and Native fills the remaining 40%.
     assert result.allocations == pytest.approx(
         {
-            "JAINE_LP_0G_USDC": 0.60,
-            "GIMO_STAKE_0G": 0.40,
+            "GIMO_STAKE_0G": 0.60,
+            "NATIVE_STAKE_0G": 0.40,
         }
     )
-    assert result.portfolio_lp_il_stress == pytest.approx(0.60 * 0.08)
+    assert result.portfolio_lp_il_stress == pytest.approx(0)
     assert result.portfolio_slashing_stress_loss == pytest.approx(
-        0.40 * 0.015
+        0.60 * 0.015 + 0.40 * 0.01
     )
 
 
@@ -124,21 +124,20 @@ def test_demo_aggressive_allocation() -> None:
         profile="Aggressive",
     ).result
 
-    # After amount-dependent execution/slippage costs, Jaine has the higher
-    # demo Net Return even though Oku has the higher gross APY. Aggressive
-    # therefore places the 80% concentration cap in Jaine and the remaining
-    # 20% in Oku.
+    # Jaine is production-excluded for insufficient live liquidity. Oku is the
+    # highest-return eligible demo route and reaches Aggressive's 80%
+    # concentration cap; Gimo fills the remaining 20%.
     assert result.allocations == pytest.approx(
         {
-            "JAINE_LP_0G_USDC": 0.80,
-            "OKU_LP_0G_USDC": 0.20,
+            "OKU_LP_0G_USDC": 0.80,
+            "GIMO_STAKE_0G": 0.20,
         }
     )
     assert result.portfolio_bridge_exposure == pytest.approx(0)
-    assert result.portfolio_lp_il_stress == pytest.approx(
-        0.80 * 0.08 + 0.20 * 0.10
+    assert result.portfolio_lp_il_stress == pytest.approx(0.80 * 0.10)
+    assert result.portfolio_slashing_stress_loss == pytest.approx(
+        0.20 * 0.015
     )
-    assert result.portfolio_slashing_stress_loss == pytest.approx(0)
 
 
 def test_morpho_stays_excluded_even_with_demo_numbers() -> None:
@@ -260,9 +259,12 @@ def test_pipeline_annotates_profile_specific_eligibility() -> None:
         "profile_exclusion_reasons"
     ]
 
-    # Jaine demo max slippage is 0.6%, within Balanced's 1.0% limit.
-    assert jaine["profile_eligible"]
-    assert jaine["profile_exclusion_reasons"] == ""
+    # Jaine remains observable in the candidate table, but its static
+    # production liquidity gate overrides otherwise acceptable demo slippage.
+    assert not jaine["profile_eligible"]
+    assert "technical_eligibility=EXCLUDED_LIQUIDITY_CONSTRAINED" in jaine[
+        "profile_exclusion_reasons"
+    ]
 
 
 
