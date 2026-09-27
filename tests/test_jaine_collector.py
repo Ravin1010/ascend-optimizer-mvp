@@ -44,14 +44,25 @@ def test_discover_jaine_pools_skips_zero_addresses() -> None:
     pool3000 = "0x3333333333333333333333333333333333333333"
 
     def fake_rpc(url, method, params):
-        fee_tier = int(params[0]["data"][-64:], 16)
-        mapping = {
-            100: "0x0000000000000000000000000000000000000000",
-            500: pool500,
-            3000: pool3000,
-            10000: "0x0000000000000000000000000000000000000000",
-        }
-        return _encode_address_result(mapping[fee_tier])
+        target = params[0]["to"]
+        data = params[0]["data"]
+
+        if target == JAINE_FACTORY:
+            fee_tier = int(data[-64:], 16)
+            mapping = {
+                100: "0x0000000000000000000000000000000000000000",
+                500: pool500,
+                3000: pool3000,
+                10000: "0x0000000000000000000000000000000000000000",
+            }
+            return _encode_address_result(mapping[fee_tier])
+
+        if target.lower() == pool500.lower():
+            return hex(100)
+        if target.lower() == pool3000.lower():
+            return hex(500)
+
+        raise AssertionError((target, data))
 
     pools = discover_jaine_pools(rpc_fn=fake_rpc)
 
@@ -173,3 +184,42 @@ def test_jaine_snapshot_includes_merkl_campaign_incentive() -> None:
     assert row["incentive_apy"] == pytest.approx(0.051267)
     assert "merkl_campaign_apr=0.05" in row["notes"]
     assert "merkl_campaigns=2" in row["notes"]
+
+
+
+def test_gecko_failure_does_not_change_jaine_onchain_pool_selection() -> None:
+    pool500 = "0x2222222222222222222222222222222222222222"
+    pool3000 = "0x3333333333333333333333333333333333333333"
+
+    def fake_rpc(url, method, params):
+        target = params[0]["to"]
+        data = params[0]["data"]
+
+        if target == JAINE_FACTORY:
+            fee_tier = int(data[-64:], 16)
+            mapping = {
+                100: "0x0000000000000000000000000000000000000000",
+                500: pool500,
+                3000: pool3000,
+                10000: "0x0000000000000000000000000000000000000000",
+            }
+            return _encode_address_result(mapping[fee_tier])
+
+        if target.lower() == pool500.lower():
+            return hex(100)
+        if target.lower() == pool3000.lower():
+            return hex(1000)
+
+        raise AssertionError((target, data))
+
+    def failing_json(url, headers=None):
+        raise Exception("secondary market API unavailable")
+
+    result = collect_market_observation(
+        rpc_fn=fake_rpc,
+        json_fn=failing_json,
+    )
+
+    assert result.pool.fee_tier == 3000
+    assert result.pool.address.lower() == pool3000
+    assert result.liquidity_usd is None
