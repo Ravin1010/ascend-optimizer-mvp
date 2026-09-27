@@ -2,6 +2,7 @@
 
 import pytest
 
+from src.ascend_optimizer.collectors.common import CollectionError
 from src.ascend_optimizer.collectors.merkl import MerklIncentiveObservation
 from src.ascend_optimizer.collectors.oku import (
     GET_POOL_SELECTOR,
@@ -223,7 +224,7 @@ def test_gecko_failure_does_not_change_oku_onchain_pool_selection() -> None:
         raise AssertionError((target, data))
 
     def failing_json(url, headers=None):
-        raise Exception("secondary market API unavailable")
+        raise CollectionError("secondary market API unavailable")
 
     result = collect_market_observation(
         rpc_fn=fake_rpc,
