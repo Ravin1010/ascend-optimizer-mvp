@@ -213,19 +213,36 @@ function statusLabel(strategy: OptimizerStrategy) {
 function allocationExplanation(
   strategy: OptimizerStrategy,
   allocatedRank: number,
+  data: OptimizerResponse,
 ) {
   const strategyName = meta(strategy.strategy_id).name;
+  const concentration =
+    data.profile_constraints.max_strategy_concentration;
 
   if (strategy.allocation_weight > 0) {
     if (allocatedRank === 0) {
-      return `${strategyName} has the highest Net APY among the routes selected by the optimizer for this run, so it receives ${pct(strategy.allocation_weight, 0)}.`;
+      return `${strategyName} ranks first at ${pct(strategy.net_apy)} Net APY and reaches ${data.input.profile}'s ${pct(concentration, 0)} per-strategy concentration ceiling.`;
     }
 
-    return `${strategyName} is the next selected eligible route and fills ${pct(strategy.allocation_weight, 0)} of the portfolio while the portfolio constraints remain satisfied.`;
+    return `${strategyName} is the next-highest eligible return at ${pct(strategy.net_apy)} Net APY and receives the remaining ${pct(strategy.allocation_weight, 0)} while satisfying the active profile constraints.`;
   }
 
   if (strategy.profile_eligible) {
-    return `${strategyName} is eligible, but its current Net APY is below the allocated routes for this profile and notional, so the optimizer assigns 0%.`;
+    return `${strategyName} is eligible at ${pct(strategy.net_apy)} Net APY, but lower-ranked than the allocated routes, so the optimizer assigns 0% at this notional.`;
+  }
+
+  if (
+    strategy.exclusion_reasons.includes("slippage_exceeds_profile_limit") &&
+    strategy.max_entry_exit_slippage != null
+  ) {
+    return `${strategyName} is excluded because live slippage is ${pct(strategy.max_entry_exit_slippage)}, above the ${data.input.profile} limit of ${pct(data.profile_constraints.max_entry_exit_slippage)}.`;
+  }
+
+  if (
+    strategy.exclusion_reasons.includes("exit_time_exceeds_profile_limit") &&
+    strategy.exit_time_days != null
+  ) {
+    return `${strategyName} is excluded because its ${strategy.exit_time_days.toFixed(1)}d exit time exceeds the ${data.profile_constraints.max_exit_time_days.toFixed(0)}d profile limit.`;
   }
 
   return `${strategyName} is not allocatable in this run: ${primaryReason(strategy)}.`;
@@ -564,6 +581,83 @@ export default function Home() {
                 >
                   Close
                 </button>
+              </div>
+
+              <div className="constraintSection">
+                <div className="constraintHeading">
+                  <div>
+                    <div className="sectionLabel">Constraints applied</div>
+                    <h3>{data.input.profile} limits</h3>
+                  </div>
+                  <span className="muted">Binding limits highlighted</span>
+                </div>
+
+                <div className="constraintGrid">
+                  {[
+                    {
+                      key: "max_strategy_concentration",
+                      label: "Max strategy",
+                      value: pct(data.profile_constraints.max_strategy_concentration, 0),
+                    },
+                    {
+                      key: "max_entry_exit_slippage",
+                      label: "Max slippage",
+                      value: pct(data.profile_constraints.max_entry_exit_slippage),
+                    },
+                    {
+                      key: "max_exit_time_days",
+                      label: "Max exit time",
+                      value: `${data.profile_constraints.max_exit_time_days.toFixed(0)}d`,
+                    },
+                    {
+                      key: "max_bridge_exposure",
+                      label: "Max bridge",
+                      value: pct(data.profile_constraints.max_bridge_exposure, 0),
+                    },
+                    {
+                      key: "max_portfolio_lp_il_stress",
+                      label: "Max LP stress",
+                      value: pct(data.profile_constraints.max_portfolio_lp_il_stress, 0),
+                    },
+                    {
+                      key: "max_slashing_stress_loss",
+                      label: "Max slashing",
+                      value: pct(data.profile_constraints.max_slashing_stress_loss, 0),
+                    },
+                  ].map((constraint) => {
+                    const binding =
+                      data.profile_constraints.binding_constraints.includes(
+                        constraint.key,
+                      );
+                    const triggered =
+                      data.profile_constraints.triggered_constraints.includes(
+                        constraint.key,
+                      );
+
+                    return (
+                      <div
+                        key={constraint.key}
+                        className={[
+                          "constraintChip",
+                          binding ? "binding" : "",
+                          triggered ? "triggered" : "",
+                        ]
+                          .filter(Boolean)
+                          .join(" ")}
+                      >
+                        <span>{constraint.label}</span>
+                        <strong>{constraint.value}</strong>
+                        <small>
+                          {binding
+                            ? "Binding"
+                            : triggered
+                              ? "Triggered by excluded route"
+                              : "Applied"}
+                        </small>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="explanationList">
