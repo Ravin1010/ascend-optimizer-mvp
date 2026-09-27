@@ -193,7 +193,7 @@ def test_live_optimizer_to_dict_is_frontend_ready_and_json_safe() -> None:
 
     payload = run.to_dict()
 
-    assert payload["schema_version"] == "1.0"
+    assert payload["schema_version"] == "1.1"
     assert payload["input"]["asset"] == "0G"
     assert payload["input"]["profile"] == "Balanced"
     assert payload["input"]["portfolio_value_usd"] == pytest.approx(1000)
@@ -217,7 +217,7 @@ def test_live_optimizer_to_dict_is_frontend_ready_and_json_safe() -> None:
     # Strict JSON serialization must never rely on non-standard NaN tokens.
     encoded = json.dumps(payload, allow_nan=False)
     decoded = json.loads(encoded)
-    assert decoded["schema_version"] == "1.0"
+    assert decoded["schema_version"] == "1.1"
 
 
 def test_live_optimizer_json_uses_null_for_missing_values() -> None:
@@ -265,3 +265,47 @@ def test_print_live_json_emits_parseable_json(capsys) -> None:
     assert payload["input"]["amount"] == pytest.approx(250)
     assert payload["input"]["asset_price_usd"] == pytest.approx(2)
     assert payload["input"]["profile"] == "Aggressive"
+
+
+
+def test_json_exposes_profile_constraints_and_binding_limits() -> None:
+    strategies, snapshots = _demo_inputs()
+
+    run = optimize_live(
+        strategies,
+        snapshots,
+        amount=1000,
+        horizon_days=90,
+        profile="Balanced",
+        price_usd=1,
+    )
+
+    payload = run.to_dict()
+    limits = payload["profile_constraints"]
+
+    assert limits["max_strategy_concentration"] == pytest.approx(0.60)
+    assert limits["max_entry_exit_slippage"] == pytest.approx(0.01)
+    assert limits["max_exit_time_days"] == pytest.approx(30.0)
+    assert "max_strategy_concentration" in limits["binding_constraints"]
+
+    observed = limits["observed"]
+    assert observed["max_allocated_strategy_weight"] == pytest.approx(0.60)
+
+
+def test_json_marks_profile_constraints_triggered_by_excluded_routes() -> None:
+    strategies, snapshots = _demo_inputs()
+
+    run = optimize_live(
+        strategies,
+        snapshots,
+        amount=1000,
+        horizon_days=90,
+        profile="Balanced",
+        price_usd=1,
+    )
+
+    payload = run.to_dict()
+
+    assert "max_entry_exit_slippage" in (
+        payload["profile_constraints"]["triggered_constraints"]
+    )
