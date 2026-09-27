@@ -111,6 +111,8 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
     error PoolMetadataMismatch();
     error PeripheryFactoryMismatch(address expected, address actual);
     error InvalidTicks(int24 lower, int24 upper);
+    error InvalidTickSpacing(int24 spacing);
+    error TicksNotAligned(int24 lower, int24 upper, int24 spacing);
     error InvalidSqrtBounds(uint160 lower, uint160 upper);
     error OnlyVault(address caller);
     error ZeroAmount();
@@ -993,12 +995,30 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
         DeploymentConfig memory config
     )
         private
-        pure
+        view
     {
         if (config.tickLower >= config.tickUpper) {
             revert InvalidTicks(
                 config.tickLower,
                 config.tickUpper
+            );
+        }
+
+        int24 spacing =
+            IV3Pool(config.pool).tickSpacing();
+
+        if (spacing <= 0) {
+            revert InvalidTickSpacing(spacing);
+        }
+
+        if (
+            config.tickLower % spacing != 0
+            || config.tickUpper % spacing != 0
+        ) {
+            revert TicksNotAligned(
+                config.tickLower,
+                config.tickUpper,
+                spacing
             );
         }
 
