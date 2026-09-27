@@ -61,6 +61,7 @@ class LiveOptimizerRun:
 
         result = self.pipeline.result
         candidates = self.pipeline.candidates.copy()
+        risk_profile = get_profile(self.profile)
 
         allocations = [
             {
@@ -179,8 +180,89 @@ class LiveOptimizerRun:
                 }
             )
 
+        max_allocated_weight = max(
+            [float(weight) for weight in result.allocations.values()],
+            default=0.0,
+        )
+        allocated_ids = set(result.allocations)
+
+        allocated_candidates = candidates[
+            candidates["strategy_id"].astype(str).isin(allocated_ids)
+        ].copy()
+
+        max_allocated_slippage = 0.0
+        max_allocated_exit_days = 0.0
+
+        if not allocated_candidates.empty:
+            slippage_values = pd.to_numeric(
+                allocated_candidates["max_entry_exit_slippage"],
+                errors="coerce",
+            ).dropna()
+            exit_values = pd.to_numeric(
+                allocated_candidates["exit_time_days"],
+                errors="coerce",
+            ).dropna()
+
+            if not slippage_values.empty:
+                max_allocated_slippage = float(slippage_values.max())
+            if not exit_values.empty:
+                max_allocated_exit_days = float(exit_values.max())
+
+        tolerance = 1e-9
+        binding_constraints: list[str] = []
+
+        if abs(
+            max_allocated_weight
+            - risk_profile.max_strategy_concentration
+        ) <= tolerance:
+            binding_constraints.append("max_strategy_concentration")
+
+        if abs(
+            result.portfolio_bridge_exposure
+            - risk_profile.max_bridge_exposure
+        ) <= tolerance:
+            binding_constraints.append("max_bridge_exposure")
+
+        if abs(
+            result.portfolio_lp_il_stress
+            - risk_profile.max_portfolio_lp_il_stress
+        ) <= tolerance:
+            binding_constraints.append("max_portfolio_lp_il_stress")
+
+        if abs(
+            result.portfolio_slashing_stress_loss
+            - risk_profile.max_slashing_stress_loss
+        ) <= tolerance:
+            binding_constraints.append("max_slashing_stress_loss")
+
+        if abs(
+            max_allocated_slippage
+            - risk_profile.max_entry_exit_slippage
+        ) <= tolerance:
+            binding_constraints.append("max_entry_exit_slippage")
+
+        if abs(
+            max_allocated_exit_days
+            - risk_profile.max_exit_time_days
+        ) <= tolerance:
+            binding_constraints.append("max_exit_time_days")
+
+        triggered_constraints: list[str] = []
+        exclusion_text = "|".join(
+            str(value)
+            for value in candidates.get(
+                "profile_exclusion_reasons",
+                pd.Series(dtype="string"),
+            ).fillna("")
+        )
+
+        if "slippage_exceeds_profile_limit" in exclusion_text:
+            triggered_constraints.append("max_entry_exit_slippage")
+        if "exit_time_exceeds_profile_limit" in exclusion_text:
+            triggered_constraints.append("max_exit_time_days")
+
         return {
-            "schema_version": "1.0",
+            "schema_version": "1.1",
             "input": {
                 "asset": self.asset,
                 "amount": float(self.amount),
@@ -191,6 +273,42 @@ class LiveOptimizerRun:
                 "horizon_days": float(self.horizon_days),
                 "profile": self.profile,
                 "include_modelled": bool(self.include_modelled),
+            },
+            "profile_constraints": {
+                "max_strategy_concentration": float(
+                    risk_profile.max_strategy_concentration
+                ),
+                "max_bridge_exposure": float(
+                    risk_profile.max_bridge_exposure
+                ),
+                "max_entry_exit_slippage": float(
+                    risk_profile.max_entry_exit_slippage
+                ),
+                "max_portfolio_lp_il_stress": float(
+                    risk_profile.max_portfolio_lp_il_stress
+                ),
+                "max_exit_time_days": float(
+                    risk_profile.max_exit_time_days
+                ),
+                "max_slashing_stress_loss": float(
+                    risk_profile.max_slashing_stress_loss
+                ),
+                "binding_constraints": binding_constraints,
+                "triggered_constraints": triggered_constraints,
+                "observed": {
+                    "max_allocated_strategy_weight": max_allocated_weight,
+                    "max_allocated_slippage": max_allocated_slippage,
+                    "max_allocated_exit_time_days": max_allocated_exit_days,
+                    "portfolio_bridge_exposure": float(
+                        result.portfolio_bridge_exposure
+                    ),
+                    "portfolio_lp_il_stress": float(
+                        result.portfolio_lp_il_stress
+                    ),
+                    "portfolio_slashing_stress_loss": float(
+                        result.portfolio_slashing_stress_loss
+                    ),
+                },
             },
             "portfolio": {
                 "allocations": allocations,
