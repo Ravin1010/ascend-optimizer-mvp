@@ -10,10 +10,11 @@ live external yield-bearing asset and is never treated as an alias for 0G.
 from __future__ import annotations
 
 import argparse
+import json
 from dataclasses import dataclass
 from math import isfinite
 from pathlib import Path
-from typing import Callable
+from typing import Any, Callable
 
 import pandas as pd
 
@@ -53,6 +54,222 @@ class LiveOptimizerRun:
         if horizon_return <= -1:
             return -1.0
         return (1.0 + horizon_return) ** (365.0 / self.horizon_days) - 1.0
+
+
+    def to_dict(self) -> dict[str, object]:
+        """Return a stable, JSON-safe frontend contract for this optimizer run."""
+
+        result = self.pipeline.result
+        candidates = self.pipeline.candidates.copy()
+
+        allocations = [
+            {
+                "strategy_id": strategy_id,
+                "weight": float(weight),
+                "amount_usd": float(
+                    weight * self.portfolio_value_usd
+                ),
+            }
+            for strategy_id, weight in sorted(
+                result.allocations.items(),
+                key=lambda item: item[1],
+                reverse=True,
+            )
+        ]
+
+        strategy_rows: list[dict[str, object]] = []
+
+        ranked = candidates.sort_values(
+            "net_return_horizon",
+            ascending=False,
+            na_position="last",
+        )
+
+        for _, row in ranked.iterrows():
+            strategy_id = str(row["strategy_id"])
+            allocation_weight = float(
+                result.allocations.get(strategy_id, 0.0)
+            )
+
+            scope_eligible = _json_bool(
+                row.get("scope_eligible"),
+                default=True,
+            )
+            profile_eligible = _json_bool(
+                row.get("profile_eligible"),
+                default=False,
+            )
+            optimizer_eligible = _json_bool(
+                row.get("optimizer_eligible"),
+                default=False,
+            )
+
+            profile_reasons = _split_reasons(
+                row.get("profile_exclusion_reasons")
+            )
+            scope_reasons = _split_reasons(
+                row.get("scope_exclusion_reason")
+            )
+
+            status = "PROFILE_ELIGIBLE"
+            if not scope_eligible:
+                status = "SCOPE_EXCLUDED"
+            elif not profile_eligible:
+                status = "PROFILE_EXCLUDED"
+
+            strategy_rows.append(
+                {
+                    "strategy_id": strategy_id,
+                    "status": status,
+                    "optimizer_eligible": optimizer_eligible,
+                    "profile_eligible": profile_eligible,
+                    "scope_eligible": scope_eligible,
+                    "exclusion_reasons": list(
+                        dict.fromkeys(
+                            scope_reasons + profile_reasons
+                        )
+                    ),
+                    "technical_eligibility": _json_value(
+                        row.get("technical_eligibility")
+                    ),
+                    "data_status": _json_value(
+                        row.get("data_status")
+                    ),
+                    "net_apy": _json_value(
+                        row.get("net_apy")
+                    ),
+                    "net_return_horizon": _json_value(
+                        row.get("net_return_horizon")
+                    ),
+                    "net_profit_usd": _json_value(
+                        row.get("net_profit_usd")
+                    ),
+                    "gross_apy_used": _json_value(
+                        row.get("gross_apy_used")
+                    ),
+                    "liquidity_usd": _json_value(
+                        row.get("liquidity_usd")
+                    ),
+                    "max_entry_exit_slippage": _json_value(
+                        row.get("max_entry_exit_slippage")
+                    ),
+                    "exit_time_days": _json_value(
+                        row.get("exit_time_days")
+                    ),
+                    "bridge_fraction": _json_value(
+                        row.get("bridge_fraction")
+                    ),
+                    "slashing_stress_loss": _json_value(
+                        row.get("slashing_stress_loss")
+                    ),
+                    "lp_stress_loss_20pct": _json_value(
+                        row.get("lp_stress_loss_20pct")
+                    ),
+                    "allocation_weight": allocation_weight,
+                    "allocation_usd": (
+                        allocation_weight
+                        * self.portfolio_value_usd
+                    ),
+                    "return_error": _json_value(
+                        row.get("return_error")
+                    ),
+                    "runtime_exposure_error": _json_value(
+                        row.get("runtime_exposure_error")
+                    ),
+                }
+            )
+
+        return {
+            "schema_version": "1.0",
+            "input": {
+                "asset": self.asset,
+                "amount": float(self.amount),
+                "asset_price_usd": float(self.asset_price_usd),
+                "portfolio_value_usd": float(
+                    self.portfolio_value_usd
+                ),
+                "horizon_days": float(self.horizon_days),
+                "profile": self.profile,
+                "include_modelled": bool(self.include_modelled),
+            },
+            "portfolio": {
+                "allocations": allocations,
+                "idle": {
+                    "weight": float(result.idle_weight),
+                    "amount_usd": float(
+                        result.idle_weight
+                        * self.portfolio_value_usd
+                    ),
+                },
+                "deployed_weight": float(
+                    result.deployed_weight
+                ),
+                "expected_net_return_horizon": float(
+                    result.expected_net_return_horizon
+                ),
+                "annualized_expected_net_apy": float(
+                    self.annualized_expected_net_apy
+                ),
+                "expected_net_profit_usd": float(
+                    result.expected_net_profit_usd
+                ),
+                "stress": {
+                    "bridge_exposure": float(
+                        result.portfolio_bridge_exposure
+                    ),
+                    "lp_il": float(
+                        result.portfolio_lp_il_stress
+                    ),
+                    "slashing": float(
+                        result.portfolio_slashing_stress_loss
+                    ),
+                },
+            },
+            "strategies": strategy_rows,
+            "solver": {
+                "status": int(result.solver_status),
+                "message": str(result.solver_message),
+            },
+        }
+
+
+def _json_value(value: Any) -> object:
+    """Convert pandas/numpy scalar values into strict JSON-safe primitives."""
+
+    if value is None or pd.isna(value):
+        return None
+
+    if isinstance(value, (bool, str)):
+        return value
+
+    if hasattr(value, "item"):
+        value = value.item()
+
+    if isinstance(value, (int, float)):
+        converted = float(value)
+        if not isfinite(converted):
+            return None
+        if isinstance(value, int):
+            return int(value)
+        return converted
+
+    return str(value)
+
+
+def _json_bool(value: Any, *, default: bool) -> bool:
+    if value is None or pd.isna(value):
+        return default
+    return bool(value)
+
+
+def _split_reasons(value: Any) -> list[str]:
+    if value is None or pd.isna(value):
+        return []
+    return [
+        reason
+        for reason in str(value).split("|")
+        if reason
+    ]
 
 
 def _positive_finite(name: str, value: float) -> float:
@@ -175,6 +392,19 @@ def _fmt_usd(value: object) -> str:
     if value is None or pd.isna(value):
         return "-"
     return "$" + f"{float(value):,.2f}"
+
+
+def print_live_json(run: LiveOptimizerRun) -> None:
+    """Print strict machine-readable JSON with no NaN extensions."""
+
+    print(
+        json.dumps(
+            run.to_dict(),
+            indent=2,
+            sort_keys=False,
+            allow_nan=False,
+        )
+    )
 
 
 def print_live_run(run: LiveOptimizerRun) -> None:
@@ -323,6 +553,14 @@ def main() -> None:
         type=Path,
         default=DEFAULT_LIVE_PATH,
     )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help=(
+            "Print the optimizer result as structured JSON instead of "
+            "the terminal dashboard."
+        ),
+    )
     args = parser.parse_args()
 
     if not args.snapshots.exists():
@@ -352,7 +590,10 @@ def main() -> None:
     except ValueError as exc:
         raise SystemExit(str(exc)) from exc
 
-    print_live_run(run)
+    if args.json:
+        print_live_json(run)
+    else:
+        print_live_run(run)
 
 
 if __name__ == "__main__":
