@@ -675,7 +675,7 @@ export default function Home() {
                         key={constraint.key}
                         className={[
                           "constraintChip",
-                          atLimit ? "binding" : "",
+                          atLimit ? "atLimit" : "",
                           triggered ? "triggered" : "",
                         ]
                           .filter(Boolean)
