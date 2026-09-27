@@ -82,7 +82,8 @@ def test_quote_v2_decodes_first_return_word() -> None:
 
 
 def test_execution_slippage_uses_whole_portfolio_notional() -> None:
-    # 100 0G at $2 = $200 portfolio. Half is swapped on each leg.
+    # 100 0G at $2 = $200 portfolio. A deterministic 50% USDC target is
+    # supplied here; live calls derive the target from the selected range.
     # Entry expected = $100, quote returns 99 USDC -> 1/200 = 0.5%.
     # Exit expected = $100, quote returns 49 0G = $98 -> 2/200 = 1%.
     call_count = 0
@@ -102,8 +103,37 @@ def test_execution_slippage_uses_whole_portfolio_notional() -> None:
         amount_0g=100,
         asset_price_usd=2,
         rpc_fn=fake_rpc,
+        target_usdc_bps=5000,
     )
 
     assert result.entry_slippage_rate == pytest.approx(0.005)
     assert result.exit_slippage_rate == pytest.approx(0.01)
     assert result.max_entry_exit_slippage == pytest.approx(0.01)
+
+
+
+def test_execution_slippage_respects_range_aware_target() -> None:
+    # 60% target means 60 of 100 0G is swapped on entry. At $2/0G,
+    # the target USDC leg is $120. Entry returns $118 => 1% portfolio loss.
+    # Exit returns 59 0G = $118 => the same 1% portfolio loss.
+    calls = []
+
+    def fake_rpc(url, method, params):
+        calls.append(params[0]["data"])
+        if len(calls) == 1:
+            return _encode_uint(118 * 10**6)
+        return _encode_uint(59 * 10**18)
+
+    snapshot = {"notes": "pool=0xabc; fee_tier=3000; pool_name=test"}
+
+    result = estimate_lp_execution_slippage(
+        strategy_id="JAINE_LP_0G_USDC",
+        snapshot=snapshot,
+        amount_0g=100,
+        asset_price_usd=2,
+        rpc_fn=fake_rpc,
+        target_usdc_bps=6000,
+    )
+
+    assert result.entry_slippage_rate == pytest.approx(0.01)
+    assert result.exit_slippage_rate == pytest.approx(0.01)
