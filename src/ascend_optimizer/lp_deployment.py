@@ -68,6 +68,7 @@ class LPDeploymentPlan:
     token1: str
     target_usdc_value_fraction: float
     fifty_fifty_deviation_bps: float
+    target_usdc_bps: int
 
     def constructor_args(self) -> tuple[object, ...]:
         return (
@@ -77,6 +78,7 @@ class LPDeploymentPlan:
             self.tick_upper,
             self.sqrt_lower_x96,
             self.sqrt_upper_x96,
+            self.target_usdc_bps,
         )
 
 
@@ -337,6 +339,7 @@ def build_plan(
         token1=state.token1,
         target_usdc_value_fraction=usdc_fraction,
         fifty_fifty_deviation_bps=abs(usdc_fraction - 0.5) * 10_000,
+        target_usdc_bps=round(usdc_fraction * 10_000),
     )
 
 
@@ -361,11 +364,13 @@ def print_plan(plan: LPDeploymentPlan) -> None:
         "50_50_deviation_bps: "
         f"{plan.fifty_fifty_deviation_bps:.2f}"
     )
+    print(f"target_usdc_bps: {plan.target_usdc_bps}")
     print("constructor_args_without_vault:")
     print(
         f"  {plan.pool} {plan.fee_tier} "
         f"{plan.tick_lower} {plan.tick_upper} "
-        f"{plan.sqrt_lower_x96} {plan.sqrt_upper_x96}"
+        f"{plan.sqrt_lower_x96} {plan.sqrt_upper_x96} "
+        f"{plan.target_usdc_bps}"
     )
 
 
