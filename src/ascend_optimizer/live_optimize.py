@@ -177,6 +177,32 @@ class LiveOptimizerRun:
                     "runtime_exposure_error": _json_value(
                         row.get("runtime_exposure_error")
                     ),
+                    "constraint_diagnostics": {
+                        "strategy_concentration": _constraint_diagnostic(
+                            allocation_weight,
+                            risk_profile.max_strategy_concentration,
+                        ),
+                        "slippage": _constraint_diagnostic(
+                            row.get("max_entry_exit_slippage"),
+                            risk_profile.max_entry_exit_slippage,
+                        ),
+                        "exit_time": _constraint_diagnostic(
+                            row.get("exit_time_days"),
+                            risk_profile.max_exit_time_days,
+                        ),
+                        "bridge": _constraint_diagnostic(
+                            row.get("bridge_fraction"),
+                            risk_profile.max_bridge_exposure,
+                        ),
+                        "slashing": _constraint_diagnostic(
+                            row.get("slashing_stress_loss"),
+                            risk_profile.max_slashing_stress_loss,
+                        ),
+                        "lp_stress": _constraint_diagnostic(
+                            row.get("lp_stress_loss_20pct"),
+                            risk_profile.max_portfolio_lp_il_stress,
+                        ),
+                    },
                 }
             )
 
@@ -209,43 +235,43 @@ class LiveOptimizerRun:
                 max_allocated_exit_days = float(exit_values.max())
 
         tolerance = 1e-9
-        binding_constraints: list[str] = []
+        at_limit_constraints: list[str] = []
 
         if abs(
             max_allocated_weight
             - risk_profile.max_strategy_concentration
         ) <= tolerance:
-            binding_constraints.append("max_strategy_concentration")
+            at_limit_constraints.append("max_strategy_concentration")
 
         if abs(
             result.portfolio_bridge_exposure
             - risk_profile.max_bridge_exposure
         ) <= tolerance:
-            binding_constraints.append("max_bridge_exposure")
+            at_limit_constraints.append("max_bridge_exposure")
 
         if abs(
             result.portfolio_lp_il_stress
             - risk_profile.max_portfolio_lp_il_stress
         ) <= tolerance:
-            binding_constraints.append("max_portfolio_lp_il_stress")
+            at_limit_constraints.append("max_portfolio_lp_il_stress")
 
         if abs(
             result.portfolio_slashing_stress_loss
             - risk_profile.max_slashing_stress_loss
         ) <= tolerance:
-            binding_constraints.append("max_slashing_stress_loss")
+            at_limit_constraints.append("max_slashing_stress_loss")
 
         if abs(
             max_allocated_slippage
             - risk_profile.max_entry_exit_slippage
         ) <= tolerance:
-            binding_constraints.append("max_entry_exit_slippage")
+            at_limit_constraints.append("max_entry_exit_slippage")
 
         if abs(
             max_allocated_exit_days
             - risk_profile.max_exit_time_days
         ) <= tolerance:
-            binding_constraints.append("max_exit_time_days")
+            at_limit_constraints.append("max_exit_time_days")
 
         triggered_constraints: list[str] = []
         exclusion_text = "|".join(
@@ -262,7 +288,7 @@ class LiveOptimizerRun:
             triggered_constraints.append("max_exit_time_days")
 
         return {
-            "schema_version": "1.1",
+            "schema_version": "1.2",
             "input": {
                 "asset": self.asset,
                 "amount": float(self.amount),
@@ -293,7 +319,7 @@ class LiveOptimizerRun:
                 "max_slashing_stress_loss": float(
                     risk_profile.max_slashing_stress_loss
                 ),
-                "binding_constraints": binding_constraints,
+                "at_limit_constraints": at_limit_constraints,
                 "triggered_constraints": triggered_constraints,
                 "observed": {
                     "max_allocated_strategy_weight": max_allocated_weight,
@@ -349,6 +375,57 @@ class LiveOptimizerRun:
                 "message": str(result.solver_message),
             },
         }
+
+
+def _constraint_diagnostic(
+    value: object,
+    limit: float,
+    *,
+    near_ratio: float = 0.90,
+    tolerance: float = 1e-9,
+) -> dict[str, object]:
+    """Describe one measured constraint against its active profile limit."""
+
+    json_value = _json_value(value)
+    numeric_value = (
+        None
+        if json_value is None
+        else float(json_value)
+    )
+    numeric_limit = float(limit)
+
+    if numeric_value is None:
+        return {
+            "value": None,
+            "limit": numeric_limit,
+            "headroom": None,
+            "utilization": None,
+            "state": "UNAVAILABLE",
+        }
+
+    headroom = numeric_limit - numeric_value
+    utilization = (
+        numeric_value / numeric_limit
+        if numeric_limit > 0
+        else None
+    )
+
+    if numeric_value > numeric_limit + tolerance:
+        state = "EXCEEDED"
+    elif abs(numeric_value - numeric_limit) <= tolerance:
+        state = "AT_LIMIT"
+    elif utilization is not None and utilization >= near_ratio:
+        state = "NEAR_LIMIT"
+    else:
+        state = "WITHIN_LIMIT"
+
+    return {
+        "value": numeric_value,
+        "limit": numeric_limit,
+        "headroom": headroom,
+        "utilization": utilization,
+        "state": state,
+    }
 
 
 def _json_value(value: Any) -> object:
