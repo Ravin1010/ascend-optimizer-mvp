@@ -23,6 +23,11 @@ import re
 from typing import Any, Callable
 
 from .collectors.common import CollectionError, rpc_call
+from .lp_deployment import (
+    derive_aligned_range,
+    fetch_pool_state,
+    target_usdc_value_fraction,
+)
 
 
 RPC_URL = "https://evmrpc.0g.ai"
@@ -190,6 +195,51 @@ def quote_exact_input_single(
     return amount_out
 
 
+def extract_pool_address(snapshot: Any) -> str:
+    """Extract the selected live pool address from snapshot provenance."""
+
+    notes = str(snapshot.get("notes") or "")
+    match = re.search(r"(?:^|;\s*)pool=(0x[a-fA-F0-9]{40})", notes)
+
+    if not match:
+        raise CollectionError(
+            "LP snapshot does not contain a selected pool address in notes"
+        )
+
+    return match.group(1)
+
+
+def resolve_target_usdc_bps(
+    snapshot: Any,
+    *,
+    rpc_fn: RpcFn | None = None,
+) -> int:
+    """Derive the immutable deployment USDC target from the live pool range."""
+
+    pool = extract_pool_address(snapshot)
+    state = fetch_pool_state(
+        pool,
+        rpc_fn=rpc_fn,
+    )
+    tick_lower, tick_upper = derive_aligned_range(
+        state.tick,
+        state.tick_spacing,
+    )
+    fraction = target_usdc_value_fraction(
+        state,
+        tick_lower=tick_lower,
+        tick_upper=tick_upper,
+    )
+    bps = round(fraction * 10_000)
+
+    if bps <= 0 or bps >= 10_000:
+        raise CollectionError(
+            f"Derived target USDC bps must be between 1 and 9999, got {bps}"
+        )
+
+    return bps
+
+
 def extract_fee_tier(snapshot: Any) -> int:
     """Extract the selected live pool fee tier from snapshot provenance."""
 
@@ -231,12 +281,17 @@ def estimate_lp_execution_slippage(
         )
 
     fee_tier = extract_fee_tier(snapshot)
+    target_usdc_bps = resolve_target_usdc_bps(
+        snapshot,
+        rpc_fn=rpc_fn,
+    )
+    target_usdc_fraction = target_usdc_bps / 10_000.0
 
     portfolio_value_usd = amount_0g * asset_price_usd
-    half_amount_0g = amount_0g / 2.0
-    half_value_usd = portfolio_value_usd / 2.0
+    swap_amount_0g = amount_0g * target_usdc_fraction
+    target_usdc_value_usd = portfolio_value_usd * target_usdc_fraction
 
-    entry_amount_in = int(half_amount_0g * 10**W0G_DECIMALS)
+    entry_amount_in = int(swap_amount_0g * 10**W0G_DECIMALS)
     entry_out_raw = quote_exact_input_single(
         quoter=str(config["quoter"]),
         mode=str(config["mode"]),
@@ -247,12 +302,17 @@ def estimate_lp_execution_slippage(
         rpc_fn=rpc_fn,
     )
     entry_out_usdc = entry_out_raw / 10**USDCE_DECIMALS
-    entry_loss_usd = max(0.0, half_value_usd - entry_out_usdc)
+    entry_loss_usd = max(
+        0.0,
+        target_usdc_value_usd - entry_out_usdc,
+    )
     entry_slippage_rate = entry_loss_usd / portfolio_value_usd
 
-    # First-order exit assumption: half the position is in USDC.e by value.
-    # USDC.e is treated as $1 for this execution proxy.
-    exit_amount_in = int(half_value_usd * 10**USDCE_DECIMALS)
+    # Exit mirrors the immutable deployment target. USDC.e is treated as $1
+    # for this execution proxy.
+    exit_amount_in = int(
+        target_usdc_value_usd * 10**USDCE_DECIMALS
+    )
     exit_out_raw = quote_exact_input_single(
         quoter=str(config["quoter"]),
         mode=str(config["mode"]),
@@ -264,7 +324,10 @@ def estimate_lp_execution_slippage(
     )
     exit_out_0g = exit_out_raw / 10**W0G_DECIMALS
     exit_value_usd = exit_out_0g * asset_price_usd
-    exit_loss_usd = max(0.0, half_value_usd - exit_value_usd)
+    exit_loss_usd = max(
+        0.0,
+        target_usdc_value_usd - exit_value_usd,
+    )
     exit_slippage_rate = exit_loss_usd / portfolio_value_usd
 
     return LPExecutionQuote(
