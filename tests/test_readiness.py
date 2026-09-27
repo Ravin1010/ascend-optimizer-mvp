@@ -91,7 +91,7 @@ def test_readiness_separates_return_and_exposure_gaps() -> None:
     assert jaine["return_ready"]
     assert not jaine["optimizer_eligible"]
     assert jaine["missing_exposures"] == ""
-    assert jaine["next_gap"] == "runtime_lp_quote"
+    assert jaine["next_gap"] == "technical_eligibility"
     assert "entry_slippage_rate" in jaine["runtime_resolvable_exposures"]
     assert "exit_slippage_rate" in jaine["runtime_resolvable_exposures"]
     assert "lp_stress_loss_20pct" in jaine["runtime_resolvable_exposures"]
