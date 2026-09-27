@@ -83,6 +83,7 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
         int24 tickUpper;
         uint160 sqrtLowerX96;
         uint160 sqrtUpperX96;
+        uint16 targetUsdcBps;
         RouterMode routerMode;
     }
 
@@ -100,6 +101,7 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
     int24 public immutable tickUpper;
     uint160 public immutable sqrtLowerX96;
     uint160 public immutable sqrtUpperX96;
+    uint16 public immutable targetUsdcBps;
     RouterMode public immutable routerMode;
 
     uint256 public tokenId;
@@ -114,6 +116,7 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
     error InvalidTickSpacing(int24 spacing);
     error TicksNotAligned(int24 lower, int24 upper, int24 spacing);
     error InvalidSqrtBounds(uint160 lower, uint160 upper);
+    error InvalidTargetUsdcBps(uint16 targetUsdcBps);
     error OnlyVault(address caller);
     error ZeroAmount();
     error ZeroMinShares();
@@ -166,6 +169,7 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
         tickUpper = config.tickUpper;
         sqrtLowerX96 = config.sqrtLowerX96;
         sqrtUpperX96 = config.sqrtUpperX96;
+        targetUsdcBps = config.targetUsdcBps;
         routerMode = config.routerMode;
     }
 
@@ -221,7 +225,11 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
         uint256 navBefore =
             _grossAssetsValue();
 
-        uint256 swapAmount = amount / 2;
+        uint256 swapAmount = Math.mulDiv(
+            amount,
+            targetUsdcBps,
+            BPS_DENOMINATOR
+        );
         uint256 keepAmount = amount - swapAmount;
 
         w0g.deposit{value: amount}();
@@ -1029,6 +1037,16 @@ contract V3LiquidityAdapter is IStrategyAdapter, ReentrancyGuard {
             revert InvalidSqrtBounds(
                 config.sqrtLowerX96,
                 config.sqrtUpperX96
+            );
+        }
+
+
+        if (
+            config.targetUsdcBps == 0
+            || config.targetUsdcBps >= BPS_DENOMINATOR
+        ) {
+            revert InvalidTargetUsdcBps(
+                config.targetUsdcBps
             );
         }
     }
