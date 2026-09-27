@@ -1,11 +1,12 @@
 """Tests for the personalized live optimizer helpers."""
 
 from pathlib import Path
+import json
 
 import pytest
 
 from src.ascend_optimizer.data_loader import load_snapshots, load_strategies
-from src.ascend_optimizer.live_optimize import optimize_live
+from src.ascend_optimizer.live_optimize import optimize_live, print_live_json
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -175,3 +176,92 @@ def test_include_modelled_flag_does_not_override_live_ascend_data_guard() -> Non
         ascend["profile_exclusion_reasons"]
     )
     assert run.include_modelled
+
+
+
+def test_live_optimizer_to_dict_is_frontend_ready_and_json_safe() -> None:
+    strategies, snapshots = _demo_inputs()
+
+    run = optimize_live(
+        strategies,
+        snapshots,
+        amount=1000,
+        horizon_days=90,
+        profile="Balanced",
+        price_usd=1,
+    )
+
+    payload = run.to_dict()
+
+    assert payload["schema_version"] == "1.0"
+    assert payload["input"]["asset"] == "0G"
+    assert payload["input"]["profile"] == "Balanced"
+    assert payload["input"]["portfolio_value_usd"] == pytest.approx(1000)
+
+    portfolio = payload["portfolio"]
+    assert portfolio["deployed_weight"] == pytest.approx(
+        run.pipeline.result.deployed_weight
+    )
+    assert "bridge_exposure" in portfolio["stress"]
+    assert "lp_il" in portfolio["stress"]
+    assert "slashing" in portfolio["stress"]
+
+    strategies_by_id = {
+        row["strategy_id"]: row
+        for row in payload["strategies"]
+    }
+    ascend = strategies_by_id["ASCEND_STAKE_A0G"]
+    assert ascend["profile_eligible"] is False
+    assert isinstance(ascend["exclusion_reasons"], list)
+
+    # Strict JSON serialization must never rely on non-standard NaN tokens.
+    encoded = json.dumps(payload, allow_nan=False)
+    decoded = json.loads(encoded)
+    assert decoded["schema_version"] == "1.0"
+
+
+def test_live_optimizer_json_uses_null_for_missing_values() -> None:
+    strategies, snapshots = _demo_inputs()
+
+    run = optimize_live(
+        strategies,
+        snapshots,
+        amount=1000,
+        horizon_days=90,
+        profile="Balanced",
+        price_usd=1,
+    )
+
+    payload = run.to_dict()
+    by_id = {
+        row["strategy_id"]: row
+        for row in payload["strategies"]
+    }
+
+    embedded = by_id["ASCEND_RESTAKE"]
+    assert embedded["net_apy"] is None
+    assert embedded["net_return_horizon"] is None
+    assert embedded["return_error"] == (
+        "embedded_exposure_no_independent_return"
+    )
+
+
+def test_print_live_json_emits_parseable_json(capsys) -> None:
+    strategies, snapshots = _demo_inputs()
+
+    run = optimize_live(
+        strategies,
+        snapshots,
+        amount=250,
+        horizon_days=30,
+        profile="Aggressive",
+        price_usd=2,
+    )
+
+    print_live_json(run)
+    output = capsys.readouterr().out
+
+    payload = json.loads(output)
+    assert payload["input"]["amount"] == pytest.approx(250)
+    assert payload["input"]["asset_price_usd"] == pytest.approx(2)
+    assert payload["input"]["profile"] == "Aggressive"
