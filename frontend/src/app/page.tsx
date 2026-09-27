@@ -288,6 +288,7 @@ export default function Home() {
         text: allocationExplanation(
           strategy,
           allocatedIds.get(strategy.strategy_id) ?? -1,
+          data,
         ),
       }));
   }, [allocated, data]);
