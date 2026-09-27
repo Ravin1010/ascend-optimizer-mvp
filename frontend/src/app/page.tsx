@@ -14,15 +14,60 @@ const PROFILES: RiskProfile[] = [
   "Aggressive",
 ];
 
-const DISPLAY_NAMES: Record<string, string> = {
-  NATIVE_STAKE_0G: "Native 0G",
-  GIMO_STAKE_0G: "Gimo st0G",
-  OKU_LP_0G_USDC: "Oku LP",
-  JAINE_LP_0G_USDC: "Jaine LP",
-  ASCEND_STAKE_A0G: "Ascend a0G",
-  ASCEND_RESTAKE: "Embedded Restaking",
-  MORPHO_LEND_0G: "Morpho",
+const STRATEGY_META: Record<
+  string,
+  {
+    name: string;
+    icon: string;
+    protocol: string;
+  }
+> = {
+  NATIVE_STAKE_0G: {
+    name: "Native 0G",
+    icon: "0G",
+    protocol: "0G staking",
+  },
+  GIMO_STAKE_0G: {
+    name: "Gimo st0G",
+    icon: "G",
+    protocol: "Gimo liquid staking",
+  },
+  OKU_LP_0G_USDC: {
+    name: "Oku LP",
+    icon: "O",
+    protocol: "Uniswap V3 via Oku",
+  },
+  JAINE_LP_0G_USDC: {
+    name: "Jaine LP",
+    icon: "J",
+    protocol: "Jaine concentrated liquidity",
+  },
+  ASCEND_STAKE_A0G: {
+    name: "Ascend a0G",
+    icon: "A",
+    protocol: "Ascend / Mellow",
+  },
+  ASCEND_RESTAKE: {
+    name: "Embedded Restaking",
+    icon: "R",
+    protocol: "Mellow / Symbiotic exposure",
+  },
+  MORPHO_LEND_0G: {
+    name: "Morpho",
+    icon: "M",
+    protocol: "Lending route",
+  },
 };
+
+function meta(strategyId: string) {
+  return (
+    STRATEGY_META[strategyId] ?? {
+      name: strategyId,
+      icon: "?",
+      protocol: "Strategy",
+    }
+  );
+}
 
 function pct(value: number | null, digits = 2) {
   return value == null ? "—" : `${(value * 100).toFixed(digits)}%`;
@@ -37,15 +82,25 @@ function usd(value: number | null) {
   }).format(value);
 }
 
+function compactUsd(value: number | null) {
+  if (value == null) return "—";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(value);
+}
+
 function friendlyReason(reason: string) {
   const map: Record<string, string> = {
     "optimizer_eligible=False": "Not currently optimizer-ready",
     "slippage_exceeds_profile_limit": "Slippage exceeds this profile limit",
     "exit_time_exceeds_profile_limit": "Exit time exceeds this profile limit",
     "technical_eligibility=EXCLUDED_LIQUIDITY_CONSTRAINED":
-      "Insufficient live liquidity",
+      "Low live liquidity",
     "technical_eligibility=EXCLUDED_LIVE_DATA_INCOMPLETE":
-      "Waiting for sufficient live history",
+      "Waiting for ≥24h yield history",
     "technical_eligibility=EXCLUDED_EMBEDDED":
       "Already embedded in a0G backing",
     "technical_eligibility=EXCLUDED_PENDING":
@@ -55,6 +110,77 @@ function friendlyReason(reason: string) {
   };
 
   return map[reason] ?? reason.replaceAll("_", " ");
+}
+
+function dataQualityLabel(strategy: OptimizerStrategy) {
+  if (strategy.data_status === "PARTIAL_MODELLED") {
+    return "Live yield + modelled risk";
+  }
+  if (strategy.data_status === "LIVE_INCOMPLETE") {
+    return "Live market data · runtime checks";
+  }
+  if (strategy.data_status === "MISSING") {
+    return "No verified live snapshot";
+  }
+  return strategy.data_status ?? "Live route";
+}
+
+function primaryReason(strategy: OptimizerStrategy) {
+  const reasons = strategy.exclusion_reasons;
+
+  if (
+    reasons.some((reason) =>
+      reason.includes("EXCLUDED_LIQUIDITY_CONSTRAINED"),
+    )
+  ) {
+    return `Low liquidity (${compactUsd(strategy.liquidity_usd)})`;
+  }
+
+  if (
+    reasons.some((reason) =>
+      reason.includes("EXCLUDED_LIVE_DATA_INCOMPLETE"),
+    )
+  ) {
+    return "Waiting for ≥24h yield history";
+  }
+
+  if (
+    reasons.some((reason) =>
+      reason.includes("EXCLUDED_EMBEDDED"),
+    )
+  ) {
+    return "Embedded beneath a0G · not separately allocatable";
+  }
+
+  if (
+    reasons.some((reason) =>
+      reason.includes("EXCLUDED_PENDING"),
+    )
+  ) {
+    return "Exact market not yet verified";
+  }
+
+  const profileReason = reasons.find(
+    (reason) =>
+      reason === "slippage_exceeds_profile_limit" ||
+      reason === "exit_time_exceeds_profile_limit",
+  );
+
+  if (profileReason) {
+    return friendlyReason(profileReason);
+  }
+
+  if (strategy.profile_eligible) {
+    return dataQualityLabel(strategy);
+  }
+
+  const concrete = reasons.find(
+    (reason) => reason !== "optimizer_eligible=False",
+  );
+
+  return concrete
+    ? friendlyReason(concrete)
+    : dataQualityLabel(strategy);
 }
 
 function statusLabel(strategy: OptimizerStrategy) {
@@ -84,6 +210,27 @@ function statusLabel(strategy: OptimizerStrategy) {
   return "Excluded";
 }
 
+function allocationExplanation(
+  strategy: OptimizerStrategy,
+  allocatedRank: number,
+) {
+  const strategyName = meta(strategy.strategy_id).name;
+
+  if (strategy.allocation_weight > 0) {
+    if (allocatedRank === 0) {
+      return `${strategyName} has the highest Net APY among the routes selected by the optimizer for this run, so it receives ${pct(strategy.allocation_weight, 0)}.`;
+    }
+
+    return `${strategyName} is the next selected eligible route and fills ${pct(strategy.allocation_weight, 0)} of the portfolio while the portfolio constraints remain satisfied.`;
+  }
+
+  if (strategy.profile_eligible) {
+    return `${strategyName} is eligible, but its current Net APY is below the allocated routes for this profile and notional, so the optimizer assigns 0%.`;
+  }
+
+  return `${strategyName} is not allocatable in this run: ${primaryReason(strategy)}.`;
+}
+
 export default function Home() {
   const [amount, setAmount] = useState("1000");
   const [horizon, setHorizon] = useState("90");
@@ -91,6 +238,9 @@ export default function Home() {
   const [data, setData] = useState<OptimizerResponse | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [expandedStrategy, setExpandedStrategy] = useState<string | null>(null);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [walletNotice, setWalletNotice] = useState(false);
 
   const allocated = useMemo(
     () =>
@@ -100,10 +250,37 @@ export default function Home() {
     [data],
   );
 
+  const explanationRows = useMemo(() => {
+    if (!data) return [];
+
+    const allocatedIds = new Map(
+      allocated.map((strategy, index) => [strategy.strategy_id, index]),
+    );
+
+    return data.strategies
+      .filter(
+        (strategy) =>
+          strategy.allocation_weight > 0 ||
+          strategy.profile_eligible ||
+          strategy.strategy_id === "JAINE_LP_0G_USDC" ||
+          strategy.strategy_id === "ASCEND_STAKE_A0G",
+      )
+      .slice(0, 5)
+      .map((strategy) => ({
+        strategy,
+        text: allocationExplanation(
+          strategy,
+          allocatedIds.get(strategy.strategy_id) ?? -1,
+        ),
+      }));
+  }, [allocated, data]);
+
   async function optimize(event: FormEvent) {
     event.preventDefault();
     setLoading(true);
     setError("");
+    setReviewOpen(false);
+    setWalletNotice(false);
 
     try {
       const response = await fetch("/api/optimize", {
@@ -132,6 +309,11 @@ export default function Home() {
     }
   }
 
+  function showWalletNotice() {
+    setReviewOpen(true);
+    setWalletNotice(true);
+  }
+
   return (
     <main className="shell">
       <header className="topbar">
@@ -139,27 +321,55 @@ export default function Home() {
           <div className="brandMark">A</div>
           <div>
             <div className="brandName">ASCEND</div>
-            <div className="brandSub">Strategy Optimizer</div>
+            <div className="brandSub">Optimizer</div>
           </div>
         </div>
-        <div className="networkPill">
-          <span className="networkDot" />
-          0G Mainnet
+
+        <nav className="mainNav" aria-label="Primary navigation">
+          <button type="button" disabled title="Coming soon">
+            Earn
+          </button>
+          <button type="button" className="active" aria-current="page">
+            Optimize
+          </button>
+          <button type="button" disabled title="Coming soon">
+            Portfolio
+          </button>
+          <button type="button" disabled title="Coming soon">
+            Strategies
+          </button>
+        </nav>
+
+        <div className="topActions">
+          <div className="networkPill">
+            <span className="networkDot" />
+            0G Mainnet
+          </div>
+          <button
+            className="walletButton"
+            type="button"
+            onClick={showWalletNotice}
+          >
+            Connect Wallet
+          </button>
         </div>
       </header>
 
-      <section className="hero">
+      <section className="appHeading">
         <div>
-          <div className="eyebrow">LIVE YIELD ROUTING</div>
-          <h1>Put your 0G to work.</h1>
+          <div className="eyebrow">LIVE STRATEGY ROUTER</div>
+          <h1>Strategy optimizer</h1>
           <p>
-            Compare live staking and DeFi routes, constrain risk, and generate
-            a portfolio before approving any on-chain action.
+            Compare live 0G routes, apply your risk profile, and review the
+            proposed allocation before any wallet action.
           </p>
         </div>
-        <div className="heroStat">
-          <span>Optimizer state</span>
-          <strong>{data ? "Live" : "Ready"}</strong>
+        <div className="optimizerState">
+          <span className="networkDot" />
+          <div>
+            <small>Optimizer</small>
+            <strong>{data ? "Live" : "Ready"}</strong>
+          </div>
         </div>
       </section>
 
@@ -208,13 +418,14 @@ export default function Home() {
           </div>
 
           <button className="primaryButton" type="submit" disabled={loading}>
-            {loading ? "Optimizing…" : "Optimize portfolio"}
+            {loading ? "Optimizing…" : "Optimize"}
           </button>
 
           {error && <div className="errorBox">{error}</div>}
 
           <div className="controlFootnote">
-            Analysis only. Execution always requires explicit user approval.
+            Analysis only. Every wallet and execution action requires explicit
+            user approval.
           </div>
         </form>
 
@@ -226,7 +437,9 @@ export default function Home() {
                 {data ? usd(data.input.portfolio_value_usd) : "—"}
               </strong>
               <small>
-                {data ? `${data.input.amount.toLocaleString()} 0G` : "Enter an amount"}
+                {data
+                  ? `${data.input.amount.toLocaleString()} 0G`
+                  : "Enter an amount"}
               </small>
             </article>
             <article className="metricCard accent">
@@ -281,7 +494,7 @@ export default function Home() {
                       key={strategy.strategy_id}
                       className="allocationSegment"
                       style={{ width: `${strategy.allocation_weight * 100}%` }}
-                      title={DISPLAY_NAMES[strategy.strategy_id] ?? strategy.strategy_id}
+                      title={meta(strategy.strategy_id).name}
                     />
                   ))}
                   {data.portfolio.idle.weight > 0 && (
@@ -296,10 +509,10 @@ export default function Home() {
                   {allocated.map((strategy) => (
                     <div className="allocationRow" key={strategy.strategy_id}>
                       <div>
-                        <strong>
-                          {DISPLAY_NAMES[strategy.strategy_id] ??
-                            strategy.strategy_id}
-                        </strong>
+                        <span className="miniIcon">
+                          {meta(strategy.strategy_id).icon}
+                        </span>
+                        <strong>{meta(strategy.strategy_id).name}</strong>
                         <span>{pct(strategy.allocation_weight, 0)}</span>
                       </div>
                       <div>{usd(strategy.allocation_usd)}</div>
@@ -308,6 +521,7 @@ export default function Home() {
                   {data.portfolio.idle.weight > 0 && (
                     <div className="allocationRow">
                       <div>
+                        <span className="miniIcon mutedIcon">—</span>
                         <strong>Idle</strong>
                         <span>{pct(data.portfolio.idle.weight, 0)}</span>
                       </div>
@@ -315,11 +529,124 @@ export default function Home() {
                     </div>
                   )}
                 </div>
+
+                <div className="allocationActions">
+                  <button
+                    type="button"
+                    className="secondaryButton"
+                    onClick={() => setReviewOpen(true)}
+                  >
+                    Why this allocation?
+                  </button>
+                  <button
+                    type="button"
+                    className="primaryButton inline"
+                    onClick={() => setReviewOpen(true)}
+                  >
+                    Review allocation
+                  </button>
+                </div>
               </>
             )}
           </article>
 
-          <article className="panel">
+          {data && reviewOpen && (
+            <article className="panel explainPanel">
+              <div className="panelHeader">
+                <div>
+                  <div className="sectionLabel">Explainability</div>
+                  <h2>Why this allocation?</h2>
+                </div>
+                <button
+                  className="textButton"
+                  type="button"
+                  onClick={() => setReviewOpen(false)}
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="explanationList">
+                {explanationRows.map(({ strategy, text }) => (
+                  <div className="explanationRow" key={strategy.strategy_id}>
+                    <span className="strategyIcon small">
+                      {meta(strategy.strategy_id).icon}
+                    </span>
+                    <div>
+                      <strong>{meta(strategy.strategy_id).name}</strong>
+                      <p>{text}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="executionFlow">
+                <div className="flowHeading">
+                  <div>
+                    <div className="sectionLabel">Execution flow</div>
+                    <h3>Review → wallet → approval → execution</h3>
+                  </div>
+                  <span className="safeBadge">Explicit approval only</span>
+                </div>
+
+                <div className="flowSteps">
+                  <div className="flowStep complete">
+                    <span>1</span>
+                    <div>
+                      <strong>Review allocation</strong>
+                      <small>Portfolio generated and visible above.</small>
+                    </div>
+                  </div>
+                  <div className="flowStep next">
+                    <span>2</span>
+                    <div>
+                      <strong>Connect wallet</strong>
+                      <small>Wallet integration is the next execution-layer task.</small>
+                    </div>
+                  </div>
+                  <div className="flowStep locked">
+                    <span>3</span>
+                    <div>
+                      <strong>Approve</strong>
+                      <small>Locked until a wallet is connected.</small>
+                    </div>
+                  </div>
+                  <div className="flowStep locked">
+                    <span>4</span>
+                    <div>
+                      <strong>Execute</strong>
+                      <small>Never automatic; requires a final explicit action.</small>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flowActions">
+                  <button
+                    type="button"
+                    className="walletButton prominent"
+                    onClick={() => setWalletNotice(true)}
+                  >
+                    Connect Wallet
+                  </button>
+                  <button type="button" className="lockedButton" disabled>
+                    Approve
+                  </button>
+                  <button type="button" className="lockedButton" disabled>
+                    Execute
+                  </button>
+                </div>
+
+                {walletNotice && (
+                  <div className="walletNotice">
+                    Wallet integration is not wired yet. No wallet request or
+                    transaction was sent.
+                  </div>
+                )}
+              </div>
+            </article>
+          )}
+
+          <article className="panel strategyPanel">
             <div className="panelHeader">
               <div>
                 <div className="sectionLabel">Strategy universe</div>
@@ -336,34 +663,116 @@ export default function Home() {
                 <span>Net APY</span>
                 <span>Liquidity</span>
                 <span>Status</span>
+                <span />
               </div>
 
-              {data?.strategies.map((strategy) => (
-                <div className="strategyRow" key={strategy.strategy_id}>
-                  <div>
-                    <strong>
-                      {DISPLAY_NAMES[strategy.strategy_id] ??
-                        strategy.strategy_id}
-                    </strong>
-                    <small>
-                      {strategy.exclusion_reasons[0]
-                        ? friendlyReason(strategy.exclusion_reasons[0])
-                        : strategy.data_status ?? "Live"}
-                    </small>
+              {data?.strategies.map((strategy) => {
+                const strategyMeta = meta(strategy.strategy_id);
+                const expanded = expandedStrategy === strategy.strategy_id;
+
+                return (
+                  <div className="strategyEntry" key={strategy.strategy_id}>
+                    <button
+                      type="button"
+                      className="strategyRow"
+                      aria-expanded={expanded}
+                      onClick={() =>
+                        setExpandedStrategy(
+                          expanded ? null : strategy.strategy_id,
+                        )
+                      }
+                    >
+                      <div className="strategyIdentity">
+                        <span className="strategyIcon">
+                          {strategyMeta.icon}
+                        </span>
+                        <div>
+                          <strong>{strategyMeta.name}</strong>
+                          <small>{primaryReason(strategy)}</small>
+                        </div>
+                      </div>
+                      <span>{pct(strategy.net_apy)}</span>
+                      <span>{usd(strategy.liquidity_usd)}</span>
+                      <span
+                        className={
+                          strategy.profile_eligible
+                            ? "status positive"
+                            : "status"
+                        }
+                      >
+                        {statusLabel(strategy)}
+                      </span>
+                      <span className="chevron">
+                        {expanded ? "−" : "+"}
+                      </span>
+                    </button>
+
+                    {expanded && (
+                      <div className="strategyDetails">
+                        <div className="detailIntro">
+                          <div>
+                            <span>{strategyMeta.protocol}</span>
+                            <strong>{dataQualityLabel(strategy)}</strong>
+                          </div>
+                          <p>{primaryReason(strategy)}</p>
+                        </div>
+
+                        <div className="detailGrid">
+                          <div>
+                            <span>Net APY</span>
+                            <strong>{pct(strategy.net_apy)}</strong>
+                          </div>
+                          <div>
+                            <span>Max slippage</span>
+                            <strong>
+                              {pct(strategy.max_entry_exit_slippage)}
+                            </strong>
+                          </div>
+                          <div>
+                            <span>Exit time</span>
+                            <strong>
+                              {strategy.exit_time_days == null
+                                ? "—"
+                                : `${strategy.exit_time_days.toFixed(1)}d`}
+                            </strong>
+                          </div>
+                          <div>
+                            <span>Bridge exposure</span>
+                            <strong>{pct(strategy.bridge_fraction)}</strong>
+                          </div>
+                          <div>
+                            <span>Slashing stress</span>
+                            <strong>
+                              {pct(strategy.slashing_stress_loss)}
+                            </strong>
+                          </div>
+                          <div>
+                            <span>LP ±20% stress</span>
+                            <strong>
+                              {pct(strategy.lp_stress_loss_20pct)}
+                            </strong>
+                          </div>
+                        </div>
+
+                        {strategy.exclusion_reasons.length > 0 && (
+                          <div className="reasonList">
+                            {strategy.exclusion_reasons
+                              .filter(
+                                (reason) =>
+                                  reason !== "optimizer_eligible=False",
+                              )
+                              .map((reason) => (
+                                <span key={reason}>
+                                  {friendlyReason(reason)}
+                                </span>
+                              ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  <span>{pct(strategy.net_apy)}</span>
-                  <span>{usd(strategy.liquidity_usd)}</span>
-                  <span
-                    className={
-                      strategy.profile_eligible
-                        ? "status positive"
-                        : "status"
-                    }
-                  >
-                    {statusLabel(strategy)}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
 
               {!data && (
                 <div className="emptyState tableEmpty">
