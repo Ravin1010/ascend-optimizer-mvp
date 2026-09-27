@@ -183,3 +183,34 @@ def test_runtime_lp_fields_do_not_look_like_collection_gaps() -> None:
         oku["runtime_resolvable_exposures"]
         == "entry_slippage_rate|exit_slippage_rate|lp_stress_loss_20pct"
     )
+
+
+
+def test_static_jaine_liquidity_exclusion_precedes_runtime_quote_gap() -> None:
+    strategies = load_strategies(PROJECT_ROOT / "data" / "strategies.csv")
+
+    frame = pd.DataFrame(
+        [
+            _row(
+                "JAINE_LP_0G_USDC",
+                gross_apr=0.08,
+                liquidity_usd=1_200,
+                entry_slippage_rate=None,
+                exit_slippage_rate=None,
+                exit_time_days=0,
+                bridge_fraction=0,
+                lp_stress_loss_20pct=None,
+            )
+        ],
+        columns=SNAPSHOT_COLUMNS,
+    )
+    snapshots = validate_snapshots(frame.astype("string"), strategies)
+
+    table = build_readiness_table(strategies, snapshots)
+    jaine = table.loc[
+        table["strategy_id"] == "JAINE_LP_0G_USDC"
+    ].iloc[0]
+
+    assert jaine["return_ready"]
+    assert not jaine["optimizer_eligible"]
+    assert jaine["next_gap"] == "technical_eligibility"
