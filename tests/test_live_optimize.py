@@ -331,14 +331,24 @@ def test_json_exposes_per_strategy_constraint_headroom() -> None:
     }
 
     native = by_id["NATIVE_STAKE_0G"]
-    concentration = native["constraint_diagnostics"][
+    native_concentration = native["constraint_diagnostics"][
         "strategy_concentration"
     ]
 
-    assert concentration["value"] == pytest.approx(0.60)
-    assert concentration["limit"] == pytest.approx(0.60)
-    assert concentration["headroom"] == pytest.approx(0)
-    assert concentration["state"] == "AT_LIMIT"
+    assert native_concentration["value"] == pytest.approx(0.40)
+    assert native_concentration["limit"] == pytest.approx(0.60)
+    assert native_concentration["headroom"] == pytest.approx(0.20)
+    assert native_concentration["state"] == "WITHIN_LIMIT"
+
+    gimo = by_id["GIMO_STAKE_0G"]
+    gimo_concentration = gimo["constraint_diagnostics"][
+        "strategy_concentration"
+    ]
+
+    assert gimo_concentration["value"] == pytest.approx(0.60)
+    assert gimo_concentration["limit"] == pytest.approx(0.60)
+    assert gimo_concentration["headroom"] == pytest.approx(0)
+    assert gimo_concentration["state"] == "AT_LIMIT"
 
     oku = by_id["OKU_LP_0G_USDC"]
     slippage = oku["constraint_diagnostics"]["slippage"]
