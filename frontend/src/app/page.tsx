@@ -171,6 +171,16 @@ function primaryReason(strategy: OptimizerStrategy) {
   }
 
   if (strategy.profile_eligible) {
+    const near = nearLimitLabel(strategy);
+    if (near) {
+      if (
+        near.diagnostic.value != null &&
+        near.diagnostic.limit != null
+      ) {
+        return `${near.label} · ${pct(near.diagnostic.value)} / ${pct(near.diagnostic.limit)}`;
+      }
+      return near.label;
+    }
     return dataQualityLabel(strategy);
   }
 
@@ -182,6 +192,31 @@ function primaryReason(strategy: OptimizerStrategy) {
     ? friendlyReason(concrete)
     : dataQualityLabel(strategy);
 }
+
+function nearLimitLabel(strategy: OptimizerStrategy) {
+  const diagnostics = Object.entries(strategy.constraint_diagnostics);
+  const near = diagnostics.find(
+    ([, diagnostic]) => diagnostic.state === "NEAR_LIMIT",
+  );
+
+  if (!near) return null;
+
+  const [key, diagnostic] = near;
+  const labels: Record<string, string> = {
+    strategy_concentration: "concentration",
+    slippage: "slippage",
+    exit_time: "exit time",
+    bridge: "bridge",
+    slashing: "slashing",
+    lp_stress: "LP stress",
+  };
+
+  return {
+    label: `Near ${labels[key] ?? key} limit`,
+    diagnostic,
+  };
+}
+
 
 function statusLabel(strategy: OptimizerStrategy) {
   if (strategy.allocation_weight > 0) return "Allocated";
@@ -590,7 +625,7 @@ export default function Home() {
                     <div className="sectionLabel">Constraints applied</div>
                     <h3>{data.input.profile} limits</h3>
                   </div>
-                  <span className="muted">Binding limits highlighted</span>
+                  <span className="muted">At-limit and triggered constraints highlighted</span>
                 </div>
 
                 <div className="constraintGrid">
@@ -626,8 +661,8 @@ export default function Home() {
                       value: pct(data.profile_constraints.max_slashing_stress_loss, 0),
                     },
                   ].map((constraint) => {
-                    const binding =
-                      data.profile_constraints.binding_constraints.includes(
+                    const atLimit =
+                      data.profile_constraints.at_limit_constraints.includes(
                         constraint.key,
                       );
                     const triggered =
@@ -640,7 +675,7 @@ export default function Home() {
                         key={constraint.key}
                         className={[
                           "constraintChip",
-                          binding ? "binding" : "",
+                          atLimit ? "binding" : "",
                           triggered ? "triggered" : "",
                         ]
                           .filter(Boolean)
@@ -649,8 +684,8 @@ export default function Home() {
                         <span>{constraint.label}</span>
                         <strong>{constraint.value}</strong>
                         <small>
-                          {binding
-                            ? "Binding"
+                          {atLimit
+                            ? "At limit"
                             : triggered
                               ? "Triggered by excluded route"
                               : "Applied"}
@@ -811,6 +846,22 @@ export default function Home() {
                           </div>
                           <p>{primaryReason(strategy)}</p>
                         </div>
+
+                        {strategy.constraint_diagnostics.slippage.state !== "UNAVAILABLE" && (
+                          <div className="headroomCallout">
+                            <span>Slippage headroom</span>
+                            <strong>
+                              {strategy.constraint_diagnostics.slippage.headroom == null
+                                ? "—"
+                                : pct(strategy.constraint_diagnostics.slippage.headroom, 3)}
+                            </strong>
+                            <small>
+                              {pct(strategy.constraint_diagnostics.slippage.value)} live vs{" "}
+                              {pct(strategy.constraint_diagnostics.slippage.limit)} limit ·{" "}
+                              {strategy.constraint_diagnostics.slippage.state.replaceAll("_", " ").toLowerCase()}
+                            </small>
+                          </div>
+                        )}
 
                         <div className="detailGrid">
                           <div>
