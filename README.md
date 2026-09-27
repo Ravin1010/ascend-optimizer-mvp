@@ -293,14 +293,16 @@ must be regenerated immediately before deployment rather than frozen in source
 code.
 
 The adapter constructor now rejects ticks that are not aligned to the selected
-pool's live tick spacing. The preflight also reports the range-implied USDC
-value fraction and its deviation from the adapter's current 50/50 entry split;
-the 50/50 split remains an explicit first-order MVP execution approximation,
-not an assertion that every concentrated-liquidity range is exactly balanced.
+pool's live tick spacing. The preflight also reports the range-implied USDC value fraction and emits
+`target_usdc_bps`. The adapter stores that target immutably at deployment and
+uses it for each entry swap instead of assuming a fixed 50/50 split. Runtime LP
+slippage quotes derive the same range-aware target, so optimizer execution-cost
+estimates and deployed adapter behavior use the same allocation basis.
 
-The shared adapter uses one immutable W0G/USDC.e pool, fee tier and tick range
-per deployment. Native 0G is wrapped to W0G, a bounded portion is swapped into
-USDC.e, and liquidity is managed through the venue's V3 NFT position manager.
+The shared adapter uses one immutable W0G/USDC.e pool, fee tier, tick range,
+and range-derived USDC target per deployment. Native 0G is wrapped to W0G, the
+configured target portion is swapped into USDC.e, and liquidity is managed
+through the venue's V3 NFT position manager.
 Jaine uses its legacy V1-style router ABI while Oku/Uniswap uses Router02.
 
 Vault LP shares are synthetic NAV shares rather than raw V3 liquidity units.
