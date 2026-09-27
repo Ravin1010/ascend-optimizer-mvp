@@ -157,6 +157,11 @@ def build_optimizer_candidates(
 
     return_rows: list[dict[str, object]] = []
 
+    strategy_meta_by_id = {
+        str(row["strategy_id"]): row
+        for _, row in strategies.iterrows()
+    }
+
     for strategy_id in strategies["strategy_id"].astype(str):
         snapshot = snapshot_by_id.get(strategy_id)
 
@@ -175,6 +180,12 @@ def build_optimizer_candidates(
 
         if snapshot is None:
             row["return_error"] = "missing_snapshot"
+            return_rows.append(row)
+            continue
+
+        strategy_meta = strategy_meta_by_id[strategy_id]
+        if str(strategy_meta["technical_eligibility"]) == "EXCLUDED_EMBEDDED":
+            row["return_error"] = "embedded_exposure_no_independent_return"
             return_rows.append(row)
             continue
 
