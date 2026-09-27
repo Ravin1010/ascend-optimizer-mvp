@@ -35,9 +35,20 @@ def test_current_scaffold_surfaces_missing_data_without_fabrication() -> None:
     assert len(candidates) == 7
     assert candidates["net_return_horizon"].isna().all()
     assert not candidates["optimizer_eligible"].any()
-    assert candidates["return_error"].str.contains(
+    embedded = candidates[
+        candidates["strategy_id"] == "ASCEND_RESTAKE"
+    ].iloc[0]
+    others = candidates[
+        candidates["strategy_id"] != "ASCEND_RESTAKE"
+    ]
+
+    assert others["return_error"].str.contains(
         "gross_apy or gross_apr"
     ).all()
+    assert (
+        embedded["return_error"]
+        == "embedded_exposure_no_independent_return"
+    )
 
 
 def _demo_inputs():
