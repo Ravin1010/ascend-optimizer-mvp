@@ -69,3 +69,28 @@ def test_invalid_tick_spacing_is_rejected() -> None:
             current_tick=0,
             tick_spacing=0,
         )
+
+
+
+def test_target_usdc_bps_is_rounded_from_fraction() -> None:
+    from src.ascend_optimizer.lp_deployment import LPDeploymentPlan
+
+    plan = LPDeploymentPlan(
+        venue="OKU",
+        pool="0x0000000000000000000000000000000000000001",
+        fee_tier=10000,
+        liquidity_usd=1000.0,
+        current_tick=0,
+        tick_spacing=200,
+        tick_lower=-200,
+        tick_upper=200,
+        sqrt_lower_x96=1,
+        sqrt_upper_x96=2,
+        token0=W0G_TOKEN,
+        token1=USDCE_TOKEN,
+        target_usdc_value_fraction=0.541083,
+        fifty_fifty_deviation_bps=410.83,
+        target_usdc_bps=5411,
+    )
+
+    assert plan.constructor_args()[-1] == 5411
