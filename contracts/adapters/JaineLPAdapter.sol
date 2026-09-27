@@ -31,7 +31,8 @@ contract JaineLPAdapter is V3LiquidityAdapter {
         int24 tickLower_,
         int24 tickUpper_,
         uint160 sqrtLowerX96_,
-        uint160 sqrtUpperX96_
+        uint160 sqrtUpperX96_,
+        uint16 targetUsdcBps_
     )
         V3LiquidityAdapter(
             DeploymentConfig({
@@ -47,6 +48,7 @@ contract JaineLPAdapter is V3LiquidityAdapter {
                 tickUpper: tickUpper_,
                 sqrtLowerX96: sqrtLowerX96_,
                 sqrtUpperX96: sqrtUpperX96_,
+                targetUsdcBps: targetUsdcBps_,
                 routerMode: RouterMode.V1
             })
         )
