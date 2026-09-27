@@ -36,6 +36,7 @@ W0G_TOKEN = "0x1Cd0690fF9a693f5EF2dD976660a8dAFc81A109c"
 USDCE_TOKEN = "0x1f3AA82227281cA364bFb3d253B0f1af1Da6473E"
 
 GET_POOL_SELECTOR = "0x1698ee82"  # getPool(address,address,uint24)
+LIQUIDITY_SELECTOR = "0x1a686502"  # liquidity()
 STANDARD_FEE_TIERS = (100, 500, 3000, 10000)
 ZERO_ADDRESS = "0x0000000000000000000000000000000000000000"
 
@@ -142,6 +143,82 @@ def get_pool_address(
     return _decode_address(raw)
 
 
+def get_pool_active_liquidity(
+    pool: OkuPool,
+    *,
+    rpc_fn: RpcFn | None = None,
+) -> int:
+    """Read the pool's current in-range V3 liquidity from chain."""
+
+    rpc = rpc_fn or rpc_call
+    raw = rpc(
+        RPC_URL,
+        "eth_call",
+        [
+            {
+                "to": pool.address,
+                "data": LIQUIDITY_SELECTOR,
+            },
+            "latest",
+        ],
+    )
+
+    if not isinstance(raw, str) or not raw.startswith("0x"):
+        raise CollectionError(
+            f"Invalid liquidity() result for {pool.address}: {raw!r}"
+        )
+
+    try:
+        return int(raw, 16)
+    except ValueError as exc:
+        raise CollectionError(
+            f"Invalid liquidity() result for {pool.address}: {raw!r}"
+        ) from exc
+
+
+def select_primary_pool_onchain(
+    pools: list[OkuPool],
+    *,
+    rpc_fn: RpcFn | None = None,
+) -> OkuPool:
+    """Select the pool with greatest current in-range on-chain liquidity."""
+
+    if not pools:
+        raise CollectionError("No Oku pools available for selection")
+
+    ranked: list[tuple[int, OkuPool]] = []
+    errors: list[str] = []
+
+    for pool in pools:
+        try:
+            liquidity = get_pool_active_liquidity(
+                pool,
+                rpc_fn=rpc_fn,
+            )
+        except CollectionError as exc:
+            errors.append(f"{pool.address}:{exc}")
+            continue
+        ranked.append((liquidity, pool))
+
+    if not ranked:
+        raise CollectionError(
+            "Unable to read on-chain liquidity for any Oku pool"
+            + (": " + " | ".join(errors) if errors else "")
+        )
+
+    liquidity, selected = max(
+        ranked,
+        key=lambda item: item[0],
+    )
+
+    if liquidity <= 0:
+        raise CollectionError(
+            "All discovered Oku pools have zero active liquidity"
+        )
+
+    return selected
+
+
 def discover_oku_pools(
     *,
     rpc_fn: RpcFn | None = None,
@@ -243,32 +320,25 @@ def collect_market_observation(
     """Discover candidate pools and select the most liquid observable route."""
 
     pools = discover_oku_pools(rpc_fn=rpc_fn)
-    observations: list[OkuMarketObservation] = []
-
-    for pool in pools:
-        try:
-            observations.append(
-                fetch_pool_market_data(
-                    pool,
-                    json_fn=json_fn,
-                )
-            )
-        except CollectionError:
-            continue
-
-    if observations:
-        return select_primary_pool(observations)
-
-    # Preserve on-chain pool discovery even if secondary market-data retrieval
-    # is temporarily unavailable.
-    pool = pools[0]
-
-    return OkuMarketObservation(
-        pool=pool,
-        name=None,
-        liquidity_usd=None,
-        volume_24h_usd=None,
+    pool = select_primary_pool_onchain(
+        pools,
+        rpc_fn=rpc_fn,
     )
+
+    try:
+        return fetch_pool_market_data(
+            pool,
+            json_fn=json_fn,
+        )
+    except CollectionError:
+        # Selection is already final from on-chain active liquidity. Market
+        # data is optional enrichment and must never change the chosen pool.
+        return OkuMarketObservation(
+            pool=pool,
+            name=None,
+            liquidity_usd=None,
+            volume_24h_usd=None,
+        )
 
 
 def build_oku_snapshot(
