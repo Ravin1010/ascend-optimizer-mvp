@@ -29,6 +29,27 @@ export interface OptimizerStrategy {
   allocation_usd: number;
   return_error: string | null;
   runtime_exposure_error: string | null;
+  constraint_diagnostics: {
+    strategy_concentration: ConstraintDiagnostic;
+    slippage: ConstraintDiagnostic;
+    exit_time: ConstraintDiagnostic;
+    bridge: ConstraintDiagnostic;
+    slashing: ConstraintDiagnostic;
+    lp_stress: ConstraintDiagnostic;
+  };
+}
+
+export interface ConstraintDiagnostic {
+  value: number | null;
+  limit: number;
+  headroom: number | null;
+  utilization: number | null;
+  state:
+    | "UNAVAILABLE"
+    | "WITHIN_LIMIT"
+    | "NEAR_LIMIT"
+    | "AT_LIMIT"
+    | "EXCEEDED";
 }
 
 export interface OptimizerResponse {
@@ -49,7 +70,7 @@ export interface OptimizerResponse {
     max_portfolio_lp_il_stress: number;
     max_exit_time_days: number;
     max_slashing_stress_loss: number;
-    binding_constraints: string[];
+    at_limit_constraints: string[];
     triggered_constraints: string[];
     observed: {
       max_allocated_strategy_weight: number;
