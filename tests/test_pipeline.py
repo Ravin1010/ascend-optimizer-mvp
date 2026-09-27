@@ -252,3 +252,25 @@ def test_pipeline_annotates_profile_specific_eligibility() -> None:
     # Jaine demo max slippage is 0.6%, within Balanced's 1.0% limit.
     assert jaine["profile_eligible"]
     assert jaine["profile_exclusion_reasons"] == ""
+
+
+
+def test_embedded_restaking_has_no_independent_return_candidate() -> None:
+    strategies, snapshots = _demo_inputs()
+
+    candidates = build_optimizer_candidates(
+        strategies,
+        snapshots,
+        amount=1000,
+        asset_price_usd=1,
+        horizon_days=90,
+    )
+
+    row = candidates.loc[
+        candidates["strategy_id"] == "ASCEND_RESTAKE"
+    ].iloc[0]
+
+    assert pd.isna(row["net_return_horizon"])
+    assert pd.isna(row["net_apy"])
+    assert row["return_error"] == "embedded_exposure_no_independent_return"
+    assert not row["optimizer_eligible"]
