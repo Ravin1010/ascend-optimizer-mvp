@@ -131,12 +131,12 @@ def build_readiness_table(
                 next_gap = "yield"
             else:
                 next_gap = "yield_fee_status"
+        elif not bool(exposure_row["technical_eligible"]):
+            next_gap = "technical_eligibility"
         elif unresolved_fields:
             next_gap = unresolved_fields[0]
         elif runtime_resolvable_fields:
             next_gap = "runtime_lp_quote"
-        elif not bool(exposure_row["technical_eligible"]):
-            next_gap = "technical_eligibility"
         else:
             next_gap = "ready"
 
