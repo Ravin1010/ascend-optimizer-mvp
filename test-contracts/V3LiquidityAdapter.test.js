@@ -9,7 +9,10 @@ describe("V3LiquidityAdapter", function () {
   const SQRT_LOWER = Q96 / 2n;
   const SQRT_UPPER = Q96 * 2n;
 
-  async function deployFixture({ routerMode = 0 } = {}) {
+  async function deployFixture({
+    routerMode = 0,
+    targetUsdcBps = 5000
+  } = {}) {
     const [owner, user, user2, other] = await ethers.getSigners();
 
     const Manager = await ethers.getContractFactory("StrategyManager");
@@ -83,6 +86,7 @@ describe("V3LiquidityAdapter", function () {
       tickUpper: TICK_UPPER,
       sqrtLowerX96: SQRT_LOWER,
       sqrtUpperX96: SQRT_UPPER,
+      targetUsdcBps,
       routerMode
     });
 
@@ -190,6 +194,34 @@ describe("V3LiquidityAdapter", function () {
 
     const position = await positionManager.positions(1);
     expect(position[7]).to.be.gt(0n);
+  });
+
+  it("uses the immutable range-aware USDC target for entry swaps", async function () {
+    const {
+      user,
+      vault,
+      w0g,
+      router,
+      adapter,
+      strategyId
+    } = await deployFixture({ targetUsdcBps: 6000 });
+
+    const amount = ethers.parseEther("10");
+    const routerBefore = await w0g.balanceOf(await router.getAddress());
+
+    await allocate({
+      user,
+      vault,
+      strategyId,
+      amount
+    });
+
+    const routerAfter = await w0g.balanceOf(await router.getAddress());
+
+    expect(await adapter.targetUsdcBps()).to.equal(6000n);
+    expect(routerAfter - routerBefore).to.equal(
+      ethers.parseEther("6")
+    );
   });
 
   it("executes the same LP lifecycle through a Router02 deployment", async function () {
@@ -438,6 +470,73 @@ describe("V3LiquidityAdapter", function () {
     );
   });
 
+  it("rejects deployment ticks that are not aligned to pool tick spacing", async function () {
+    const [owner] = await ethers.getSigners();
+
+    const Manager = await ethers.getContractFactory("StrategyManager");
+    const manager = await Manager.deploy(owner.address);
+
+    const Vault = await ethers.getContractFactory("AscendVault");
+    const vault = await Vault.deploy(
+      owner.address,
+      await manager.getAddress()
+    );
+
+    const W0G = await ethers.getContractFactory("MockW0G");
+    const w0g = await W0G.deploy();
+
+    const USDC = await ethers.getContractFactory("MockUSDCe");
+    const usdce = await USDC.deploy();
+
+    const Factory = await ethers.getContractFactory("MockV3Factory");
+    const factory = await Factory.deploy();
+
+    const Pool = await ethers.getContractFactory("MockV3Pool");
+    const pool = await Pool.deploy(
+      await factory.getAddress(),
+      await w0g.getAddress(),
+      await usdce.getAddress(),
+      FEE
+    );
+    await factory.setPool(await pool.getAddress());
+
+    const PositionManager = await ethers.getContractFactory(
+      "MockV3PositionManager"
+    );
+    const positionManager = await PositionManager.deploy(
+      await factory.getAddress()
+    );
+
+    const Router = await ethers.getContractFactory("MockV3RouterV1");
+    const router = await Router.deploy(await factory.getAddress());
+
+    const Adapter = await ethers.getContractFactory(
+      "V3LiquidityAdapter"
+    );
+
+    await expect(
+      Adapter.deploy({
+        vault: await vault.getAddress(),
+        factory: await factory.getAddress(),
+        router: await router.getAddress(),
+        positionManager: await positionManager.getAddress(),
+        pool: await pool.getAddress(),
+        w0g: await w0g.getAddress(),
+        usdce: await usdce.getAddress(),
+        feeTier: FEE,
+        tickLower: -601,
+        tickUpper: TICK_UPPER,
+        sqrtLowerX96: SQRT_LOWER,
+        sqrtUpperX96: SQRT_UPPER,
+        targetUsdcBps: 5000,
+        routerMode: 0
+      })
+    ).to.be.revertedWithCustomError(
+      Adapter,
+      "TicksNotAligned"
+    );
+  });
+
   it("rejects a pool that is not the factory's configured pair", async function () {
     const [owner] = await ethers.getSigners();
 
@@ -504,6 +603,7 @@ describe("V3LiquidityAdapter", function () {
         tickUpper: TICK_UPPER,
         sqrtLowerX96: SQRT_LOWER,
         sqrtUpperX96: SQRT_UPPER,
+        targetUsdcBps: 5000,
         routerMode: 0
       })
     ).to.be.revertedWithCustomError(
