@@ -78,14 +78,25 @@ def test_collect_market_observation_selects_highest_liquidity_pool() -> None:
     pool3000 = "0x3333333333333333333333333333333333333333"
 
     def fake_rpc(url, method, params):
-        fee_tier = int(params[0]["data"][-64:], 16)
-        mapping = {
-            100: "0x0000000000000000000000000000000000000000",
-            500: pool500,
-            3000: pool3000,
-            10000: "0x0000000000000000000000000000000000000000",
-        }
-        return _encode_address_result(mapping[fee_tier])
+        target = params[0]["to"]
+        data = params[0]["data"]
+
+        if target == JAINE_FACTORY:
+            fee_tier = int(data[-64:], 16)
+            mapping = {
+                100: "0x0000000000000000000000000000000000000000",
+                500: pool500,
+                3000: pool3000,
+                10000: "0x0000000000000000000000000000000000000000",
+            }
+            return _encode_address_result(mapping[fee_tier])
+
+        if target.lower() == pool500.lower():
+            return hex(100)
+        if target.lower() == pool3000.lower():
+            return hex(500)
+
+        raise AssertionError((target, data))
 
     def fake_json(url, headers=None):
         if pool500.lower() in url.lower():
