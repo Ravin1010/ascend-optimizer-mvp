@@ -276,6 +276,28 @@ The concentrated-liquidity execution layer is now implemented through a shared
 `V3LiquidityAdapter.sol` plus thin venue wrappers:
 `JaineLPAdapter.sol` and `OkuV3Adapter.sol`.
 
+
+Before deploying either LP adapter, generate a fresh live deployment plan:
+
+~~~bash
+python -m src.ascend_optimizer.lp_deployment --venue oku
+python -m src.ascend_optimizer.lp_deployment --venue jaine
+~~~
+
+The preflight discovers the currently deepest observable W0G/USDC.e fee-tier
+pool through the venue collector, reads the pool's on-chain `slot0()`,
+`tickSpacing()`, and token ordering, then derives a tick-spacing-aligned
++/-20% range consistent with the MVP LP stress model. It prints the exact pool,
+fee tier, ticks, TickMath sqrt bounds, and constructor arguments. These values
+must be regenerated immediately before deployment rather than frozen in source
+code.
+
+The adapter constructor now rejects ticks that are not aligned to the selected
+pool's live tick spacing. The preflight also reports the range-implied USDC
+value fraction and its deviation from the adapter's current 50/50 entry split;
+the 50/50 split remains an explicit first-order MVP execution approximation,
+not an assertion that every concentrated-liquidity range is exactly balanced.
+
 The shared adapter uses one immutable W0G/USDC.e pool, fee tier and tick range
 per deployment. Native 0G is wrapped to W0G, a bounded portion is swapped into
 USDC.e, and liquidity is managed through the venue's V3 NFT position manager.
