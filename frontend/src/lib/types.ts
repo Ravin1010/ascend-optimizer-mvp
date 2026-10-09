@@ -188,9 +188,11 @@ export type TechnicalAdmission = "SUPPORTED" | "UNSUPPORTED" | "UNKNOWN";
 export interface AdmissionEvidence {
   status: TechnicalAdmission; strategy_id: string; amount_0g: number; chain_id: number;
   source: string; mechanism: string; evidence_class: string; scalar_headroom_usd: number | null;
-  /** Optional per-capture provenance; no TTL/freshness certification. */
+  /** Optional per-capture provenance; validity applies only to admission. */
   capture?: AdmissionCapture | null;
   diagnostics?: string[];
+  validity?: AdmissionValidity | null;
+  validity_records?: AdmissionValidity[];
 }
 export interface AmountCandidate {
   strategy_id: string; weight: number; amount_0g: number; amount_usd: number;
@@ -255,4 +257,17 @@ export interface AdmissionCapture {
   valuation_price_usd: number | null;
   capture_status: "CAPTURED" | "NO_FRESH_CAPTURE_SUPPLIED" | "SOURCE_UNVERIFIED" | "CONFIG_UNRESOLVED" | "INVALID";
   notes: string;
+}
+
+
+export type AdmissionValidityState = "VALID" | "STALE" | "CONFIG_MISMATCH" | "AMOUNT_MISMATCH" | "SOURCE_UNVERIFIED" | "MISSING" | "POLICY_UNDEFINED";
+export interface AdmissionValidity {
+  state: AdmissionValidityState; as_of: string;
+  observation_timestamp: string | null; retrieval_timestamp: string | null;
+  observation_age_seconds: number | null; max_age_seconds: number | null;
+  source_role: string; evidence_class: string; config_identity: string | null;
+  candidate_amount_0g: string; candidate_amount_usd: string;
+  policy_version: string; reason_code: string; details: string;
+  config_verification_state: string | null; config_verification_source: string | null;
+  evidence_id?: string; captured_assertion?: TechnicalAdmission;
 }

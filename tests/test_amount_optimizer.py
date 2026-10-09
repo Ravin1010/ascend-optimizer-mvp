@@ -1,5 +1,6 @@
 """Synthetic amount/admission fixtures; no live evidence or RPC requests."""
 from dataclasses import replace
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 
@@ -39,7 +40,7 @@ def quote(**kw):
 def run(inputs, **kw):
     s, snapshots = inputs
     return run_amount_optimizer(s, snapshots, decision_amount=1000, price_usd=1, horizon_days=90,
-                                profile=kw.pop('profile', 'Balanced'), **kw)
+                                profile=kw.pop('profile', 'Balanced'), as_of=datetime(2026, 1, 1, tzinfo=timezone.utc), **kw)
 
 
 def point(inputs, sid='NATIVE_STAKE_0G', weight=.2, **kw):

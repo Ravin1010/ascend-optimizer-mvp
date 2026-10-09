@@ -15,12 +15,13 @@ from src.ascend_optimizer.data_loader import load_strategies, load_snapshots
 from src.ascend_optimizer.live_optimize import optimize_live
 from src.ascend_optimizer.amount_optimizer import run_amount_optimizer
 import json,sys
+from datetime import datetime, timezone
 s=load_strategies(); snapshots=load_snapshots(s, 'data/demo_strategy_snapshots.csv')
 a=sys.argv[1:]
 def arg(name, default):
  return a[a.index(name)+1] if name in a else default
 run=optimize_live(s,snapshots,amount=float(arg('--amount','1000')),horizon_days=float(arg('--horizon-days','90')),profile=arg('--profile','Balanced'),price_usd=1,include_modelled='--include-modelled' in a)
-amount_run=run_amount_optimizer(s,snapshots,decision_amount=run.amount,price_usd=run.asset_price_usd,horizon_days=run.horizon_days,profile=run.profile)
+amount_run=run_amount_optimizer(s,snapshots,decision_amount=run.amount,price_usd=run.asset_price_usd,horizon_days=run.horizon_days,profile=run.profile,as_of=datetime(2026,10,9,10,0,tzinfo=timezone.utc))
 print(json.dumps(run.to_dict(amount_aware=amount_run), allow_nan=False))
 `;
 const fixture: OptimizerResponse = parseOptimizerResponse(execFileSync(process.env.PYTHON_BIN ?? "python", ["-c", script], {cwd: root, encoding: "utf8"}));
@@ -100,5 +101,9 @@ test("repository admission diagnostics remain additive and unknown", () => {
     assert.equal(candidate.technical_admission, "UNKNOWN");
     assert.equal(candidate.admission_evidence?.capture, null);
     assert.ok(candidate.admission_evidence?.diagnostics?.includes("NO_MATCHING_CAPTURE"));
+    assert.equal(candidate.admission_evidence?.validity?.state, "MISSING");
+    assert.equal(candidate.admission_evidence?.validity?.as_of, "2026-10-09T10:00:00+00:00");
+    assert.equal(candidate.admission_evidence?.validity?.observation_age_seconds, null);
+    assert.equal(candidate.admission_evidence?.validity?.policy_version, "ADMISSION_VALIDITY_V1");
   }
 });

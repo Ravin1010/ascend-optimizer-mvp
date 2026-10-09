@@ -1,4 +1,5 @@
 """Hypothetical captures in temporary files only; no live evidence or RPC."""
+from datetime import datetime, timezone
 import csv
 import json
 from pathlib import Path
@@ -10,6 +11,14 @@ from src.ascend_optimizer.admission_provider import RepositoryAdmissionProvider
 from src.ascend_optimizer.amount_optimizer import AdmissionState, run_amount_optimizer
 from src.ascend_optimizer.data_loader import SchemaValidationError, load_snapshots, load_strategies
 from src.ascend_optimizer.live_optimize import optimize_live
+
+from src.ascend_optimizer.admission_validity import DEFAULT_POLICIES, FreshnessPolicy, RuntimeConfigContext
+
+TEST_TIME = datetime(2026, 3, 1, tzinfo=timezone.utc)
+# Legacy structural tests intentionally isolate matching from expiry. Production
+# policy is exercised separately by test_admission_validity.py.
+MATCHING_POLICIES = {k: FreshnessPolicy(100 * 86400, p.production_usable, 'Synthetic matching-only test')
+                     for k, p in DEFAULT_POLICIES.items()}
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -35,8 +44,12 @@ def write(path, *rows):
     return path
 
 def provider(tmp_path, inputs, *rows, **kwargs):
+    identities = kwargs.pop('config_identities', {'GIMO_STAKE_0G':'test:gimo:deployment-1'})
+    contexts = {sid: RuntimeConfigContext(sid, 16661, identity, 'VERIFIED', 'SYNTHETIC_TEST_ONLY')
+                for sid, identity in identities.items()}
     return RepositoryAdmissionProvider(write(tmp_path/'captures.csv', *rows), strategies=inputs[0],
-                config_identities=kwargs.pop('config_identities', {'GIMO_STAKE_0G':'test:gimo:deployment-1'}), **kwargs)
+                config_identities=identities, config_contexts=contexts, as_of=TEST_TIME,
+                policies=MATCHING_POLICIES, **kwargs)
 
 def lookup(p, inputs, amount=200, sid='GIMO_STAKE_0G', chain=None, usd=None):
     meta = inputs[0][inputs[0].strategy_id==sid].iloc[0].copy()
@@ -75,7 +88,7 @@ def test_times_and_block_provenance_preserved(tmp_path, inputs):
     assert e.capture['observation_timestamp']=='2026-01-01T00:00:00Z'
     assert e.capture['retrieval_timestamp']=='2026-01-02T00:00:00Z'
     assert e.capture['block_number']==123
-    assert 'STRUCTURAL_CAPTURE_MATCH_NO_TTL_ASSESSMENT' in e.diagnostics
+    assert 'CAPTURE_VALID_UNDER_OPERATIONAL_POLICY' in e.diagnostics
     json.dumps(e.capture,allow_nan=False)
 
 @pytest.mark.parametrize('changes', [
@@ -108,7 +121,7 @@ def test_wrong_chain_strategy_or_config(tmp_path,inputs):
     assert lookup(p,inputs,sid='NATIVE_STAKE_0G').status==AdmissionState.UNKNOWN
     p.config_identities['GIMO_STAKE_0G']='wrong'
     assert lookup(p,inputs).status==AdmissionState.UNKNOWN
-    p.config_identities.clear()
+    p.config_identities.clear(); p.config_contexts.clear()
     assert lookup(p,inputs).status==AdmissionState.UNKNOWN
 
 def test_conflicts_no_optimistic_override(tmp_path,inputs):
@@ -131,7 +144,7 @@ def test_specificity_observation_id_not_retrieval(tmp_path,inputs):
 def test_modelled_explicit_opt_in_historical_never_current(tmp_path,inputs):
     p=provider(tmp_path,inputs,record(evidence_class='MODELLED'))
     assert lookup(p,inputs).status==AdmissionState.UNKNOWN
-    demo=RepositoryAdmissionProvider(p.path,strategies=inputs[0],config_identities=p.config_identities,allow_modelled=True)
+    demo=RepositoryAdmissionProvider(p.path,strategies=inputs[0],config_identities=p.config_identities,config_contexts=p.config_contexts,as_of=TEST_TIME,policies=MATCHING_POLICIES,allow_modelled=True)
     assert lookup(demo,inputs).evidence_class=='MODELLED'
     assert lookup(demo,inputs).status==AdmissionState.SUPPORTED
     write(p.path,record(evidence_class='HISTORICAL'))
@@ -143,7 +156,7 @@ def test_explicit_negative_point(tmp_path,inputs):
 def test_native_validator_binding(tmp_path,inputs):
     p=provider(tmp_path,inputs,record(strategy_id='NATIVE_STAKE_0G',source_role='CONFIGURED_VALIDATOR_ADMISSION',config_identity='test:validator'),config_identities={'NATIVE_STAKE_0G':'test:validator'})
     assert lookup(p,inputs,sid='NATIVE_STAKE_0G').status==AdmissionState.SUPPORTED
-    p.config_identities.clear()
+    p.config_identities.clear(); p.config_contexts.clear()
     assert lookup(p,inputs,sid='NATIVE_STAKE_0G').status==AdmissionState.UNKNOWN
 
 def test_ascend_gate_overrides_capture(tmp_path,inputs):
@@ -157,7 +170,7 @@ def test_repository_no_tvl_depth_or_quote_fallback(inputs,profile):
     s,snapshots=inputs
     snapshots['tvl_usd']=1e15; snapshots['liquidity_usd']=1e15
     def forbidden(**kw): raise AssertionError('quote is not admission')
-    r=run_amount_optimizer(s,snapshots,decision_amount=1000,price_usd=1,horizon_days=90,profile=profile,lp_quote_fn=forbidden)
+    r=run_amount_optimizer(s,snapshots,decision_amount=1000,price_usd=1,horizon_days=90,profile=profile,lp_quote_fn=forbidden,as_of=TEST_TIME)
     assert not r.selected and r.to_dict()['recommendation']['idle_weight']==1
 
 @pytest.mark.parametrize('change',['withdraw','invalid','status','observation'])
@@ -172,7 +185,7 @@ def test_selected_lookup_repeated_changed_capture_fails(tmp_path,inputs,change):
                 elif change=='status': write(self.path,record(admission_status='UNSUPPORTED'))
                 else: write(self.path,record(observation_timestamp='2026-01-03T00:00:00Z',retrieval_timestamp='2026-01-04T00:00:00Z'))
             return super().__call__(**kw)
-    p=Changing(base.path,strategies=inputs[0],config_identities=base.config_identities)
+    p=Changing(base.path,strategies=inputs[0],config_identities=base.config_identities,config_contexts=base.config_contexts,as_of=TEST_TIME,policies=MATCHING_POLICIES)
     r=run_amount_optimizer(*inputs,decision_amount=1000,price_usd=1,horizon_days=90,profile='Balanced',admission_fn=p)
     assert 'REVALIDATION' in calls and r.selected[0].amount_0g==200
     assert r.revalidation=='FAILED' and r.to_dict()['recommendation'] is None

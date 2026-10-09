@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, replace
 from decimal import Decimal, localcontext
+from datetime import datetime
 from enum import Enum
 from itertools import product
 from math import isfinite
@@ -46,6 +47,8 @@ class AdmissionEvidence:
     scalar_headroom_usd: float | None = None
     capture: dict | None = None
     diagnostics: tuple[str, ...] = ()
+    validity: dict | None = None
+    validity_records: tuple[dict, ...] = ()
 
 
 def unknown_admission(*, strategy: pd.Series, amount_0g: float, **kwargs) -> AdmissionEvidence:
@@ -99,7 +102,7 @@ def evaluate_candidate(strategy: pd.Series, snapshot: pd.Series | None, *, weigh
                        profile: RiskProfile, admission_fn: AdmissionFn = unknown_admission,
                        lp_quote_fn: QuoteFn = estimate_lp_execution_slippage,
                        management_fee_rate: float = 0, performance_fee_rate: float = 0,
-                       stage: str = "CANDIDATE") -> AmountCandidate:
+                       stage: str = "CANDIDATE", as_of: datetime | None = None) -> AmountCandidate:
     sid = str(strategy.strategy_id)
     state = strategy_state(strategy)
     if sid not in MVP_STRATEGY_IDS or not state.structural_candidate:
@@ -132,7 +135,7 @@ def evaluate_candidate(strategy: pd.Series, snapshot: pd.Series | None, *, weigh
     try:
         evidence = admission_fn(strategy=strategy.copy(), snapshot=None if snapshot is None else snapshot.copy(),
                                 amount_0g=c.amount_0g, amount_usd=c.amount_usd, stage=stage,
-                                canonical_amount_0g=canonical_amount, canonical_amount_usd=canonical_usd)
+                                canonical_amount_0g=canonical_amount, canonical_amount_usd=canonical_usd, as_of=as_of)
         if not isinstance(evidence, AdmissionEvidence) or not isinstance(evidence.status, AdmissionState):
             raise ValueError("typed admission evidence required")
         if (evidence.strategy_id != sid or evidence.amount_0g != c.amount_0g
@@ -276,7 +279,9 @@ def run_amount_optimizer(strategies: pd.DataFrame, snapshots: pd.DataFrame, *, d
                          price_usd: float, horizon_days: float, profile: RiskProfile | str,
                          admission_fn: AdmissionFn | None = None,
                          lp_quote_fn: QuoteFn = estimate_lp_execution_slippage,
-                         management_fee_rate: float = 0, performance_fee_rate: float = 0) -> AmountAwareRun:
+                         management_fee_rate: float = 0, performance_fee_rate: float = 0,
+                         as_of: datetime | None = None,
+                         revalidation_as_of: datetime | None = None) -> AmountAwareRun:
     profile = profile if isinstance(profile, RiskProfile) else get_profile(profile)
     if admission_fn is None:
         from .admission_provider import RepositoryAdmissionProvider
@@ -284,6 +289,12 @@ def run_amount_optimizer(strategies: pd.DataFrame, snapshots: pd.DataFrame, *, d
     for name, value in (("decision_amount", decision_amount), ("price_usd", price_usd), ("horizon_days", horizon_days)):
         if not isfinite(value) or value <= 0:
             raise ValueError(f"{name} must be finite and positive")
+    from .admission_provider import RepositoryAdmissionProvider
+    if isinstance(admission_fn, RepositoryAdmissionProvider):
+        from .admission_validity import require_as_of
+        require_as_of(as_of if as_of is not None else admission_fn.as_of)
+        if revalidation_as_of is not None:
+            require_as_of(revalidation_as_of)
     if strategies.strategy_id.duplicated().any():
         raise ValueError("duplicate strategy IDs")
     members = strategies[strategies.apply(lambda row: strategy_state(row).structural_candidate, axis=1)]
@@ -296,6 +307,7 @@ def run_amount_optimizer(strategies: pd.DataFrame, snapshots: pd.DataFrame, *, d
         return evaluate_candidate(meta, by_id.get(str(meta.strategy_id)), weight=w, decision_amount=decision_amount,
                                   price_usd=price_usd, horizon_days=horizon_days, profile=profile,
                                   admission_fn=admission_fn, lp_quote_fn=lp_quote_fn, stage=stage,
+                                  as_of=revalidation_as_of if stage == "REVALIDATION" and revalidation_as_of is not None else as_of,
                                   management_fee_rate=management_fee_rate, performance_fee_rate=performance_fee_rate)
     candidates = tuple(evaluate(meta, w, "CANDIDATE") for _, meta in members.iterrows() for w in grid)
     options = [[c for c in candidates if c.strategy_id == sid and c.eligible] for sid in members.strategy_id]
@@ -325,7 +337,13 @@ def run_amount_optimizer(strategies: pd.DataFrame, snapshots: pd.DataFrame, *, d
     for c in selected:
         meta = strategies[strategies.strategy_id == c.strategy_id].iloc[0]
         refreshed = evaluate(meta, c.weight, "REVALIDATION")
-        if not refreshed.eligible or refreshed != c:
+        # A later assessment time/age is expected. Compare all other evidence,
+        # economics and route context; validity still controls refreshed admission.
+        def without_assessment(candidate):
+            evidence = candidate.admission_evidence
+            return replace(candidate, admission_evidence=None if evidence is None else
+                           replace(evidence, validity=None, validity_records=()))
+        if not refreshed.eligible or without_assessment(refreshed) != without_assessment(c):
             errors.append(c.strategy_id + ": selected candidate evidence/economics changed or failed")
     for c in selected:
         final_state = strategy_state(strategies[strategies.strategy_id == c.strategy_id].iloc[0])

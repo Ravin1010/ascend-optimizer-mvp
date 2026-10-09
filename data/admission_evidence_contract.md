@@ -1,5 +1,7 @@
 # Per-capture technical-admission evidence — Iteration 14
 
+**Runtime update:** Iteration 15 now enforces the centralized policy and verified runtime configuration described in [admission_validity_policy.md](admission_validity_policy.md). The no-TTL/provider behavior below records the historical Iteration 14 baseline; CSV structure and decimal matching remain authoritative.
+
 Canonical dataset: `data/admission_evidence.csv`. One CSV row per point or explicit bound. Current committed baseline is headers only: zero captures and zero qualified positive support. No source references, historical market values or demo assumptions were converted into admission captures. The separate source registry remains a reference catalogue, not this dataset.
 
 The strict loader is `admission_records.load_admission_records`; the provider is `admission_provider.RepositoryAdmissionProvider`. The amount-aware runner defaults to this provider when no explicit admission function is supplied. The legacy optimizer/API path is unchanged. Explicit Iteration 13 synthetic mode remains non-default.
