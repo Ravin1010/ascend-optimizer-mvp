@@ -111,3 +111,14 @@ Deferred: trustworthy capture acquisition/source verification, actual registered
 - TypeScript typecheck and production build: passed.
 - Repository-only three-profile comparison: no support/allocations, 100% idle, Ascend GATED.
 - git diff --check: passed.
+
+
+### Canonical decimal candidate identity
+
+The amount-aware runner derives admission identity as `Decimal(str(decision_amount)) ×
+Decimal(str(weight))`, then derives USD identity by multiplying the decimal amount by
+`Decimal(str(price_usd))`. Admission lookup and valuation matching use these decimals;
+float conversion is reserved for existing numerical economics and serialized values.
+Thus 100.1 × 0.3 matches 30.03 (including 30.030), but not 30.031. Revalidation
+repeats the same derivation. No fuzzy matching, epsilon, evidence rounding or
+interpolation is permitted. USD-only bounds are compared in USD without rounded division.

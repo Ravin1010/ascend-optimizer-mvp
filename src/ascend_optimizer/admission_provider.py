@@ -1,7 +1,7 @@
 """Repository-only technical admission. No RPC, TVL, quote or freshness fallback."""
 from __future__ import annotations
 
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from pathlib import Path
 from typing import Mapping
 
@@ -22,7 +22,9 @@ class RepositoryAdmissionProvider:
         self.config_identities = dict(config_identities or {})
         self.allow_modelled = allow_modelled
 
-    def __call__(self, *, strategy, amount_0g: float, amount_usd: float, **kwargs) -> AdmissionEvidence:
+    def __call__(self, *, strategy, amount_0g: float, amount_usd: float,
+                 canonical_amount_0g: Decimal | None = None,
+                 canonical_amount_usd: Decimal | None = None, **kwargs) -> AdmissionEvidence:
         sid, chain = str(strategy.strategy_id), int(strategy.execution_chain_id)
         def unknown(*diagnostics):
             return AdmissionEvidence(AdmissionState.UNKNOWN, sid, amount_0g, chain, "UNAVAILABLE",
@@ -36,7 +38,13 @@ class RepositoryAdmissionProvider:
             records = load_admission_records(self.path, strategies=self.strategies)
         except (OSError, SchemaValidationError) as exc:
             return unknown("EVIDENCE_DATASET_UNUSABLE: " + str(exc))
-        amount, usd = Decimal(str(amount_0g)), Decimal(str(amount_usd))
+        # The optimizer supplies identity derived from original decimal inputs,
+        # not Decimal(str(binary-float multiplication)). Direct callers retain
+        # exact semantics for their supplied decimal representations.
+        amount = Decimal(str(amount_0g)) if canonical_amount_0g is None else canonical_amount_0g
+        usd = Decimal(str(amount_usd)) if canonical_amount_usd is None else canonical_amount_usd
+        if not isinstance(amount, Decimal) or not isinstance(usd, Decimal):
+            return unknown("INVALID_CANONICAL_CANDIDATE_AMOUNT")
         if not amount.is_finite() or amount <= 0 or not usd.is_finite() or usd <= 0:
             return unknown("INVALID_CANDIDATE_AMOUNT")
         matched, diagnostics = [], []
@@ -56,18 +64,25 @@ class RepositoryAdmissionProvider:
                 continue
             # USD-dependent bounds/points require the captured valuation context.
             usd_dependent = record.number("amount_usd") is not None or record.number("tested_amount_usd") is not None or record.number("scalar_headroom_usd") is not None
-            if usd_dependent and usd != amount * record.number("valuation_price_usd"):
-                diagnostics.append(identity + ":VALUATION_CONTEXT_MISMATCH")
-                continue
+            if usd_dependent:
+                price = record.number("valuation_price_usd")
+                with localcontext() as context:
+                    context.prec = max(28, len(amount.as_tuple().digits) + len(price.as_tuple().digits))
+                    expected_usd = amount * price
+                if usd != expected_usd:
+                    diagnostics.append(identity + ":VALUATION_CONTEXT_MISMATCH")
+                    continue
             status = record.get("admission_status")
             if record.get("evidence_type") == "EXACT_POINT":
                 if amount != record.number("amount_0g"):
                     continue
             else:
                 bound = record.number("scalar_headroom_0g")
-                if bound is None:
-                    bound = record.number("scalar_headroom_usd") / record.number("valuation_price_usd")
-                if amount > bound:
+                # Compare USD-only bounds in their own unit; division could
+                # create a rounded decimal boundary for non-terminating ratios.
+                above_bound = (usd > record.number("scalar_headroom_usd")
+                               if bound is None else amount > bound)
+                if above_bound:
                     if status == "SUPPORTED":
                         status = "UNSUPPORTED"  # explicit maximum exceeded
                     else:

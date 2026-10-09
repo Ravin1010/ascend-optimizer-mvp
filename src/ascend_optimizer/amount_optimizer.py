@@ -6,6 +6,7 @@ No holdings acquisition, freshness enforcement or new stress model is performed.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, replace
+from decimal import Decimal, localcontext
 from enum import Enum
 from itertools import product
 from math import isfinite
@@ -108,7 +109,17 @@ def evaluate_candidate(strategy: pd.Series, snapshot: pd.Series | None, *, weigh
     for name, value in (("decision_amount", decision_amount), ("price_usd", price_usd), ("horizon_days", horizon_days)):
         if not isfinite(value) or value <= 0:
             raise ValueError(f"{name} must be finite and positive")
-    c = AmountCandidate(sid, weight, decision_amount * weight, decision_amount * price_usd * weight)
+    # Admission identity uses decimal inputs before any binary multiplication.
+    # Float amounts remain the compatibility boundary for numerical economics.
+    decision_decimal, weight_decimal, price_decimal = (
+        Decimal(str(value)) for value in (decision_amount, weight, price_usd)
+    )
+    with localcontext() as context:
+        context.prec = max(28, sum(len(value.as_tuple().digits) for value in
+                                   (decision_decimal, weight_decimal, price_decimal)))
+        canonical_amount = decision_decimal * weight_decimal
+        canonical_usd = canonical_amount * price_decimal
+    c = AmountCandidate(sid, weight, float(canonical_amount), float(canonical_usd))
     if weight == 0:
         return replace(c, net_profit_usd=0, net_return_horizon=0, fixed_execution_cost_usd=0,
                        technical_admission="NOT_REQUIRED", runtime_execution="NOT_REQUIRED", eligible=True,
@@ -120,7 +131,8 @@ def evaluate_candidate(strategy: pd.Series, snapshot: pd.Series | None, *, weigh
         reasons.append("PROFILE_CONCENTRATION_LIMIT")
     try:
         evidence = admission_fn(strategy=strategy.copy(), snapshot=None if snapshot is None else snapshot.copy(),
-                                amount_0g=c.amount_0g, amount_usd=c.amount_usd, stage=stage)
+                                amount_0g=c.amount_0g, amount_usd=c.amount_usd, stage=stage,
+                                canonical_amount_0g=canonical_amount, canonical_amount_usd=canonical_usd)
         if not isinstance(evidence, AdmissionEvidence) or not isinstance(evidence.status, AdmissionState):
             raise ValueError("typed admission evidence required")
         if (evidence.strategy_id != sid or evidence.amount_0g != c.amount_0g
@@ -133,7 +145,7 @@ def evaluate_candidate(strategy: pd.Series, snapshot: pd.Series | None, *, weigh
             headroom = _number(evidence.scalar_headroom_usd)
             if headroom is None or headroom < 0:
                 raise ValueError("invalid technical headroom")
-            if c.amount_usd > headroom:
+            if canonical_usd > Decimal(str(evidence.scalar_headroom_usd)):
                 evidence = replace(evidence, status=AdmissionState.UNSUPPORTED)
         c = replace(c, technical_admission=evidence.status.value, admission_evidence=evidence)
         if evidence.status != AdmissionState.SUPPORTED:

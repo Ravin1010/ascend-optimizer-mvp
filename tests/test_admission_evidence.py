@@ -190,3 +190,72 @@ def test_unchanged_capture_passes_and_legacy_unchanged(tmp_path,inputs):
 def test_modelled_mode_requires_boolean_opt_in(tmp_path,inputs):
     with pytest.raises(ValueError,match='explicit boolean'):
         provider(tmp_path,inputs,record(evidence_class='MODELLED'),allow_modelled='false')
+
+
+# Decimal-boundary regressions use hypothetical captures only.
+def decimal_point(inputs, p, *, weight=.3, price=1.7):
+    from src.ascend_optimizer.amount_optimizer import evaluate_candidate
+    from src.ascend_optimizer.profiles import get_profile
+    strategies, snapshots = inputs
+    sid = 'GIMO_STAKE_0G'
+    return evaluate_candidate(strategies[strategies.strategy_id == sid].iloc[0],
+                              snapshots[snapshots.strategy_id == sid].iloc[0],
+                              decision_amount=100.1, weight=weight, price_usd=price,
+                              horizon_days=90, profile=get_profile('Balanced'), admission_fn=p)
+
+
+@pytest.mark.parametrize('evidence_amount,expected', [
+    ('30.03', 'SUPPORTED'), ('30.030', 'SUPPORTED'), ('30.031', 'UNKNOWN'),
+])
+def test_canonical_decimal_exact_identity(tmp_path, inputs, evidence_amount, expected):
+    from decimal import Decimal
+    p = provider(tmp_path, inputs, record(amount_0g=evidence_amount, tested_amount_0g=evidence_amount))
+    seen = []
+    def capture(**kw):
+        seen.append((kw['canonical_amount_0g'], kw['canonical_amount_usd']))
+        return p(**kw)
+    c = decimal_point(inputs, capture)
+    assert seen == [(Decimal('30.03'), Decimal('51.051'))]
+    assert c.amount_0g == 30.03
+    assert c.technical_admission == expected
+
+
+@pytest.mark.parametrize('price,expected', [(1.7, 'SUPPORTED'), (1.7001, 'UNKNOWN')])
+def test_canonical_decimal_valuation(tmp_path, inputs, price, expected):
+    p = provider(tmp_path, inputs, record(amount_0g='30.03', tested_amount_0g='30.03',
+                 amount_usd='51.051', tested_amount_usd='51.051', valuation_price_usd='1.7'))
+    c = decimal_point(inputs, p, price=price)
+    assert c.technical_admission == expected
+    if expected == 'SUPPORTED':
+        assert c.amount_usd == 51.051
+
+
+@pytest.mark.parametrize('bound,expected', [('30.030', 'SUPPORTED'), ('30.029', 'UNSUPPORTED')])
+def test_canonical_decimal_native_bound(tmp_path, inputs, bound, expected):
+    p = provider(tmp_path, inputs, record(evidence_type='SCALAR_BOUND', amount_0g='',
+                 tested_amount_0g='', scalar_headroom_0g=bound))
+    assert decimal_point(inputs, p).technical_admission == expected
+
+
+@pytest.mark.parametrize('bound,expected', [('51.051', 'SUPPORTED'), ('51.050', 'UNSUPPORTED')])
+def test_canonical_decimal_usd_bound(tmp_path, inputs, bound, expected):
+    p = provider(tmp_path, inputs, record(evidence_type='SCALAR_BOUND', amount_0g='',
+                 tested_amount_0g='', scalar_headroom_usd=bound, valuation_price_usd='1.7'))
+    assert decimal_point(inputs, p).technical_admission == expected
+
+
+def test_canonical_decimal_selected_revalidation(tmp_path, inputs):
+    from decimal import Decimal
+    base = provider(tmp_path, inputs, record(amount_0g='30.030', tested_amount_0g='30.03',
+                    amount_usd='51.051', valuation_price_usd='1.7'))
+    calls = []
+    def capture(**kw):
+        if kw['strategy'].strategy_id == 'GIMO_STAKE_0G' and kw['canonical_amount_0g'] == Decimal('30.03'):
+            calls.append((kw['stage'], kw['canonical_amount_0g'], kw['canonical_amount_usd']))
+        return base(**kw)
+    r = run_amount_optimizer(*inputs, decision_amount=100.1, price_usd=1.7,
+                             horizon_days=90, profile='Balanced', admission_fn=capture)
+    assert r.revalidation == 'PASSED'
+    assert len(r.selected) == 1 and r.selected[0].amount_0g == 30.03
+    assert calls == [('CANDIDATE', Decimal('30.03'), Decimal('51.051')),
+                     ('REVALIDATION', Decimal('30.03'), Decimal('51.051'))]
