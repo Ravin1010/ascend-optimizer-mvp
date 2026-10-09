@@ -1,0 +1,439 @@
+{
+  "schema_version": "1.0",
+  "identity_version": "RUNTIME_ROUTE_V1",
+  "records": [
+    {
+      "strategy_id": "NATIVE_STAKE_0G",
+      "execution_chain_id": 16661,
+      "verification_state": "UNRESOLVED",
+      "verification_source": null,
+      "verified_at": null,
+      "block_number": null,
+      "block_hash": null,
+      "config_identity": null,
+      "config_components": {
+        "adapter_address": null,
+        "vault_address": null,
+        "strategy_manager_address": null,
+        "manager_strategy_key": null,
+        "adapter_class": "Native0GStakingAdapter",
+        "validator": null
+      },
+      "evidence_sources": [
+        {
+          "source_id": "OFFICIAL_0G_CHAIN",
+          "source_type": "OFFICIAL_PROTOCOL_REFERENCE",
+          "location": "https://build.0g.ai/chain",
+          "finding": "Publishes Mainnet chain 16661 / evmrpc.0g.ai; not adapter deployment proof."
+        },
+        {
+          "source_id": "data/strategies.csv",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/data/strategies.csv",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "3f1df7f87e0d340f9ecfbb56b49ec7555a4ff8c1d707fdc383867473f27e886e",
+          "finding": "Mainnet strategy identity and reference addresses, not deployed registration."
+        },
+        {
+          "source_id": "contracts/StrategyManager.sol",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/contracts/StrategyManager.sol",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "eb51aeba554ed01e911475c6777c1b80a539e36839c4edefff4b17a8da67b040",
+          "finding": "Strategy ID to adapter mapping requires concrete deployed manager registration; none supplied."
+        },
+        {
+          "source_id": "hardhat.config.js",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/hardhat.config.js",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "1028fbab53cd5e978e57a62be7bb8756437589db7d48ec311055f7704d7ee0a2",
+          "finding": "Compiler/test paths only; no deployed Mainnet route manifest."
+        },
+        {
+          "source_id": "README.md",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/README.md",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "b75860e9ca3898a5f36d7c535e9989f5912b1f10dd429aa35f1335fb33de8ad3",
+          "finding": "Describes adapter implementation and pre-deployment choices; no concrete deployment/registration artifact."
+        },
+        {
+          "source_id": "contracts/adapters/Native0GStakingAdapter.sol",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/contracts/adapters/Native0GStakingAdapter.sol",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "0c46545d182fdc0ced3f1d59dfc76f2b4deb60f71c9247319780182217076e32",
+          "finding": "Constructor fixes validator supplied at deployment; address is not a source-code constant."
+        },
+        {
+          "source_id": "src/ascend_optimizer/collectors/native_staking.py",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/src/ascend_optimizer/collectors/native_staking.py",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "9fa64c8db2cbb2198a1804fb50fb708e35f8706397fb7e64102a003a93a801d6",
+          "finding": "DEFAULT_VALIDATOR_SAMPLE is benchmark sampling, not configured validator."
+        }
+      ],
+      "verification_notes": "No committed Mainnet adapter, vault, StrategyManager address or registration key/proof establishes this actual capstone route. Required resolution: configured validator contract and its role/code on chain 16661, adapter constructor/immutable validator, vault/manager registration."
+    },
+    {
+      "strategy_id": "GIMO_STAKE_0G",
+      "execution_chain_id": 16661,
+      "verification_state": "UNRESOLVED",
+      "verification_source": null,
+      "verified_at": null,
+      "block_number": null,
+      "block_hash": null,
+      "config_identity": null,
+      "config_components": {
+        "adapter_address": null,
+        "vault_address": null,
+        "strategy_manager_address": null,
+        "manager_strategy_key": null,
+        "adapter_class": "GimoAdapter",
+        "stake_pool": "0xAc06d1Df23a4Fa00981aFAC0f33A5936Bd2135aF",
+        "st0g": "0x7bBC63D01CA42491c3E084C941c3E86e55951404",
+        "withdrawal_contract": "0xAc06d1Df23a4Fa00981aFAC0f33A5936Bd2135aF",
+        "referral": null
+      },
+      "evidence_sources": [
+        {
+          "source_id": "OFFICIAL_0G_CHAIN",
+          "source_type": "OFFICIAL_PROTOCOL_REFERENCE",
+          "location": "https://build.0g.ai/chain",
+          "finding": "Publishes Mainnet chain 16661 / evmrpc.0g.ai; not adapter deployment proof."
+        },
+        {
+          "source_id": "data/strategies.csv",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/data/strategies.csv",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "3f1df7f87e0d340f9ecfbb56b49ec7555a4ff8c1d707fdc383867473f27e886e",
+          "finding": "Mainnet strategy identity and reference addresses, not deployed registration."
+        },
+        {
+          "source_id": "contracts/StrategyManager.sol",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/contracts/StrategyManager.sol",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "eb51aeba554ed01e911475c6777c1b80a539e36839c4edefff4b17a8da67b040",
+          "finding": "Strategy ID to adapter mapping requires concrete deployed manager registration; none supplied."
+        },
+        {
+          "source_id": "hardhat.config.js",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/hardhat.config.js",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "1028fbab53cd5e978e57a62be7bb8756437589db7d48ec311055f7704d7ee0a2",
+          "finding": "Compiler/test paths only; no deployed Mainnet route manifest."
+        },
+        {
+          "source_id": "README.md",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/README.md",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "b75860e9ca3898a5f36d7c535e9989f5912b1f10dd429aa35f1335fb33de8ad3",
+          "finding": "Describes adapter implementation and pre-deployment choices; no concrete deployment/registration artifact."
+        },
+        {
+          "source_id": "contracts/adapters/GimoAdapter.sol",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/contracts/adapters/GimoAdapter.sol",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "5accb07b0f87d0a3021258ba1826bf4e2286bc9a53b5a6946b79373a55cdab96",
+          "finding": "stakePool is the stake/unstake/withdraw surface; referral is immutable constructor input, not configured here."
+        },
+        {
+          "source_id": "src/ascend_optimizer/collectors/gimo.py",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/src/ascend_optimizer/collectors/gimo.py",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "aed7a50787d5960023c49433465545727e59e10786351603db4eb15d6a21541e",
+          "finding": "Collector stake/token constants agree with metadata; not adapter registration."
+        },
+        {
+          "source_id": "GIMO_OFFICIAL_APP",
+          "source_type": "OFFICIAL_PROTOCOL_REFERENCE",
+          "location": "https://app.gimofinance.xyz/",
+          "finding": "Labels st0G token 0x7bBC63D01CA42491c3E084C941c3E86e55951404 and stake contract 0xAc06d1Df23a4Fa00981aFAC0f33A5936Bd2135aF; corroboration only, not code/registered adapter proof."
+        }
+      ],
+      "verification_notes": "No committed Mainnet adapter, vault, StrategyManager address or registration key/proof establishes this actual capstone route. Required resolution: deployed adapter stakePool/st0g/referral, registration and correct-chain contract role/code proof. Official protocol address match alone does not establish capstone configuration."
+    },
+    {
+      "strategy_id": "JAINE_LP_0G_USDC",
+      "execution_chain_id": 16661,
+      "verification_state": "UNRESOLVED",
+      "verification_source": null,
+      "verified_at": null,
+      "block_number": null,
+      "block_hash": null,
+      "config_identity": null,
+      "config_components": {
+        "adapter_address": null,
+        "vault_address": null,
+        "strategy_manager_address": null,
+        "manager_strategy_key": null,
+        "adapter_class": "JaineLPAdapter",
+        "factory": "0x9bdcA5798E52e592A08e3b34d3F18EeF76Af7ef4",
+        "router": "0x8B598A7C136215A95ba0282b4d832B9f9801f2e2",
+        "position_manager": "0x8F67A30Ed186e3E1f6504c6dE3239Ef43A2e0d72",
+        "pool": null,
+        "w0g": "0x1Cd0690fF9a693f5EF2dD976660a8dAFc81A109c",
+        "usdce": "0x1f3AA82227281cA364bFb3d253B0f1af1Da6473E",
+        "token0": null,
+        "token1": null,
+        "fee_tier": null,
+        "tick_spacing": null,
+        "tick_lower": null,
+        "tick_upper": null,
+        "sqrt_lower_x96": null,
+        "sqrt_upper_x96": null,
+        "target_usdc_bps": null,
+        "router_mode": "V1"
+      },
+      "evidence_sources": [
+        {
+          "source_id": "OFFICIAL_0G_CHAIN",
+          "source_type": "OFFICIAL_PROTOCOL_REFERENCE",
+          "location": "https://build.0g.ai/chain",
+          "finding": "Publishes Mainnet chain 16661 / evmrpc.0g.ai; not adapter deployment proof."
+        },
+        {
+          "source_id": "data/strategies.csv",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/data/strategies.csv",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "3f1df7f87e0d340f9ecfbb56b49ec7555a4ff8c1d707fdc383867473f27e886e",
+          "finding": "Mainnet strategy identity and reference addresses, not deployed registration."
+        },
+        {
+          "source_id": "contracts/StrategyManager.sol",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/contracts/StrategyManager.sol",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "eb51aeba554ed01e911475c6777c1b80a539e36839c4edefff4b17a8da67b040",
+          "finding": "Strategy ID to adapter mapping requires concrete deployed manager registration; none supplied."
+        },
+        {
+          "source_id": "hardhat.config.js",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/hardhat.config.js",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "1028fbab53cd5e978e57a62be7bb8756437589db7d48ec311055f7704d7ee0a2",
+          "finding": "Compiler/test paths only; no deployed Mainnet route manifest."
+        },
+        {
+          "source_id": "README.md",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/README.md",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "b75860e9ca3898a5f36d7c535e9989f5912b1f10dd429aa35f1335fb33de8ad3",
+          "finding": "Describes adapter implementation and pre-deployment choices; no concrete deployment/registration artifact."
+        },
+        {
+          "source_id": "contracts/adapters/JaineLPAdapter.sol",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/contracts/adapters/JaineLPAdapter.sol",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "32ca94c6d718803fc84fd25423280a5e5b86de89ad5c4b32b46179aa9288d3d9",
+          "finding": "Pins periphery/token candidates; pool/fee/ticks/sqrt bounds/target remain deployment inputs."
+        },
+        {
+          "source_id": "contracts/adapters/V3LiquidityAdapter.sol",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/contracts/adapters/V3LiquidityAdapter.sol",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "a346db77e66b19f53c091b332257066b6ea6509d3fdee1d30c39d98fea577b44",
+          "finding": "Validates selected pool/periphery/ticks and fixes deployment config immutably; no deployed instance supplied."
+        },
+        {
+          "source_id": "src/ascend_optimizer/lp_deployment.py",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/src/ascend_optimizer/lp_deployment.py",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "594739441cd4466d382ce0f35b7296db2fce8c5b6931aa9892069553e67063e2",
+          "finding": "Live discovery planner, not a committed actual registered deployment; not run for this audit."
+        }
+      ],
+      "verification_notes": "No committed Mainnet adapter, vault, StrategyManager address or registration key/proof establishes this actual capstone route. Required resolution: actual registered adapter pool/token order/fee/tick spacing/fixed ticks/sqrt bounds/target, periphery role/code and manager registration. No visible/deepest pool is selected as a substitute. Venue-specific periphery is kept separate."
+    },
+    {
+      "strategy_id": "OKU_LP_0G_USDC",
+      "execution_chain_id": 16661,
+      "verification_state": "UNRESOLVED",
+      "verification_source": null,
+      "verified_at": null,
+      "block_number": null,
+      "block_hash": null,
+      "config_identity": null,
+      "config_components": {
+        "adapter_address": null,
+        "vault_address": null,
+        "strategy_manager_address": null,
+        "manager_strategy_key": null,
+        "adapter_class": "OkuV3Adapter",
+        "factory": "0xcb2436774C3e191c85056d248EF4260ce5f27A9D",
+        "router": "0x807F4E281B7A3B324825C64ca53c69F0b418dE40",
+        "position_manager": "0x743E03cceB4af2efA3CC76838f6E8B50B63F184c",
+        "pool": null,
+        "w0g": "0x1Cd0690fF9a693f5EF2dD976660a8dAFc81A109c",
+        "usdce": "0x1f3AA82227281cA364bFb3d253B0f1af1Da6473E",
+        "token0": null,
+        "token1": null,
+        "fee_tier": null,
+        "tick_spacing": null,
+        "tick_lower": null,
+        "tick_upper": null,
+        "sqrt_lower_x96": null,
+        "sqrt_upper_x96": null,
+        "target_usdc_bps": null,
+        "router_mode": "ROUTER02"
+      },
+      "evidence_sources": [
+        {
+          "source_id": "OFFICIAL_0G_CHAIN",
+          "source_type": "OFFICIAL_PROTOCOL_REFERENCE",
+          "location": "https://build.0g.ai/chain",
+          "finding": "Publishes Mainnet chain 16661 / evmrpc.0g.ai; not adapter deployment proof."
+        },
+        {
+          "source_id": "data/strategies.csv",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/data/strategies.csv",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "3f1df7f87e0d340f9ecfbb56b49ec7555a4ff8c1d707fdc383867473f27e886e",
+          "finding": "Mainnet strategy identity and reference addresses, not deployed registration."
+        },
+        {
+          "source_id": "contracts/StrategyManager.sol",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/contracts/StrategyManager.sol",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "eb51aeba554ed01e911475c6777c1b80a539e36839c4edefff4b17a8da67b040",
+          "finding": "Strategy ID to adapter mapping requires concrete deployed manager registration; none supplied."
+        },
+        {
+          "source_id": "hardhat.config.js",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/hardhat.config.js",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "1028fbab53cd5e978e57a62be7bb8756437589db7d48ec311055f7704d7ee0a2",
+          "finding": "Compiler/test paths only; no deployed Mainnet route manifest."
+        },
+        {
+          "source_id": "README.md",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/README.md",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "b75860e9ca3898a5f36d7c535e9989f5912b1f10dd429aa35f1335fb33de8ad3",
+          "finding": "Describes adapter implementation and pre-deployment choices; no concrete deployment/registration artifact."
+        },
+        {
+          "source_id": "contracts/adapters/OkuV3Adapter.sol",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/contracts/adapters/OkuV3Adapter.sol",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "165387efd8a6e15d595323d98d5bac94d1609b3936ba3703efaa1d16b0ae9677",
+          "finding": "Pins periphery/token candidates; pool/fee/ticks/sqrt bounds/target remain deployment inputs."
+        },
+        {
+          "source_id": "contracts/adapters/V3LiquidityAdapter.sol",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/contracts/adapters/V3LiquidityAdapter.sol",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "a346db77e66b19f53c091b332257066b6ea6509d3fdee1d30c39d98fea577b44",
+          "finding": "Validates selected pool/periphery/ticks and fixes deployment config immutably; no deployed instance supplied."
+        },
+        {
+          "source_id": "src/ascend_optimizer/lp_deployment.py",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/src/ascend_optimizer/lp_deployment.py",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "594739441cd4466d382ce0f35b7296db2fce8c5b6931aa9892069553e67063e2",
+          "finding": "Live discovery planner, not a committed actual registered deployment; not run for this audit."
+        }
+      ],
+      "verification_notes": "No committed Mainnet adapter, vault, StrategyManager address or registration key/proof establishes this actual capstone route. Required resolution: actual registered adapter pool/token order/fee/tick spacing/fixed ticks/sqrt bounds/target, periphery role/code and manager registration. No visible/deepest pool is selected as a substitute. Venue-specific periphery is kept separate."
+    },
+    {
+      "strategy_id": "ASCEND_STAKE_A0G",
+      "execution_chain_id": 16661,
+      "verification_state": "UNRESOLVED",
+      "verification_source": null,
+      "verified_at": null,
+      "block_number": null,
+      "block_hash": null,
+      "config_identity": null,
+      "config_components": {
+        "adapter_address": null,
+        "vault_address": null,
+        "strategy_manager_address": null,
+        "manager_strategy_key": null,
+        "adapter_class": "AscendProtocolAdapter",
+        "w0g": "0x1Cd0690fF9a693f5EF2dD976660a8dAFc81A109c",
+        "source_core": "0x4B3c2f55fa67679b382c979A082Df1B32079B4cB",
+        "a0g": "0x4B3c2f55fa67679b382c979A082Df1B32079B4cB",
+        "withdrawal_queue": null
+      },
+      "evidence_sources": [
+        {
+          "source_id": "OFFICIAL_0G_CHAIN",
+          "source_type": "OFFICIAL_PROTOCOL_REFERENCE",
+          "location": "https://build.0g.ai/chain",
+          "finding": "Publishes Mainnet chain 16661 / evmrpc.0g.ai; not adapter deployment proof."
+        },
+        {
+          "source_id": "data/strategies.csv",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/data/strategies.csv",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "3f1df7f87e0d340f9ecfbb56b49ec7555a4ff8c1d707fdc383867473f27e886e",
+          "finding": "Mainnet strategy identity and reference addresses, not deployed registration."
+        },
+        {
+          "source_id": "contracts/StrategyManager.sol",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/contracts/StrategyManager.sol",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "eb51aeba554ed01e911475c6777c1b80a539e36839c4edefff4b17a8da67b040",
+          "finding": "Strategy ID to adapter mapping requires concrete deployed manager registration; none supplied."
+        },
+        {
+          "source_id": "hardhat.config.js",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/hardhat.config.js",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "1028fbab53cd5e978e57a62be7bb8756437589db7d48ec311055f7704d7ee0a2",
+          "finding": "Compiler/test paths only; no deployed Mainnet route manifest."
+        },
+        {
+          "source_id": "README.md",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/README.md",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "b75860e9ca3898a5f36d7c535e9989f5912b1f10dd429aa35f1335fb33de8ad3",
+          "finding": "Describes adapter implementation and pre-deployment choices; no concrete deployment/registration artifact."
+        },
+        {
+          "source_id": "contracts/adapters/AscendProtocolAdapter.sol",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/contracts/adapters/AscendProtocolAdapter.sol",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "0376d18e0dd3a6630b506a675cc659d2fe3d7df9b3e95addb1cc5eaeb186a03a",
+          "finding": "Uses SourceCore ERC4626 shares as a0G; resolves withdrawalQueue and validates source/asset links at construction."
+        },
+        {
+          "source_id": "src/ascend_optimizer/collectors/ascend.py",
+          "source_type": "PROJECT_REFERENCE",
+          "location": "https://github.com/Ravin1010/ascend-optimizer-mvp/blob/e624eb9823662479f92b8044c35fc729f5251fda/src/ascend_optimizer/collectors/ascend.py",
+          "repository_commit": "e624eb9823662479f92b8044c35fc729f5251fda",
+          "content_sha256": "0f40c4eb2c3bf6e1e5a69a6945a6828b8770133fcf2841ac863c58e4a17e219a",
+          "finding": "SourceCore/W0G reference constants; no registered adapter or committed withdrawal queue value."
+        }
+      ],
+      "verification_notes": "No committed Mainnet adapter, vault, StrategyManager address or registration key/proof establishes this actual capstone route. Required resolution: actual adapter/sourceCore/w0g/withdrawalQueue links, SourceCore ERC4626 share identity, correct-chain role/code, vault/manager registration. Ethereum backing remains dependency only; allocation gate CLOSED regardless of config."
+    }
+  ]
+}

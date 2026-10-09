@@ -18,14 +18,20 @@ class RepositoryAdmissionProvider:
     def __init__(self, path: str | Path = DEFAULT_ADMISSION_PATH, *, strategies=None,
                  config_identities: Mapping[str, str] | None = None, allow_modelled: bool = False,
                  config_contexts: Mapping[str, RuntimeConfigContext] | None = None,
-                 as_of: datetime | None = None, policies: Mapping = DEFAULT_POLICIES):
+                 as_of: datetime | None = None, policies: Mapping = DEFAULT_POLICIES,
+                 runtime_config_path: str | Path | None = None):
         if not isinstance(allow_modelled, bool):
             raise ValueError("allow_modelled must be an explicit boolean demo/test opt-in")
         self.path = Path(path)
         self.strategies = strategies
-        # Explicit caller context only; never infer config from notes/reference IDs.
+        # Explicit caller or canonical repository context; never infer from notes/reference IDs.
         self.config_identities = dict(config_identities or {})
         self.allow_modelled = allow_modelled
+        from .runtime_config import DEFAULT_RUNTIME_CONFIG_PATH
+        self.runtime_config_path = (Path(runtime_config_path) if runtime_config_path is not None else
+            DEFAULT_RUNTIME_CONFIG_PATH if config_contexts is None and config_identities is None else None)
+        if runtime_config_path is not None and (config_contexts is not None or config_identities is not None):
+            raise ValueError('repository config path and explicit context overrides are mutually exclusive')
         self.config_contexts = dict(config_contexts or {})
         if any(not isinstance(c, RuntimeConfigContext) for c in self.config_contexts.values()):
             raise ValueError('typed RuntimeConfigContext required')
@@ -58,6 +64,13 @@ class RepositoryAdmissionProvider:
                                      validity_records=tuple(ordered))
         if not strategy_state(strategy).allocation_admitted:
             return unknown("METADATA_GATE_NOT_ADMITTED")
+        contexts = self.config_contexts
+        if self.runtime_config_path is not None:
+            from .runtime_config import runtime_config_contexts
+            try:
+                contexts = runtime_config_contexts(self.runtime_config_path)
+            except SchemaValidationError as exc:
+                return unknown('CONFIG_DATASET_UNUSABLE: ' + str(exc))
         # Reload on every candidate and revalidation lookup. Withdrawal/change is
         # visible; no cache makes an old capture survive a removed/replaced file.
         try:
@@ -78,7 +91,7 @@ class RepositoryAdmissionProvider:
             if record.get("strategy_id") != sid or int(record.get("chain_id")) != chain:
                 continue
             identity = record.get("evidence_id")
-            context = self.config_contexts.get(sid)
+            context = contexts.get(sid)
             # Legacy identity strings are retained but never certify verification.
             legacy_identity = self.config_identities.get(sid)
             if legacy_identity is not None and (context is None or legacy_identity != context.config_identity):
