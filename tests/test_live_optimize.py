@@ -376,3 +376,42 @@ def test_legacy_modelled_status_cannot_remove_canonical_jaine_or_open_ascend() -
     assert run.pipeline.result.allocations["JAINE_LP_0G_USDC"] == pytest.approx(0.60)
     assert "ASCEND_STAKE_A0G" not in run.pipeline.result.allocations
     assert run.to_dict()["schema_version"] == "1.2"
+
+
+def test_compatibility_flag_preserves_scope_and_terminal_wording(capsys) -> None:
+    from src.ascend_optimizer.data_loader import MVP_STRATEGY_IDS
+    from src.ascend_optimizer.live_optimize import print_live_run
+
+    strategies, snapshots = _demo_inputs()
+    allocations = []
+    scope_lines = []
+    for flag in (False, True):
+        run = optimize_live(strategies, snapshots, amount=1000, price_usd=1,
+                            horizon_days=90, profile="Balanced", include_modelled=flag)
+        members = run.pipeline.candidates[run.pipeline.candidates.structural_candidate]
+        assert set(members.strategy_id) == MVP_STRATEGY_IDS
+        assert members.set_index("strategy_id").loc["ASCEND_STAKE_A0G", "allocation_gate"] == "CLOSED"
+        assert "ASCEND_STAKE_A0G" not in run.pipeline.result.allocations
+        assert run.to_dict()["schema_version"] == "1.2"
+        assert run.to_dict()["input"]["include_modelled"] is flag
+        allocations.append(run.pipeline.result.allocations)
+        print_live_run(run)
+        output = capsys.readouterr().out
+        scope_lines.append(next(line for line in output.splitlines() if "Scope:" in line))
+        assert "configured five-strategy universe (allocation gates apply)" in output
+        assert "live + explicitly modelled routes" not in output
+        assert "live routes only" not in output
+    assert allocations[0] == allocations[1]
+    assert scope_lines[0] == scope_lines[1]
+
+
+def test_include_modelled_help_describes_compatibility_only(monkeypatch, capsys) -> None:
+    from src.ascend_optimizer.live_optimize import main
+
+    monkeypatch.setattr("sys.argv", ["live_optimize", "--help"])
+    with pytest.raises(SystemExit) as error:
+        main()
+    assert error.value.code == 0
+    help_text = " ".join(capsys.readouterr().out.split())
+    assert "Compatibility flag only; does not change the strategy universe or allocation gates." in help_text
+    assert "Include MODELLED/PARTIAL_MODELLED Ascend routes" not in help_text

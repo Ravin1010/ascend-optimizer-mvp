@@ -598,11 +598,7 @@ def print_live_run(run: LiveOptimizerRun) -> None:
         f"@ {_fmt_usd(run.asset_price_usd)} "
         f"= {_fmt_usd(run.portfolio_value_usd)}"
     )
-    scope_label = (
-        "live + explicitly modelled routes"
-        if run.include_modelled
-        else "live routes only"
-    )
+    scope_label = "configured five-strategy universe (allocation gates apply)"
     print(
         f"Horizon: {run.horizon_days:g} days | "
         f"Profile: {run.profile} | Scope: {scope_label}"
@@ -723,8 +719,8 @@ def main() -> None:
         "--include-modelled",
         action="store_true",
         help=(
-            "Include MODELLED/PARTIAL_MODELLED Ascend routes in allocation. "
-            "By default, the LIVE optimizer excludes them."
+            "Compatibility flag only; does not change the strategy universe "
+            "or allocation gates."
         ),
     )
     parser.add_argument(
