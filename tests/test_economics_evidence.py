@@ -131,6 +131,54 @@ def test_modelled_return_explicit_mode_and_scenario():
         e.normalize_return([ret()],**normalization(scenario_id="different"))
 
 
+@pytest.mark.parametrize("metric,role", [
+    ("validator_yield_benchmark", "CONFIGURED_VALIDATOR_RETURN"),
+    ("gross_apy", "VALIDATOR_OBSERVATIONAL_SAMPLE"),
+])
+def test_native_production_base_must_be_configured_validator(metric, role):
+    r = observed(ret(metric=metric, source_role=role))
+    policy = {("return", r["source_id"], metric): {"max_age_seconds": 60, "rationale": "Test-only budget"}}
+    with pytest.raises(e.EconomicsError, match="NATIVE_BENCHMARK_NOT_CONFIGURED_ROUTE"):
+        e.normalize_return([r], **normalization(mode=e.PRODUCTION, scenario_id=None, policies=policy))
+
+
+@pytest.mark.parametrize("fee_basis,deduction,net", [
+    ("GROSS_BEFORE_FEES", 1, 9),
+    ("NET_OF_PROTOCOL_FEES", 0, 10),
+])
+def test_native_production_separate_commission_role(fee_basis, deduction, net):
+    base = observed(ret(source_role="CONFIGURED_VALIDATOR_RETURN", fee_basis=fee_basis,
+                        fees_embedded=[] if fee_basis == "GROSS_BEFORE_FEES" else ["commission"]))
+    commission = observed(ret(evidence_id="native-commission", metric="commission", unit="FRACTION",
+                              source_id="test-commission-source", source_role="CONFIGURED_VALIDATOR_COMMISSION",
+                              fee_basis=fee_basis))
+    policies = {("return", r["source_id"], r["metric"]):
+                {"max_age_seconds": 60, "rationale": "Test-only budget"} for r in (base, commission)}
+    result = e.normalize_return([base, commission], **normalization(
+        mode=e.PRODUCTION, scenario_id=None, horizon_days=365, policies=policies))
+    assert result["qualification"] == "VALID"
+    assert result["expected_gross_income_usd"] == pytest.approx(10)
+    assert result["additional_fee_usd"] == pytest.approx(deduction)
+    assert result["income_after_protocol_fee_usd"] == pytest.approx(net)
+    assert result["provenance"][1]["source_role"] == "CONFIGURED_VALIDATOR_COMMISSION"
+
+
+@pytest.mark.parametrize("changes,error", [
+    ({"source_verified": False}, "SOURCE_UNVERIFIED"),
+    ({"observation_timestamp": (NOW-timedelta(seconds=61)).isoformat()}, "STALE"),
+    ({"config_context": "other-validator"}, "CONTEXT_MISMATCH"),
+])
+def test_native_separate_commission_still_requires_qualification(changes, error):
+    base = observed(ret(source_role="CONFIGURED_VALIDATOR_RETURN", fee_basis="GROSS_BEFORE_FEES", fees_embedded=[]))
+    commission = observed(ret(evidence_id="native-commission", metric="commission", unit="FRACTION",
+                              source_role="CONFIGURED_VALIDATOR_COMMISSION")) | changes
+    policies = {("return", r["source_id"], r["metric"]):
+                {"max_age_seconds": 60, "rationale": "Test-only budget"} for r in (base, commission)}
+    with pytest.raises(e.EconomicsError, match=error):
+        e.normalize_return([base, commission], **normalization(
+            mode=e.PRODUCTION, scenario_id=None, policies=policies))
+
+
 def test_native_sample_never_configured_route_return():
     r = observed(ret(metric="validator_yield_benchmark", source_role="VALIDATOR_OBSERVATIONAL_SAMPLE"))
     policy = {("return",r["source_id"],r["metric"]): {"max_age_seconds":60,"rationale":"Test-only budget"}}

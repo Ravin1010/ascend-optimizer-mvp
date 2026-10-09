@@ -310,8 +310,12 @@ def normalize_return(records, *, strategy_id, amount_0g, price_usd, horizon_days
         state = qualify(r, "return", mode=mode, scenario_id=scenario_id, as_of=as_of, policies=policies or {})
         if state != "VALID":
             raise EconomicsError(state + ":" + r["evidence_id"])
-        if mode == PRODUCTION and strategy_id == "NATIVE_STAKE_0G" and (r["metric"] == "validator_yield_benchmark" or r["source_role"] != "CONFIGURED_VALIDATOR_RETURN"):
-            raise EconomicsError("NATIVE_BENCHMARK_NOT_CONFIGURED_ROUTE")
+    # Configured-validator identity applies to the return basis, not separate
+    # commission/fee metadata, which still passes qualification above.
+    if mode == PRODUCTION and strategy_id == "NATIVE_STAKE_0G":
+        for r in base:
+            if r["metric"] == "validator_yield_benchmark" or r["source_role"] != "CONFIGURED_VALIDATOR_RETURN":
+                raise EconomicsError("NATIVE_BENCHMARK_NOT_CONFIGURED_ROUTE")
     if first["fee_basis"] == "UNKNOWN" or any(r["fee_basis"] != first["fee_basis"] for r in base):
         raise EconomicsError("FEE_BASIS_UNRESOLVED")
     if mode == PRODUCTION and any(r["evidence_class"] == "STATIC_CONFIG" for r in base):
