@@ -1,0 +1,1499 @@
+{
+  "design_schema_version": "1.0",
+  "artifact_type": "INTENDED_DEPLOYMENT_ARCHITECTURE",
+  "accepted_baseline": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+  "public_deployment_required": false,
+  "public_deployment_planned": false,
+  "project_boundary": "The capstone evaluates a prototype implementation and optimizer architecture. It does not require an actual public deployment of the vault/adapter stack. This design is not a deployment manifest and is not a runtime/admission evidence source.",
+  "execution_chain_id": 16661,
+  "network_roles": {
+    "16661": "INTENDED_EXECUTION_DOMAIN_NOT_DEPLOYMENT_PROOF",
+    "1": "ASCEND_BACKING_DEPENDENCY_ONLY",
+    "16602": "CONDITIONAL_DEVELOPMENT_TEST_ONLY",
+    "8453": "KIV_ONLY"
+  },
+  "core": [
+    {
+      "component": "StrategyManager",
+      "depends_on": [],
+      "constructor_inputs": [
+        "initialOwner"
+      ],
+      "components": [
+        {
+          "component": "initialOwner",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "Constructor initialOwner; no account/instance selected.",
+          "evidence_source": {
+            "path": "contracts/StrategyManager.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "eb51aeba554ed01e911475c6777c1b80a539e36839c4edefff4b17a8da67b040"
+          }
+        },
+        {
+          "component": "instance_address",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "No public instance; design only.",
+          "evidence_source": {
+            "path": "contracts/StrategyManager.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "eb51aeba554ed01e911475c6777c1b80a539e36839c4edefff4b17a8da67b040"
+          }
+        },
+        {
+          "component": "BPS_DENOMINATOR",
+          "value": 10000,
+          "classification": "SOURCE_FIXED",
+          "chain_id": 16661,
+          "meaning": "Limit-unit scale, not a chosen limit.",
+          "evidence_source": {
+            "path": "contracts/StrategyManager.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "eb51aeba554ed01e911475c6777c1b80a539e36839c4edefff4b17a8da67b040"
+          }
+        }
+      ],
+      "public_deployment": "NOT_PERFORMED"
+    },
+    {
+      "component": "AscendVault",
+      "depends_on": [
+        "StrategyManager"
+      ],
+      "constructor_inputs": [
+        "initialOwner",
+        "strategyManager_"
+      ],
+      "components": [
+        {
+          "component": "initialOwner",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "Constructor initialOwner; no account/instance selected.",
+          "evidence_source": {
+            "path": "contracts/AscendVault.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "cb91c239e6cc8e7902577f1cbf8ab466537532f6c17d026ae514aa2c2fa33f62"
+          }
+        },
+        {
+          "component": "strategyManager_",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "Constructor strategyManager_; no account/instance selected.",
+          "evidence_source": {
+            "path": "contracts/AscendVault.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "cb91c239e6cc8e7902577f1cbf8ab466537532f6c17d026ae514aa2c2fa33f62"
+          }
+        },
+        {
+          "component": "instance_address",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "No public instance; design only.",
+          "evidence_source": {
+            "path": "contracts/AscendVault.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "cb91c239e6cc8e7902577f1cbf8ab466537532f6c17d026ae514aa2c2fa33f62"
+          }
+        },
+        {
+          "component": "NATIVE_0G",
+          "value": "0x0000000000000000000000000000000000000000",
+          "classification": "SOURCE_FIXED",
+          "chain_id": 16661,
+          "meaning": "Native-asset sentinel, not deployed token.",
+          "evidence_source": {
+            "path": "contracts/AscendVault.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "cb91c239e6cc8e7902577f1cbf8ab466537532f6c17d026ae514aa2c2fa33f62"
+          }
+        }
+      ],
+      "public_deployment": "NOT_PERFORMED"
+    },
+    {
+      "component": "RewardAccounting",
+      "depends_on": [
+        "AscendVault",
+        "StrategyManager"
+      ],
+      "constructor_inputs": [
+        "initialOwner",
+        "vault_",
+        "strategyManager_"
+      ],
+      "components": [
+        {
+          "component": "initialOwner",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "Constructor initialOwner; no account/instance selected.",
+          "evidence_source": {
+            "path": "contracts/RewardAccounting.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "5f8cfd1c638589fff46ae4e7990e3e06f833cdb4a45aaf74d664ceb793015bdd"
+          }
+        },
+        {
+          "component": "vault_",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "Constructor vault_; no account/instance selected.",
+          "evidence_source": {
+            "path": "contracts/RewardAccounting.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "5f8cfd1c638589fff46ae4e7990e3e06f833cdb4a45aaf74d664ceb793015bdd"
+          }
+        },
+        {
+          "component": "strategyManager_",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "Constructor strategyManager_; no account/instance selected.",
+          "evidence_source": {
+            "path": "contracts/RewardAccounting.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "5f8cfd1c638589fff46ae4e7990e3e06f833cdb4a45aaf74d664ceb793015bdd"
+          }
+        },
+        {
+          "component": "instance_address",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "No public instance; design only.",
+          "evidence_source": {
+            "path": "contracts/RewardAccounting.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "5f8cfd1c638589fff46ae4e7990e3e06f833cdb4a45aaf74d664ceb793015bdd"
+          }
+        },
+        {
+          "component": "ACC_PRECISION",
+          "value": 1000000000000000000,
+          "classification": "SOURCE_FIXED",
+          "chain_id": 16661,
+          "meaning": "Reward-per-share scale.",
+          "evidence_source": {
+            "path": "contracts/RewardAccounting.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "5f8cfd1c638589fff46ae4e7990e3e06f833cdb4a45aaf74d664ceb793015bdd"
+          }
+        },
+        {
+          "component": "MAX_REWARD_TOKENS_PER_STRATEGY",
+          "value": 8,
+          "classification": "SOURCE_FIXED",
+          "chain_id": 16661,
+          "meaning": "Maximum registered reward-token count.",
+          "evidence_source": {
+            "path": "contracts/RewardAccounting.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "5f8cfd1c638589fff46ae4e7990e3e06f833cdb4a45aaf74d664ceb793015bdd"
+          }
+        }
+      ],
+      "public_deployment": "NOT_PERFORMED"
+    }
+  ],
+  "strategies": [
+    {
+      "strategy_id": "NATIVE_STAKE_0G",
+      "adapter": "Native0GStakingAdapter",
+      "constructor_inputs": [
+        "initialOwner",
+        "vault_",
+        "validator_"
+      ],
+      "components": [
+        {
+          "component": "adapter_address",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/Native0GStakingAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "0c46545d182fdc0ced3f1d59dfc76f2b4deb60f71c9247319780182217076e32"
+          }
+        },
+        {
+          "component": "vault_address",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/Native0GStakingAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "0c46545d182fdc0ced3f1d59dfc76f2b4deb60f71c9247319780182217076e32"
+          }
+        },
+        {
+          "component": "strategy_manager_address",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/Native0GStakingAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "0c46545d182fdc0ced3f1d59dfc76f2b4deb60f71c9247319780182217076e32"
+          }
+        },
+        {
+          "component": "manager_strategy_key",
+          "value": null,
+          "classification": "DERIVED_CONFIGURATION",
+          "chain_id": 16661,
+          "meaning": "Intended key convention: keccak256 of UTF-8 strategy ID; no registered key/state.",
+          "evidence_source": {
+            "path": "contracts/adapters/Native0GStakingAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "0c46545d182fdc0ced3f1d59dfc76f2b4deb60f71c9247319780182217076e32"
+          },
+          "derivation": "ethers.id(strategy_id); manager accepts any nonzero bytes32"
+        },
+        {
+          "component": "adapter_class",
+          "value": "Native0GStakingAdapter",
+          "classification": "SOURCE_FIXED",
+          "chain_id": 16661,
+          "meaning": "Adapter implementation class.",
+          "evidence_source": {
+            "path": "contracts/adapters/Native0GStakingAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "0c46545d182fdc0ced3f1d59dfc76f2b4deb60f71c9247319780182217076e32"
+          }
+        },
+        {
+          "component": "validator",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/Native0GStakingAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "0c46545d182fdc0ced3f1d59dfc76f2b4deb60f71c9247319780182217076e32"
+          }
+        },
+        {
+          "component": "initial_owner",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "Native adapter reserve-admin owner; not selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/Native0GStakingAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "0c46545d182fdc0ced3f1d59dfc76f2b4deb60f71c9247319780182217076e32"
+          }
+        },
+        {
+          "component": "input_asset",
+          "value": "0x0000000000000000000000000000000000000000",
+          "classification": "SOURCE_FIXED",
+          "chain_id": 16661,
+          "meaning": "Current native-0G adapter input sentinel.",
+          "evidence_source": {
+            "path": "contracts/adapters/Native0GStakingAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "0c46545d182fdc0ced3f1d59dfc76f2b4deb60f71c9247319780182217076e32"
+          }
+        },
+        {
+          "component": "asynchronous",
+          "value": true,
+          "classification": "SOURCE_FIXED",
+          "chain_id": 16661,
+          "meaning": "isAsyncWithdrawal() mode matched by registry.",
+          "evidence_source": {
+            "path": "contracts/adapters/Native0GStakingAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "0c46545d182fdc0ced3f1d59dfc76f2b4deb60f71c9247319780182217076e32"
+          }
+        },
+        {
+          "component": "deposit_cap",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "Registry configuration; no new cap/profile value chosen. Python gate is not an automatic Solidity gate.",
+          "evidence_source": {
+            "path": "contracts/StrategyManager.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "eb51aeba554ed01e911475c6777c1b80a539e36839c4edefff4b17a8da67b040"
+          }
+        },
+        {
+          "component": "max_allocation_bps",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "Registry configuration; no new cap/profile value chosen. Python gate is not an automatic Solidity gate.",
+          "evidence_source": {
+            "path": "contracts/StrategyManager.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "eb51aeba554ed01e911475c6777c1b80a539e36839c4edefff4b17a8da67b040"
+          }
+        },
+        {
+          "component": "active",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "Registry configuration; no new cap/profile value chosen. Python gate is not an automatic Solidity gate.",
+          "evidence_source": {
+            "path": "contracts/StrategyManager.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "eb51aeba554ed01e911475c6777c1b80a539e36839c4edefff4b17a8da67b040"
+          }
+        }
+      ],
+      "allocation_gate": "CONDITIONAL",
+      "readiness": {
+        "source": "SOURCE_IMPLEMENTED",
+        "static": "STATICALLY_VALIDATED",
+        "simulation": "LOCAL_SIMULATION_VALIDATED",
+        "external_dependencies": "VALIDATOR_UNRESOLVED",
+        "runtime_binding": "RUNTIME_BINDING_UNRESOLVED",
+        "public_deployment": "NOT_PERFORMED"
+      },
+      "simulation_limit": "Own adapter/core mock fixtures only; not current external contracts or Mainnet proof."
+    },
+    {
+      "strategy_id": "GIMO_STAKE_0G",
+      "adapter": "GimoAdapter",
+      "constructor_inputs": [
+        "vault_",
+        "stakePool_",
+        "st0g_",
+        "referral_"
+      ],
+      "components": [
+        {
+          "component": "adapter_address",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/GimoAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "5accb07b0f87d0a3021258ba1826bf4e2286bc9a53b5a6946b79373a55cdab96"
+          }
+        },
+        {
+          "component": "vault_address",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/GimoAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "5accb07b0f87d0a3021258ba1826bf4e2286bc9a53b5a6946b79373a55cdab96"
+          }
+        },
+        {
+          "component": "strategy_manager_address",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/GimoAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "5accb07b0f87d0a3021258ba1826bf4e2286bc9a53b5a6946b79373a55cdab96"
+          }
+        },
+        {
+          "component": "manager_strategy_key",
+          "value": null,
+          "classification": "DERIVED_CONFIGURATION",
+          "chain_id": 16661,
+          "meaning": "Intended key convention: keccak256 of UTF-8 strategy ID; no registered key/state.",
+          "evidence_source": {
+            "path": "contracts/adapters/GimoAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "5accb07b0f87d0a3021258ba1826bf4e2286bc9a53b5a6946b79373a55cdab96"
+          },
+          "derivation": "ethers.id(strategy_id); manager accepts any nonzero bytes32"
+        },
+        {
+          "component": "adapter_class",
+          "value": "GimoAdapter",
+          "classification": "SOURCE_FIXED",
+          "chain_id": 16661,
+          "meaning": "Adapter implementation class.",
+          "evidence_source": {
+            "path": "contracts/adapters/GimoAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "5accb07b0f87d0a3021258ba1826bf4e2286bc9a53b5a6946b79373a55cdab96"
+          }
+        },
+        {
+          "component": "stake_pool",
+          "value": "0xAc06d1Df23a4Fa00981aFAC0f33A5936Bd2135aF",
+          "classification": "EXTERNAL_PROTOCOL_REFERENCE",
+          "chain_id": 16661,
+          "meaning": "Intended route reference only; not capstone deployment proof.",
+          "evidence_source": {
+            "path": "src/ascend_optimizer/collectors/gimo.py",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "aed7a50787d5960023c49433465545727e59e10786351603db4eb15d6a21541e"
+          }
+        },
+        {
+          "component": "st0g",
+          "value": "0x7bBC63D01CA42491c3E084C941c3E86e55951404",
+          "classification": "EXTERNAL_PROTOCOL_REFERENCE",
+          "chain_id": 16661,
+          "meaning": "Intended route reference only; not capstone deployment proof.",
+          "evidence_source": {
+            "path": "src/ascend_optimizer/collectors/gimo.py",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "aed7a50787d5960023c49433465545727e59e10786351603db4eb15d6a21541e"
+          }
+        },
+        {
+          "component": "withdrawal_contract",
+          "value": "0xAc06d1Df23a4Fa00981aFAC0f33A5936Bd2135aF",
+          "classification": "EXTERNAL_PROTOCOL_REFERENCE",
+          "chain_id": 16661,
+          "meaning": "Gimo unstake()/withdraw() on the same stakePool reference.",
+          "evidence_source": {
+            "path": "src/ascend_optimizer/collectors/gimo.py",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "aed7a50787d5960023c49433465545727e59e10786351603db4eb15d6a21541e"
+          }
+        },
+        {
+          "component": "referral",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/GimoAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "5accb07b0f87d0a3021258ba1826bf4e2286bc9a53b5a6946b79373a55cdab96"
+          }
+        },
+        {
+          "component": "input_asset",
+          "value": "0x0000000000000000000000000000000000000000",
+          "classification": "SOURCE_FIXED",
+          "chain_id": 16661,
+          "meaning": "Current native-0G adapter input sentinel.",
+          "evidence_source": {
+            "path": "contracts/adapters/GimoAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "5accb07b0f87d0a3021258ba1826bf4e2286bc9a53b5a6946b79373a55cdab96"
+          }
+        },
+        {
+          "component": "asynchronous",
+          "value": true,
+          "classification": "SOURCE_FIXED",
+          "chain_id": 16661,
+          "meaning": "isAsyncWithdrawal() mode matched by registry.",
+          "evidence_source": {
+            "path": "contracts/adapters/GimoAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "5accb07b0f87d0a3021258ba1826bf4e2286bc9a53b5a6946b79373a55cdab96"
+          }
+        },
+        {
+          "component": "deposit_cap",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "Registry configuration; no new cap/profile value chosen. Python gate is not an automatic Solidity gate.",
+          "evidence_source": {
+            "path": "contracts/StrategyManager.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "eb51aeba554ed01e911475c6777c1b80a539e36839c4edefff4b17a8da67b040"
+          }
+        },
+        {
+          "component": "max_allocation_bps",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "Registry configuration; no new cap/profile value chosen. Python gate is not an automatic Solidity gate.",
+          "evidence_source": {
+            "path": "contracts/StrategyManager.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "eb51aeba554ed01e911475c6777c1b80a539e36839c4edefff4b17a8da67b040"
+          }
+        },
+        {
+          "component": "active",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "Registry configuration; no new cap/profile value chosen. Python gate is not an automatic Solidity gate.",
+          "evidence_source": {
+            "path": "contracts/StrategyManager.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "eb51aeba554ed01e911475c6777c1b80a539e36839c4edefff4b17a8da67b040"
+          }
+        }
+      ],
+      "allocation_gate": "CONDITIONAL",
+      "readiness": {
+        "source": "SOURCE_IMPLEMENTED",
+        "static": "STATICALLY_VALIDATED",
+        "simulation": "LOCAL_SIMULATION_VALIDATED",
+        "external_dependencies": "EXTERNAL_DEPENDENCY_REFERENCED",
+        "runtime_binding": "RUNTIME_BINDING_UNRESOLVED",
+        "public_deployment": "NOT_PERFORMED"
+      },
+      "simulation_limit": "Own adapter/core mock fixtures only; not current external contracts or Mainnet proof."
+    },
+    {
+      "strategy_id": "JAINE_LP_0G_USDC",
+      "adapter": "JaineLPAdapter",
+      "constructor_inputs": [
+        "vault_",
+        "pool_",
+        "feeTier_",
+        "tickLower_",
+        "tickUpper_",
+        "sqrtLowerX96_",
+        "sqrtUpperX96_",
+        "targetUsdcBps_"
+      ],
+      "components": [
+        {
+          "component": "adapter_address",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/JaineLPAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "32ca94c6d718803fc84fd25423280a5e5b86de89ad5c4b32b46179aa9288d3d9"
+          }
+        },
+        {
+          "component": "vault_address",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/JaineLPAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "32ca94c6d718803fc84fd25423280a5e5b86de89ad5c4b32b46179aa9288d3d9"
+          }
+        },
+        {
+          "component": "strategy_manager_address",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/JaineLPAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "32ca94c6d718803fc84fd25423280a5e5b86de89ad5c4b32b46179aa9288d3d9"
+          }
+        },
+        {
+          "component": "manager_strategy_key",
+          "value": null,
+          "classification": "DERIVED_CONFIGURATION",
+          "chain_id": 16661,
+          "meaning": "Intended key convention: keccak256 of UTF-8 strategy ID; no registered key/state.",
+          "evidence_source": {
+            "path": "contracts/adapters/JaineLPAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "32ca94c6d718803fc84fd25423280a5e5b86de89ad5c4b32b46179aa9288d3d9"
+          },
+          "derivation": "ethers.id(strategy_id); manager accepts any nonzero bytes32"
+        },
+        {
+          "component": "adapter_class",
+          "value": "JaineLPAdapter",
+          "classification": "SOURCE_FIXED",
+          "chain_id": 16661,
+          "meaning": "Adapter implementation class.",
+          "evidence_source": {
+            "path": "contracts/adapters/JaineLPAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "32ca94c6d718803fc84fd25423280a5e5b86de89ad5c4b32b46179aa9288d3d9"
+          }
+        },
+        {
+          "component": "factory",
+          "value": "0x9bdcA5798E52e592A08e3b34d3F18EeF76Af7ef4",
+          "classification": "EXTERNAL_PROTOCOL_REFERENCE",
+          "chain_id": 16661,
+          "meaning": "Intended route reference only; not capstone deployment proof.",
+          "evidence_source": {
+            "path": "contracts/adapters/JaineLPAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "32ca94c6d718803fc84fd25423280a5e5b86de89ad5c4b32b46179aa9288d3d9"
+          }
+        },
+        {
+          "component": "router",
+          "value": "0x8B598A7C136215A95ba0282b4d832B9f9801f2e2",
+          "classification": "EXTERNAL_PROTOCOL_REFERENCE",
+          "chain_id": 16661,
+          "meaning": "Intended route reference only; not capstone deployment proof.",
+          "evidence_source": {
+            "path": "contracts/adapters/JaineLPAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "32ca94c6d718803fc84fd25423280a5e5b86de89ad5c4b32b46179aa9288d3d9"
+          }
+        },
+        {
+          "component": "position_manager",
+          "value": "0x8F67A30Ed186e3E1f6504c6dE3239Ef43A2e0d72",
+          "classification": "EXTERNAL_PROTOCOL_REFERENCE",
+          "chain_id": 16661,
+          "meaning": "Intended route reference only; not capstone deployment proof.",
+          "evidence_source": {
+            "path": "contracts/adapters/JaineLPAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "32ca94c6d718803fc84fd25423280a5e5b86de89ad5c4b32b46179aa9288d3d9"
+          }
+        },
+        {
+          "component": "pool",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/JaineLPAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "32ca94c6d718803fc84fd25423280a5e5b86de89ad5c4b32b46179aa9288d3d9"
+          }
+        },
+        {
+          "component": "w0g",
+          "value": "0x1Cd0690fF9a693f5EF2dD976660a8dAFc81A109c",
+          "classification": "EXTERNAL_PROTOCOL_REFERENCE",
+          "chain_id": 16661,
+          "meaning": "Intended route reference only; not capstone deployment proof.",
+          "evidence_source": {
+            "path": "contracts/adapters/JaineLPAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "32ca94c6d718803fc84fd25423280a5e5b86de89ad5c4b32b46179aa9288d3d9"
+          }
+        },
+        {
+          "component": "usdce",
+          "value": "0x1f3AA82227281cA364bFb3d253B0f1af1Da6473E",
+          "classification": "EXTERNAL_PROTOCOL_REFERENCE",
+          "chain_id": 16661,
+          "meaning": "Intended route reference only; not capstone deployment proof.",
+          "evidence_source": {
+            "path": "contracts/adapters/JaineLPAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "32ca94c6d718803fc84fd25423280a5e5b86de89ad5c4b32b46179aa9288d3d9"
+          }
+        },
+        {
+          "component": "token0",
+          "value": null,
+          "classification": "DERIVED_CONFIGURATION",
+          "chain_id": 16661,
+          "meaning": "Read from the chosen pool only if supplied; no pool chosen.",
+          "evidence_source": {
+            "path": "contracts/adapters/JaineLPAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "32ca94c6d718803fc84fd25423280a5e5b86de89ad5c4b32b46179aa9288d3d9"
+          },
+          "derivation": "pool.token0()"
+        },
+        {
+          "component": "token1",
+          "value": null,
+          "classification": "DERIVED_CONFIGURATION",
+          "chain_id": 16661,
+          "meaning": "Read from the chosen pool only if supplied; no pool chosen.",
+          "evidence_source": {
+            "path": "contracts/adapters/JaineLPAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "32ca94c6d718803fc84fd25423280a5e5b86de89ad5c4b32b46179aa9288d3d9"
+          },
+          "derivation": "pool.token1()"
+        },
+        {
+          "component": "fee_tier",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/JaineLPAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "32ca94c6d718803fc84fd25423280a5e5b86de89ad5c4b32b46179aa9288d3d9"
+          }
+        },
+        {
+          "component": "tick_spacing",
+          "value": null,
+          "classification": "DERIVED_CONFIGURATION",
+          "chain_id": 16661,
+          "meaning": "Read from the chosen pool only if supplied; no pool chosen.",
+          "evidence_source": {
+            "path": "contracts/adapters/JaineLPAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "32ca94c6d718803fc84fd25423280a5e5b86de89ad5c4b32b46179aa9288d3d9"
+          },
+          "derivation": "pool.tickSpacing()"
+        },
+        {
+          "component": "tick_lower",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/JaineLPAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "32ca94c6d718803fc84fd25423280a5e5b86de89ad5c4b32b46179aa9288d3d9"
+          }
+        },
+        {
+          "component": "tick_upper",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/JaineLPAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "32ca94c6d718803fc84fd25423280a5e5b86de89ad5c4b32b46179aa9288d3d9"
+          }
+        },
+        {
+          "component": "sqrt_lower_x96",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/JaineLPAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "32ca94c6d718803fc84fd25423280a5e5b86de89ad5c4b32b46179aa9288d3d9"
+          }
+        },
+        {
+          "component": "sqrt_upper_x96",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/JaineLPAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "32ca94c6d718803fc84fd25423280a5e5b86de89ad5c4b32b46179aa9288d3d9"
+          }
+        },
+        {
+          "component": "target_usdc_bps",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/JaineLPAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "32ca94c6d718803fc84fd25423280a5e5b86de89ad5c4b32b46179aa9288d3d9"
+          }
+        },
+        {
+          "component": "router_mode",
+          "value": "V1",
+          "classification": "SOURCE_FIXED",
+          "chain_id": 16661,
+          "meaning": "Wrapper-specific router ABI.",
+          "evidence_source": {
+            "path": "contracts/adapters/JaineLPAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "32ca94c6d718803fc84fd25423280a5e5b86de89ad5c4b32b46179aa9288d3d9"
+          }
+        },
+        {
+          "component": "input_asset",
+          "value": "0x0000000000000000000000000000000000000000",
+          "classification": "SOURCE_FIXED",
+          "chain_id": 16661,
+          "meaning": "Current native-0G adapter input sentinel.",
+          "evidence_source": {
+            "path": "contracts/adapters/JaineLPAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "32ca94c6d718803fc84fd25423280a5e5b86de89ad5c4b32b46179aa9288d3d9"
+          }
+        },
+        {
+          "component": "asynchronous",
+          "value": false,
+          "classification": "SOURCE_FIXED",
+          "chain_id": 16661,
+          "meaning": "isAsyncWithdrawal() mode matched by registry.",
+          "evidence_source": {
+            "path": "contracts/adapters/JaineLPAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "32ca94c6d718803fc84fd25423280a5e5b86de89ad5c4b32b46179aa9288d3d9"
+          }
+        },
+        {
+          "component": "deposit_cap",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "Registry configuration; no new cap/profile value chosen. Python gate is not an automatic Solidity gate.",
+          "evidence_source": {
+            "path": "contracts/StrategyManager.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "eb51aeba554ed01e911475c6777c1b80a539e36839c4edefff4b17a8da67b040"
+          }
+        },
+        {
+          "component": "max_allocation_bps",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "Registry configuration; no new cap/profile value chosen. Python gate is not an automatic Solidity gate.",
+          "evidence_source": {
+            "path": "contracts/StrategyManager.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "eb51aeba554ed01e911475c6777c1b80a539e36839c4edefff4b17a8da67b040"
+          }
+        },
+        {
+          "component": "active",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "Registry configuration; no new cap/profile value chosen. Python gate is not an automatic Solidity gate.",
+          "evidence_source": {
+            "path": "contracts/StrategyManager.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "eb51aeba554ed01e911475c6777c1b80a539e36839c4edefff4b17a8da67b040"
+          }
+        },
+        {
+          "component": "quoter",
+          "value": "0xd00883722cECAD3A1c60bCA611f09e1851a0bE02",
+          "classification": "EXTERNAL_PROTOCOL_REFERENCE",
+          "chain_id": 16661,
+          "meaning": "Off-chain execution quote source, not adapter constructor dependency.",
+          "evidence_source": {
+            "path": "src/ascend_optimizer/lp_execution.py",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "3609b034bf0822c685f70bd320919097a88e357f7ee5c90722f8d271470ae190"
+          }
+        }
+      ],
+      "allocation_gate": "CONDITIONAL",
+      "readiness": {
+        "source": "SOURCE_IMPLEMENTED",
+        "static": "STATICALLY_VALIDATED",
+        "simulation": "LOCAL_SIMULATION_VALIDATED",
+        "external_dependencies": "EXTERNAL_DEPENDENCY_REFERENCED",
+        "runtime_binding": "RUNTIME_BINDING_UNRESOLVED",
+        "public_deployment": "NOT_PERFORMED"
+      },
+      "simulation_limit": "V3 base adapter V1/Router02 mock fixtures; concrete wrappers compiled/ABI checked, not instantiated against actual protocol references."
+    },
+    {
+      "strategy_id": "OKU_LP_0G_USDC",
+      "adapter": "OkuV3Adapter",
+      "constructor_inputs": [
+        "vault_",
+        "pool_",
+        "feeTier_",
+        "tickLower_",
+        "tickUpper_",
+        "sqrtLowerX96_",
+        "sqrtUpperX96_",
+        "targetUsdcBps_"
+      ],
+      "components": [
+        {
+          "component": "adapter_address",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/OkuV3Adapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "165387efd8a6e15d595323d98d5bac94d1609b3936ba3703efaa1d16b0ae9677"
+          }
+        },
+        {
+          "component": "vault_address",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/OkuV3Adapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "165387efd8a6e15d595323d98d5bac94d1609b3936ba3703efaa1d16b0ae9677"
+          }
+        },
+        {
+          "component": "strategy_manager_address",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/OkuV3Adapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "165387efd8a6e15d595323d98d5bac94d1609b3936ba3703efaa1d16b0ae9677"
+          }
+        },
+        {
+          "component": "manager_strategy_key",
+          "value": null,
+          "classification": "DERIVED_CONFIGURATION",
+          "chain_id": 16661,
+          "meaning": "Intended key convention: keccak256 of UTF-8 strategy ID; no registered key/state.",
+          "evidence_source": {
+            "path": "contracts/adapters/OkuV3Adapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "165387efd8a6e15d595323d98d5bac94d1609b3936ba3703efaa1d16b0ae9677"
+          },
+          "derivation": "ethers.id(strategy_id); manager accepts any nonzero bytes32"
+        },
+        {
+          "component": "adapter_class",
+          "value": "OkuV3Adapter",
+          "classification": "SOURCE_FIXED",
+          "chain_id": 16661,
+          "meaning": "Adapter implementation class.",
+          "evidence_source": {
+            "path": "contracts/adapters/OkuV3Adapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "165387efd8a6e15d595323d98d5bac94d1609b3936ba3703efaa1d16b0ae9677"
+          }
+        },
+        {
+          "component": "factory",
+          "value": "0xcb2436774C3e191c85056d248EF4260ce5f27A9D",
+          "classification": "EXTERNAL_PROTOCOL_REFERENCE",
+          "chain_id": 16661,
+          "meaning": "Intended route reference only; not capstone deployment proof.",
+          "evidence_source": {
+            "path": "contracts/adapters/OkuV3Adapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "165387efd8a6e15d595323d98d5bac94d1609b3936ba3703efaa1d16b0ae9677"
+          }
+        },
+        {
+          "component": "router",
+          "value": "0x807F4E281B7A3B324825C64ca53c69F0b418dE40",
+          "classification": "EXTERNAL_PROTOCOL_REFERENCE",
+          "chain_id": 16661,
+          "meaning": "Intended route reference only; not capstone deployment proof.",
+          "evidence_source": {
+            "path": "contracts/adapters/OkuV3Adapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "165387efd8a6e15d595323d98d5bac94d1609b3936ba3703efaa1d16b0ae9677"
+          }
+        },
+        {
+          "component": "position_manager",
+          "value": "0x743E03cceB4af2efA3CC76838f6E8B50B63F184c",
+          "classification": "EXTERNAL_PROTOCOL_REFERENCE",
+          "chain_id": 16661,
+          "meaning": "Intended route reference only; not capstone deployment proof.",
+          "evidence_source": {
+            "path": "contracts/adapters/OkuV3Adapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "165387efd8a6e15d595323d98d5bac94d1609b3936ba3703efaa1d16b0ae9677"
+          }
+        },
+        {
+          "component": "pool",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/OkuV3Adapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "165387efd8a6e15d595323d98d5bac94d1609b3936ba3703efaa1d16b0ae9677"
+          }
+        },
+        {
+          "component": "w0g",
+          "value": "0x1Cd0690fF9a693f5EF2dD976660a8dAFc81A109c",
+          "classification": "EXTERNAL_PROTOCOL_REFERENCE",
+          "chain_id": 16661,
+          "meaning": "Intended route reference only; not capstone deployment proof.",
+          "evidence_source": {
+            "path": "contracts/adapters/OkuV3Adapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "165387efd8a6e15d595323d98d5bac94d1609b3936ba3703efaa1d16b0ae9677"
+          }
+        },
+        {
+          "component": "usdce",
+          "value": "0x1f3AA82227281cA364bFb3d253B0f1af1Da6473E",
+          "classification": "EXTERNAL_PROTOCOL_REFERENCE",
+          "chain_id": 16661,
+          "meaning": "Intended route reference only; not capstone deployment proof.",
+          "evidence_source": {
+            "path": "contracts/adapters/OkuV3Adapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "165387efd8a6e15d595323d98d5bac94d1609b3936ba3703efaa1d16b0ae9677"
+          }
+        },
+        {
+          "component": "token0",
+          "value": null,
+          "classification": "DERIVED_CONFIGURATION",
+          "chain_id": 16661,
+          "meaning": "Read from the chosen pool only if supplied; no pool chosen.",
+          "evidence_source": {
+            "path": "contracts/adapters/OkuV3Adapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "165387efd8a6e15d595323d98d5bac94d1609b3936ba3703efaa1d16b0ae9677"
+          },
+          "derivation": "pool.token0()"
+        },
+        {
+          "component": "token1",
+          "value": null,
+          "classification": "DERIVED_CONFIGURATION",
+          "chain_id": 16661,
+          "meaning": "Read from the chosen pool only if supplied; no pool chosen.",
+          "evidence_source": {
+            "path": "contracts/adapters/OkuV3Adapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "165387efd8a6e15d595323d98d5bac94d1609b3936ba3703efaa1d16b0ae9677"
+          },
+          "derivation": "pool.token1()"
+        },
+        {
+          "component": "fee_tier",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/OkuV3Adapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "165387efd8a6e15d595323d98d5bac94d1609b3936ba3703efaa1d16b0ae9677"
+          }
+        },
+        {
+          "component": "tick_spacing",
+          "value": null,
+          "classification": "DERIVED_CONFIGURATION",
+          "chain_id": 16661,
+          "meaning": "Read from the chosen pool only if supplied; no pool chosen.",
+          "evidence_source": {
+            "path": "contracts/adapters/OkuV3Adapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "165387efd8a6e15d595323d98d5bac94d1609b3936ba3703efaa1d16b0ae9677"
+          },
+          "derivation": "pool.tickSpacing()"
+        },
+        {
+          "component": "tick_lower",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/OkuV3Adapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "165387efd8a6e15d595323d98d5bac94d1609b3936ba3703efaa1d16b0ae9677"
+          }
+        },
+        {
+          "component": "tick_upper",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/OkuV3Adapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "165387efd8a6e15d595323d98d5bac94d1609b3936ba3703efaa1d16b0ae9677"
+          }
+        },
+        {
+          "component": "sqrt_lower_x96",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/OkuV3Adapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "165387efd8a6e15d595323d98d5bac94d1609b3936ba3703efaa1d16b0ae9677"
+          }
+        },
+        {
+          "component": "sqrt_upper_x96",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/OkuV3Adapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "165387efd8a6e15d595323d98d5bac94d1609b3936ba3703efaa1d16b0ae9677"
+          }
+        },
+        {
+          "component": "target_usdc_bps",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/OkuV3Adapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "165387efd8a6e15d595323d98d5bac94d1609b3936ba3703efaa1d16b0ae9677"
+          }
+        },
+        {
+          "component": "router_mode",
+          "value": "ROUTER02",
+          "classification": "SOURCE_FIXED",
+          "chain_id": 16661,
+          "meaning": "Wrapper-specific router ABI.",
+          "evidence_source": {
+            "path": "contracts/adapters/OkuV3Adapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "165387efd8a6e15d595323d98d5bac94d1609b3936ba3703efaa1d16b0ae9677"
+          }
+        },
+        {
+          "component": "input_asset",
+          "value": "0x0000000000000000000000000000000000000000",
+          "classification": "SOURCE_FIXED",
+          "chain_id": 16661,
+          "meaning": "Current native-0G adapter input sentinel.",
+          "evidence_source": {
+            "path": "contracts/adapters/OkuV3Adapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "165387efd8a6e15d595323d98d5bac94d1609b3936ba3703efaa1d16b0ae9677"
+          }
+        },
+        {
+          "component": "asynchronous",
+          "value": false,
+          "classification": "SOURCE_FIXED",
+          "chain_id": 16661,
+          "meaning": "isAsyncWithdrawal() mode matched by registry.",
+          "evidence_source": {
+            "path": "contracts/adapters/OkuV3Adapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "165387efd8a6e15d595323d98d5bac94d1609b3936ba3703efaa1d16b0ae9677"
+          }
+        },
+        {
+          "component": "deposit_cap",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "Registry configuration; no new cap/profile value chosen. Python gate is not an automatic Solidity gate.",
+          "evidence_source": {
+            "path": "contracts/StrategyManager.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "eb51aeba554ed01e911475c6777c1b80a539e36839c4edefff4b17a8da67b040"
+          }
+        },
+        {
+          "component": "max_allocation_bps",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "Registry configuration; no new cap/profile value chosen. Python gate is not an automatic Solidity gate.",
+          "evidence_source": {
+            "path": "contracts/StrategyManager.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "eb51aeba554ed01e911475c6777c1b80a539e36839c4edefff4b17a8da67b040"
+          }
+        },
+        {
+          "component": "active",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "Registry configuration; no new cap/profile value chosen. Python gate is not an automatic Solidity gate.",
+          "evidence_source": {
+            "path": "contracts/StrategyManager.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "eb51aeba554ed01e911475c6777c1b80a539e36839c4edefff4b17a8da67b040"
+          }
+        },
+        {
+          "component": "quoter",
+          "value": "0xaa52bB8110fE38D0d2d2AF0B85C3A3eE622CA455",
+          "classification": "EXTERNAL_PROTOCOL_REFERENCE",
+          "chain_id": 16661,
+          "meaning": "Off-chain execution quote source, not adapter constructor dependency.",
+          "evidence_source": {
+            "path": "src/ascend_optimizer/lp_execution.py",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "3609b034bf0822c685f70bd320919097a88e357f7ee5c90722f8d271470ae190"
+          }
+        }
+      ],
+      "allocation_gate": "CONDITIONAL",
+      "readiness": {
+        "source": "SOURCE_IMPLEMENTED",
+        "static": "STATICALLY_VALIDATED",
+        "simulation": "LOCAL_SIMULATION_VALIDATED",
+        "external_dependencies": "EXTERNAL_DEPENDENCY_REFERENCED",
+        "runtime_binding": "RUNTIME_BINDING_UNRESOLVED",
+        "public_deployment": "NOT_PERFORMED"
+      },
+      "simulation_limit": "V3 base adapter V1/Router02 mock fixtures; concrete wrappers compiled/ABI checked, not instantiated against actual protocol references."
+    },
+    {
+      "strategy_id": "ASCEND_STAKE_A0G",
+      "adapter": "AscendProtocolAdapter",
+      "constructor_inputs": [
+        "vault_",
+        "sourceCore_",
+        "w0g_"
+      ],
+      "components": [
+        {
+          "component": "adapter_address",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/AscendProtocolAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "0376d18e0dd3a6630b506a675cc659d2fe3d7df9b3e95addb1cc5eaeb186a03a"
+          }
+        },
+        {
+          "component": "vault_address",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/AscendProtocolAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "0376d18e0dd3a6630b506a675cc659d2fe3d7df9b3e95addb1cc5eaeb186a03a"
+          }
+        },
+        {
+          "component": "strategy_manager_address",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "UNRESOLVED_DEPLOYMENT_INPUT; no actual value selected.",
+          "evidence_source": {
+            "path": "contracts/adapters/AscendProtocolAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "0376d18e0dd3a6630b506a675cc659d2fe3d7df9b3e95addb1cc5eaeb186a03a"
+          }
+        },
+        {
+          "component": "manager_strategy_key",
+          "value": null,
+          "classification": "DERIVED_CONFIGURATION",
+          "chain_id": 16661,
+          "meaning": "Intended key convention: keccak256 of UTF-8 strategy ID; no registered key/state.",
+          "evidence_source": {
+            "path": "contracts/adapters/AscendProtocolAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "0376d18e0dd3a6630b506a675cc659d2fe3d7df9b3e95addb1cc5eaeb186a03a"
+          },
+          "derivation": "ethers.id(strategy_id); manager accepts any nonzero bytes32"
+        },
+        {
+          "component": "adapter_class",
+          "value": "AscendProtocolAdapter",
+          "classification": "SOURCE_FIXED",
+          "chain_id": 16661,
+          "meaning": "Adapter implementation class.",
+          "evidence_source": {
+            "path": "contracts/adapters/AscendProtocolAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "0376d18e0dd3a6630b506a675cc659d2fe3d7df9b3e95addb1cc5eaeb186a03a"
+          }
+        },
+        {
+          "component": "w0g",
+          "value": "0x1Cd0690fF9a693f5EF2dD976660a8dAFc81A109c",
+          "classification": "EXTERNAL_PROTOCOL_REFERENCE",
+          "chain_id": 16661,
+          "meaning": "Intended route reference only; not capstone deployment proof.",
+          "evidence_source": {
+            "path": "src/ascend_optimizer/collectors/ascend.py",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "0f40c4eb2c3bf6e1e5a69a6945a6828b8770133fcf2841ac863c58e4a17e219a"
+          }
+        },
+        {
+          "component": "source_core",
+          "value": "0x4B3c2f55fa67679b382c979A082Df1B32079B4cB",
+          "classification": "EXTERNAL_PROTOCOL_REFERENCE",
+          "chain_id": 16661,
+          "meaning": "Intended route reference only; not capstone deployment proof.",
+          "evidence_source": {
+            "path": "src/ascend_optimizer/collectors/ascend.py",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "0f40c4eb2c3bf6e1e5a69a6945a6828b8770133fcf2841ac863c58e4a17e219a"
+          }
+        },
+        {
+          "component": "a0g",
+          "value": "0x4B3c2f55fa67679b382c979A082Df1B32079B4cB",
+          "classification": "EXTERNAL_PROTOCOL_REFERENCE",
+          "chain_id": 16661,
+          "meaning": "SourceCore itself is the ERC4626 a0G share token; not 1:1 native 0G.",
+          "evidence_source": {
+            "path": "src/ascend_optimizer/collectors/ascend.py",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "0f40c4eb2c3bf6e1e5a69a6945a6828b8770133fcf2841ac863c58e4a17e219a"
+          }
+        },
+        {
+          "component": "withdrawal_queue",
+          "value": null,
+          "classification": "DERIVED_CONFIGURATION",
+          "chain_id": 16661,
+          "meaning": "Constructor reads SourceCore queue and checks reciprocal source/asset; actual queue binding unresolved.",
+          "evidence_source": {
+            "path": "contracts/adapters/AscendProtocolAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "0376d18e0dd3a6630b506a675cc659d2fe3d7df9b3e95addb1cc5eaeb186a03a"
+          },
+          "derivation": "SourceCore.withdrawalQueue()"
+        },
+        {
+          "component": "input_asset",
+          "value": "0x0000000000000000000000000000000000000000",
+          "classification": "SOURCE_FIXED",
+          "chain_id": 16661,
+          "meaning": "Current native-0G adapter input sentinel.",
+          "evidence_source": {
+            "path": "contracts/adapters/AscendProtocolAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "0376d18e0dd3a6630b506a675cc659d2fe3d7df9b3e95addb1cc5eaeb186a03a"
+          }
+        },
+        {
+          "component": "asynchronous",
+          "value": true,
+          "classification": "SOURCE_FIXED",
+          "chain_id": 16661,
+          "meaning": "isAsyncWithdrawal() mode matched by registry.",
+          "evidence_source": {
+            "path": "contracts/adapters/AscendProtocolAdapter.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "0376d18e0dd3a6630b506a675cc659d2fe3d7df9b3e95addb1cc5eaeb186a03a"
+          }
+        },
+        {
+          "component": "deposit_cap",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "Registry configuration; no new cap/profile value chosen. Python gate is not an automatic Solidity gate.",
+          "evidence_source": {
+            "path": "contracts/StrategyManager.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "eb51aeba554ed01e911475c6777c1b80a539e36839c4edefff4b17a8da67b040"
+          }
+        },
+        {
+          "component": "max_allocation_bps",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "Registry configuration; no new cap/profile value chosen. Python gate is not an automatic Solidity gate.",
+          "evidence_source": {
+            "path": "contracts/StrategyManager.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "eb51aeba554ed01e911475c6777c1b80a539e36839c4edefff4b17a8da67b040"
+          }
+        },
+        {
+          "component": "active",
+          "value": null,
+          "classification": "UNRESOLVED_DEPLOYMENT_INPUT",
+          "chain_id": 16661,
+          "meaning": "Registry configuration; no new cap/profile value chosen. Python gate is not an automatic Solidity gate.",
+          "evidence_source": {
+            "path": "contracts/StrategyManager.sol",
+            "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+            "sha256": "eb51aeba554ed01e911475c6777c1b80a539e36839c4edefff4b17a8da67b040"
+          }
+        }
+      ],
+      "allocation_gate": "CLOSED",
+      "readiness": {
+        "source": "SOURCE_IMPLEMENTED",
+        "static": "STATICALLY_VALIDATED",
+        "simulation": "LOCAL_SIMULATION_VALIDATED",
+        "external_dependencies": "EXTERNAL_DEPENDENCY_REFERENCED",
+        "runtime_binding": "RUNTIME_BINDING_UNRESOLVED",
+        "public_deployment": "NOT_PERFORMED"
+      },
+      "simulation_limit": "Own adapter/core mock fixtures only; not current external contracts or Mainnet proof."
+    }
+  ],
+  "auxiliary": [
+    {
+      "id": "W0G",
+      "classification": "AUXILIARY_NOT_STRATEGY",
+      "economic_role": "Wrapped representation of the 0G family; internal execution, no sixth optimizer route."
+    }
+  ],
+  "unchanged_files": {
+    "data/runtime_strategy_config.json": "5a370824b7f2436293373f683bb20df0a0bf7837ab9e04aa435103329be7b022",
+    "data/admission_evidence.csv": "ddb2a0e6b3b4533db5ca62a617340503925a4d6c49ab6f77716c3b9d7c99f3a8",
+    "data/strategies.csv": "3f1df7f87e0d340f9ecfbb56b49ec7555a4ff8c1d707fdc383867473f27e886e",
+    "hardhat.config.js": "1028fbab53cd5e978e57a62be7bb8756437589db7d48ec311055f7704d7ee0a2",
+    "package.json": "05bf9ad946338fc239b4e2e755cdc3bbbba1b11abf429666d25f07b8513c11c7"
+  },
+  "synthetic_parameter_policy": "SYNTHETIC_PREFLIGHT_ONLY results never write runtime config or admission records; no verified identities produced.",
+  "runtime_readiness": "UNRESOLVED_RUNTIME_BINDING",
+  "public_deployment": "NOT_DEPLOYED",
+  "dependency_domains": [
+    {
+      "strategy_id": "ASCEND_STAKE_A0G",
+      "chain_id": 1,
+      "classification": "EXTERNAL_PROTOCOL_REFERENCE",
+      "role": "Mellow/Symbiotic remote backing and OFT/messaging dependency; not independently user-routed, allocated or included as sixth strategy. Not an expanded user-facing route identity.",
+      "evidence_source": {
+        "path": "data/source_registry.csv",
+        "commit": "f8d309d2e8ca1904cbe31560a17591332ed7b80c",
+        "sha256": "eb8eee5bbb8515a7d52c824b4d845309dc5e98bac7d1d3ce206210d70f280da6"
+      }
+    }
+  ]
+}
