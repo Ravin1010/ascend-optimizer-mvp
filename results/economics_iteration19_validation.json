@@ -1,0 +1,165 @@
+{
+  "iteration": 19,
+  "canonical_repository_baseline": {
+    "as_of": "2026-10-09T14:30:00+00:00",
+    "evidence_mode": "PRODUCTION",
+    "return_record_count": 0,
+    "quote_record_count": 0,
+    "cost_record_count": 0,
+    "freshness_policies": "NO_VALID_SOURCE_POLICY",
+    "analysis_inputs": {
+      "amount_0g": "1000",
+      "price_usd": "1",
+      "price_basis": "MODELLED_ANALYSIS_ONLY_NOT_QUALIFIED",
+      "horizon_days": 90
+    },
+    "runs": [
+      {
+        "profile": "Conservative",
+        "qualified_return_evidence": "MISSING",
+        "qualified_quote_cost_evidence": "MISSING",
+        "allocation": [],
+        "idle_weight": 1,
+        "main_reason": "UNRESOLVED_RUNTIME_CONFIG_AND_EMPTY_ADMISSION",
+        "positive_selected_count": 0
+      },
+      {
+        "profile": "Balanced",
+        "qualified_return_evidence": "MISSING",
+        "qualified_quote_cost_evidence": "MISSING",
+        "allocation": [],
+        "idle_weight": 1,
+        "main_reason": "UNRESOLVED_RUNTIME_CONFIG_AND_EMPTY_ADMISSION",
+        "positive_selected_count": 0
+      },
+      {
+        "profile": "Aggressive",
+        "qualified_return_evidence": "MISSING",
+        "qualified_quote_cost_evidence": "MISSING",
+        "allocation": [],
+        "idle_weight": 1,
+        "main_reason": "UNRESOLVED_RUNTIME_CONFIG_AND_EMPTY_ADMISSION",
+        "positive_selected_count": 0
+      }
+    ],
+    "public_deployment_required": false,
+    "public_deployment_planned": false
+  },
+  "synthetic_verification": {
+    "label": "SYNTHETIC_EVALUATION_ONLY",
+    "source": "tests/test_economics_evidence.py; ephemeral fixtures only",
+    "scenario_id": "iteration19-test-only",
+    "native_candidates": [
+      {
+        "amount_0g": "100.0",
+        "fixed_cost_usd": 2.0,
+        "net_profit_usd": 8.000000000000009
+      },
+      {
+        "amount_0g": "200.0",
+        "fixed_cost_usd": 2.0,
+        "net_profit_usd": 18.000000000000018
+      },
+      {
+        "amount_0g": "300.0",
+        "fixed_cost_usd": 2.0,
+        "net_profit_usd": 28.00000000000003
+      },
+      {
+        "amount_0g": "400.0",
+        "fixed_cost_usd": 2.0,
+        "net_profit_usd": 38.000000000000036
+      },
+      {
+        "amount_0g": "500.0",
+        "fixed_cost_usd": 2.0,
+        "net_profit_usd": 48.00000000000004
+      },
+      {
+        "amount_0g": "600.0",
+        "fixed_cost_usd": 2.0,
+        "net_profit_usd": 58.00000000000006
+      },
+      {
+        "amount_0g": "700.0",
+        "fixed_cost_usd": 2.0,
+        "net_profit_usd": 68.00000000000006
+      },
+      {
+        "amount_0g": "800.0",
+        "fixed_cost_usd": 2.0,
+        "net_profit_usd": 78.00000000000007
+      }
+    ],
+    "variable_cost_cases": [
+      {
+        "amount_0g": "100",
+        "variable_cost_usd": 0.25
+      },
+      {
+        "amount_0g": "400",
+        "variable_cost_usd": 1.0
+      }
+    ],
+    "quote_exact_amount_failure": "AMOUNT_MISMATCH",
+    "selected_point_revalidation": "PASSED",
+    "changed_selected_evidence_test": "PASS",
+    "cases": [
+      {
+        "test": "test_missing_required_cost_blocks_positive_and_models_cannot_unlock_production",
+        "result": "PASS"
+      },
+      {
+        "test": "test_explicit_structural_zero_and_missing_coverage",
+        "result": "PASS"
+      },
+      {
+        "test": "test_embedded_yield_and_lp_nav_reward_double_counts_rejected",
+        "result": "PASS"
+      },
+      {
+        "test": "test_points_excluded_and_realizable_incentive_needs_proof",
+        "result": "PASS"
+      },
+      {
+        "test": "test_synthetic_quote_requires_explicit_scenario_never_public_binding",
+        "result": "PASS"
+      },
+      {
+        "test": "test_amount_specific_cost_changes_ranking_without_grid_change",
+        "result": "PASS"
+      },
+      {
+        "test": "test_lp_quotes_per_exact_candidate_no_quote_no_positive",
+        "result": "PASS"
+      },
+      {
+        "test": "test_selected_quote_expiry_and_identity_revalidation",
+        "result": "PASS"
+      },
+      {
+        "test": "test_economics_does_not_create_admission_or_open_ascend",
+        "result": "PASS"
+      },
+      {
+        "test": "exchange_rate_growth_net_fee_no_double_count",
+        "strategy_id": "GIMO_STAKE_0G",
+        "result": "PASS",
+        "assumed_one_year_rate_growth": "1 -> 1.1",
+        "derived_apy": 0.1,
+        "additional_protocol_fee_usd": 0
+      },
+      {
+        "test": "exchange_rate_growth_net_fee_no_double_count",
+        "strategy_id": "ASCEND_STAKE_A0G",
+        "result": "PASS",
+        "assumed_one_year_rate_growth": "1 -> 1.1",
+        "derived_apy": 0.1,
+        "additional_protocol_fee_usd": 0
+      }
+    ],
+    "technical_admission_basis": "TEST_ONLY_ASSUMPTION",
+    "risk_stress": "UNCHANGED_LEGACY_TEST_FIXTURE_COEFFICIENTS",
+    "public_deployment_proof": "NOT_ESTABLISHED"
+  }
+}

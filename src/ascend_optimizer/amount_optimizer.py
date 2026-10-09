@@ -82,6 +82,7 @@ class AmountCandidate:
     lp_stress_loss_20pct: float | None = None
     slashing_stress_loss: float | None = None
     exit_time_days: float | None = None
+    economics_evidence: dict | None = None
 
 
 def candidate_grid(profile: RiskProfile) -> tuple[float, ...]:
@@ -102,7 +103,8 @@ def evaluate_candidate(strategy: pd.Series, snapshot: pd.Series | None, *, weigh
                        profile: RiskProfile, admission_fn: AdmissionFn = unknown_admission,
                        lp_quote_fn: QuoteFn = estimate_lp_execution_slippage,
                        management_fee_rate: float = 0, performance_fee_rate: float = 0,
-                       stage: str = "CANDIDATE", as_of: datetime | None = None) -> AmountCandidate:
+                       stage: str = "CANDIDATE", as_of: datetime | None = None,
+                       economics_fn=None, economics_mode: str = "PRODUCTION") -> AmountCandidate:
     sid = str(strategy.strategy_id)
     state = strategy_state(strategy)
     if sid not in MVP_STRATEGY_IDS or not state.structural_candidate:
@@ -156,12 +158,34 @@ def evaluate_candidate(strategy: pd.Series, snapshot: pd.Series | None, *, weigh
             reasons.extend(evidence.diagnostics)
     except (ValueError, CollectionError) as exc:
         reasons.append("ADMISSION_EVIDENCE_UNAVAILABLE: " + str(exc))
+    economic_point = None
+    if economics_fn is not None:
+        from .economics_evidence import EconomicPoint, EconomicsError
+        if c.technical_admission != "SUPPORTED":
+            return replace(c, rejection_reasons=tuple(reasons))
+        try:
+            economic_point = economics_fn(strategy=strategy.copy(), canonical_amount_0g=canonical_amount,
+                price_usd=price_usd, horizon_days=horizon_days, as_of=as_of, stage=stage,
+                management_fee_rate=management_fee_rate, performance_fee_rate=performance_fee_rate)
+            if not isinstance(economic_point, EconomicPoint) or economic_point.strategy_id != sid or Decimal(economic_point.canonical_amount_0g) != canonical_amount:
+                raise EconomicsError("economic point identity mismatch")
+            if economic_point.evidence["mode"] != economics_mode:
+                raise EconomicsError("explicit economics mode mismatch")
+            c = replace(c, economics_evidence=economic_point.evidence)
+        except (EconomicsError, ValueError) as exc:
+            return replace(c, rejection_reasons=tuple(reasons + ["ECONOMICS_UNAVAILABLE: " + str(exc)]))
     if snapshot is None:
         return replace(c, rejection_reasons=tuple(reasons + ["MISSING_SNAPSHOT"]))
     snapshot = snapshot.copy(deep=True)
+    if economic_point is not None:
+        snapshot["entry_slippage_rate"] = economic_point.entry_slippage_rate
+        snapshot["exit_slippage_rate"] = economic_point.exit_slippage_rate
+        c = replace(c, runtime_execution="ECONOMIC_EVIDENCE_ONLY_NOT_EXECUTION_PROOF",
+                    quote_context={"basis": "CANONICAL_ECONOMIC_QUOTE_EVIDENCE",
+                                   "quotes": economic_point.evidence["quotes"]} if sid in LP_ROUTE_CONFIG else None)
     # Always quote each supported positive LP point, even with prefilled rates.
     # Unknown admission points do not trigger unnecessary network requests.
-    if sid in LP_ROUTE_CONFIG:
+    if sid in LP_ROUTE_CONFIG and economic_point is None:
         if c.technical_admission != "SUPPORTED":
             return replace(c, rejection_reasons=tuple(reasons))
         try:
@@ -188,7 +212,7 @@ def evaluate_candidate(strategy: pd.Series, snapshot: pd.Series | None, *, weigh
             })
         except (CollectionError, ValueError) as exc:
             return replace(c, runtime_execution="FAILED", rejection_reasons=tuple(reasons + ["RUNTIME_QUOTE_UNAVAILABLE: " + str(exc)]))
-    else:
+    elif economic_point is None:
         c = replace(c, runtime_execution="SNAPSHOT_PROXY")
     exposure = build_strategy_exposure(strategy, snapshot)
     fields = ("entry_slippage_rate", "exit_slippage_rate", "exit_time_days", "bridge_fraction", "lp_stress_loss_20pct", "slashing_stress_loss")
@@ -204,6 +228,11 @@ def evaluate_candidate(strategy: pd.Series, snapshot: pd.Series | None, *, weigh
             reasons.append("PROFILE_SLIPPAGE_LIMIT")
     if values["exit_time_days"] is not None and values["exit_time_days"] > profile.max_exit_time_days:
         reasons.append("PROFILE_EXIT_TIME_LIMIT")
+    if economic_point is not None:
+        return replace(c, net_profit_usd=economic_point.net_profit_usd,
+                       net_return_horizon=economic_point.net_return_horizon, net_apy=economic_point.net_apy,
+                       fixed_execution_cost_usd=economic_point.fixed_cost_usd,
+                       eligible=not reasons, rejection_reasons=tuple(reasons))
     if str(snapshot.get("yield_fee_status")) not in {"NET_OF_PROTOCOL_FEES", "GROSS_BEFORE_FEES"}:
         reasons.append("FEE_BASIS_UNRESOLVED")
     # Missing monetary costs stay missing. Known USD costs retain the existing
@@ -256,7 +285,7 @@ class AmountAwareRun:
             "selected_amount_revalidation": self.revalidation, "revalidation_errors": list(self.revalidation_errors),
             "outcome": "SELECTED_REVALIDATION_FAILED" if not valid else "RECOMMENDATION_GENERATED" if self.selected else "NO_POSITIVE_ALLOCATION",
             "execution_readiness": "NOT_ESTABLISHED", "live_capstone_proof": "NOT_ESTABLISHED",
-            "risk_basis": "LEGACY_SLEEVE_COEFFICIENTS", "cost_basis": "EXISTING_FIXED_USD_LIFECYCLE_CONVENTION_PROVENANCE_UNRESOLVED",
+            "risk_basis": "LEGACY_SLEEVE_COEFFICIENTS", "cost_basis": "CANONICAL_ECONOMICS_EVIDENCE_V1" if any(c.economics_evidence for c in self.candidates) else "EXISTING_FIXED_USD_LIFECYCLE_CONVENTION_PROVENANCE_UNRESOLVED",
             "candidates": [asdict(c) for c in self.candidates],
             "proposed_selected": [asdict(c) for c in self.selected],
             "strategy_results": {sid: "REVALIDATION_FAILED" if sid in selected_ids and not valid else
@@ -281,8 +310,10 @@ def run_amount_optimizer(strategies: pd.DataFrame, snapshots: pd.DataFrame, *, d
                          lp_quote_fn: QuoteFn = estimate_lp_execution_slippage,
                          management_fee_rate: float = 0, performance_fee_rate: float = 0,
                          as_of: datetime | None = None,
-                         revalidation_as_of: datetime | None = None) -> AmountAwareRun:
+                         revalidation_as_of: datetime | None = None,
+                         economics_fn=None, economics_mode: str = "PRODUCTION") -> AmountAwareRun:
     profile = profile if isinstance(profile, RiskProfile) else get_profile(profile)
+    repository_mode = admission_fn is None
     if admission_fn is None:
         from .admission_provider import RepositoryAdmissionProvider
         admission_fn = RepositoryAdmissionProvider(strategies=strategies)
@@ -291,6 +322,9 @@ def run_amount_optimizer(strategies: pd.DataFrame, snapshots: pd.DataFrame, *, d
             raise ValueError(f"{name} must be finite and positive")
     from .admission_provider import RepositoryAdmissionProvider
     if isinstance(admission_fn, RepositoryAdmissionProvider):
+        if repository_mode and economics_fn is None:
+            from .economics_evidence import EconomicsProvider
+            economics_fn = EconomicsProvider.repository()
         from .admission_validity import require_as_of
         require_as_of(as_of if as_of is not None else admission_fn.as_of)
         if revalidation_as_of is not None:
@@ -308,7 +342,8 @@ def run_amount_optimizer(strategies: pd.DataFrame, snapshots: pd.DataFrame, *, d
                                   price_usd=price_usd, horizon_days=horizon_days, profile=profile,
                                   admission_fn=admission_fn, lp_quote_fn=lp_quote_fn, stage=stage,
                                   as_of=revalidation_as_of if stage == "REVALIDATION" and revalidation_as_of is not None else as_of,
-                                  management_fee_rate=management_fee_rate, performance_fee_rate=performance_fee_rate)
+                                  management_fee_rate=management_fee_rate, performance_fee_rate=performance_fee_rate,
+                                  economics_fn=economics_fn, economics_mode=economics_mode)
     candidates = tuple(evaluate(meta, w, "CANDIDATE") for _, meta in members.iterrows() for w in grid)
     options = [[c for c in candidates if c.strategy_id == sid and c.eligible] for sid in members.strategy_id]
     best = tuple(group[0] for group in options)  # all zero
