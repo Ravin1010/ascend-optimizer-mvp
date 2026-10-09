@@ -46,6 +46,47 @@ STRATEGY_COLUMNS = (
     "notes",
 )
 
+
+# Iteration 10 metadata dimensions; legacy engine columns above remain intact.
+STRATEGY_METADATA_VALUES = {
+    "record_role": frozenset({"INDEPENDENT_STRATEGY", "EMBEDDED_DEPENDENCY", "OBSERVED_OPPORTUNITY"}),
+    "reconciliation_category": frozenset({"INTEGRATED_ALLOCATABLE", "INTEGRATED_GATED", "EMBEDDED_NON_ALLOCATABLE", "OBSERVED_EXCLUDED"}),
+    "protocol_availability": frozenset({"LIVE", "DEPLOYED_MARKET_UNRESOLVED"}),
+    "integration_status": frozenset({"IMPLEMENTED", "EMBEDDED", "NOT_INTEGRATED"}),
+    "optimizer_universe": frozenset({"TRUE", "FALSE"}),
+    "allocation_gate": frozenset({"CONDITIONAL", "CLOSED", "NOT_APPLICABLE"}),
+    "evidence_readiness": frozenset({"NOT_ASSESSED", "INCOMPLETE", "NOT_APPLICABLE"}),
+    "runtime_feasibility": frozenset({"NOT_ASSESSED", "NOT_APPLICABLE"}),
+    "live_capstone_proof": frozenset({"NOT_ESTABLISHED", "NOT_APPLICABLE"}),
+    "user_bridge_required": frozenset({"TRUE", "FALSE", "UNKNOWN"}),
+    "protocol_managed_remote_exposure": frozenset({"TRUE", "FALSE", "UNKNOWN"}),
+}
+STRATEGY_COLUMNS += (
+    "record_role", "reconciliation_category", "protocol_availability",
+    "integration_status", "optimizer_universe", "allocation_gate",
+    "gate_requirements", "evidence_readiness", "runtime_feasibility",
+    "live_capstone_proof", "execution_chain_id", "dependency_chain_ids",
+    "parent_strategy_id", "internal_assets", "position_asset",
+    "user_bridge_required", "protocol_managed_remote_exposure",
+    "legacy_liquidity_meaning", "capital_path",
+)
+MVP_STRATEGY_IDS = frozenset({
+    "NATIVE_STAKE_0G", "GIMO_STAKE_0G", "JAINE_LP_0G_USDC",
+    "OKU_LP_0G_USDC", "ASCEND_STAKE_A0G",
+})
+SOURCE_REGISTRY_COLUMNS = (
+    "source_id", "strategy_id", "field_group", "source_type", "source_url",
+    "retrieval_method", "authority", "confidence", "last_verified_utc", "notes",
+    "chain_ids", "source_role", "mechanism_evidence_class", "freshness_class",
+    "amount_specific", "config_specific", "history_required", "capture_status",
+)
+TRACKED_RECORD_COLUMNS = (
+    "record_id", "record_name", "reconciliation_category", "protocol_availability",
+    "integration_status", "optimizer_universe", "allocation_gate",
+    "parent_strategy_id", "chain_role", "chain_ids", "asset_role",
+    "source_coverage", "notes",
+)
+
 SNAPSHOT_COLUMNS = (
     "timestamp",
     "strategy_id",
@@ -392,6 +433,108 @@ def validate_strategies(df: pd.DataFrame) -> pd.DataFrame:
             f"at CSV row(s) {rows}"
         )
 
+    _validate_strategy_metadata(result)
+    return result
+
+
+def _validate_strategy_metadata(result: pd.DataFrame) -> None:
+    for column, values in STRATEGY_METADATA_VALUES.items():
+        _validate_allowed_values(result, column, values, "strategies")
+    _require_non_null(result, (
+        "gate_requirements", "position_asset", "legacy_liquidity_meaning", "capital_path",
+    ), "strategies")
+    members = result["optimizer_universe"].eq("TRUE")
+    if set(result.loc[members, "strategy_id"]) != MVP_STRATEGY_IDS:
+        raise SchemaValidationError("strategies must retain exactly the five MVP optimizer-universe IDs")
+    if not result.loc[members, "record_role"].eq("INDEPENDENT_STRATEGY").all():
+        raise SchemaValidationError("optimizer-universe members must be independent strategies")
+    if not result.loc[members, "integration_status"].eq("IMPLEMENTED").all():
+        raise SchemaValidationError("MVP strategies must be implemented")
+    if not result.loc[members, "execution_chain_id"].eq("16661").all():
+        raise SchemaValidationError("MVP execution chain must be 16661")
+    if not result.loc[members, "input_asset"].eq("0G").all():
+        raise SchemaValidationError("configured MVP input must remain native 0G")
+    for _, row in result.iterrows():
+        sid = str(row["strategy_id"])
+        expected_category = (
+            "INTEGRATED_GATED" if sid == "ASCEND_STAKE_A0G" else
+            "INTEGRATED_ALLOCATABLE" if sid in MVP_STRATEGY_IDS else
+            "EMBEDDED_NON_ALLOCATABLE" if row["record_role"] == "EMBEDDED_DEPENDENCY" else
+            "OBSERVED_EXCLUDED"
+        )
+        expected_gate = "CLOSED" if sid == "ASCEND_STAKE_A0G" else "CONDITIONAL" if sid in MVP_STRATEGY_IDS else "NOT_APPLICABLE"
+        if row["reconciliation_category"] != expected_category or row["allocation_gate"] != expected_gate:
+            raise SchemaValidationError(f"strategies.{sid} category/gate contradicts frozen universe")
+        legacy_excluded = str(row["technical_eligibility"]).startswith("EXCLUDED")
+        if legacy_excluded != (sid not in MVP_STRATEGY_IDS or sid == "ASCEND_STAKE_A0G"):
+            raise SchemaValidationError(f"strategies.{sid} legacy eligibility contradicts allocation gate")
+        if row["record_role"] == "EMBEDDED_DEPENDENCY":
+            if pd.isna(row["parent_strategy_id"]) or row["parent_strategy_id"] not in MVP_STRATEGY_IDS:
+                raise SchemaValidationError("embedded dependency requires an MVP parent_strategy_id")
+        for field in ("execution_chain_id", "dependency_chain_ids"):
+            if pd.notna(row[field]) and not all(part.isdigit() and int(part) > 0 for part in str(row[field]).split("|")):
+                raise SchemaValidationError(f"strategies.{field} must contain positive chain IDs")
+
+
+def _validate_reference_ids(df: pd.DataFrame, column: str, known_ids: set[str], name: str) -> None:
+    for value in df[column].dropna():
+        if not set(str(value).split("|")) <= known_ids:
+            raise SchemaValidationError(f"{name}.{column} contains unknown reference: {value}")
+
+
+def load_tracked_records(path: Path | str | None = None, *, strategies: pd.DataFrame | None = None) -> pd.DataFrame:
+    """Load non-candidate inventory separately; never append it to optimizer datasets."""
+    result = _strip_strings(_validate_columns(
+        _read_csv(Path(path) if path is not None else DEFAULT_DATA_DIR / "tracked_records.csv", "tracked_records"),
+        TRACKED_RECORD_COLUMNS, "tracked_records",
+    ))
+    _require_non_null(result, [c for c in TRACKED_RECORD_COLUMNS if c not in {"parent_strategy_id", "chain_ids"}], "tracked_records")
+    if result["record_id"].duplicated().any():
+        raise SchemaValidationError("tracked_records.record_id must be unique")
+    for column, values in {
+        "reconciliation_category": {"OBSERVED_EXCLUDED", "AUXILIARY_NOT_STRATEGY", "KIV_FUTURE"},
+        "protocol_availability": {"LIVE", "OBSERVED", "UNKNOWN", "NOT_APPLICABLE"},
+        "integration_status": {"NOT_INTEGRATED", "EXECUTION_HELPER", "REFERENCE_ONLY"},
+        "optimizer_universe": {"FALSE"}, "allocation_gate": {"NOT_APPLICABLE"},
+        "source_coverage": {"GAP", "EXISTING_REPOSITORY_REFERENCE"},
+    }.items():
+        _validate_allowed_values(result, column, frozenset(values), "tracked_records")
+    known = set((load_strategies() if strategies is None else strategies)["strategy_id"])
+    if set(result["record_id"]) & known:
+        raise SchemaValidationError("tracked_records IDs must not duplicate strategy IDs")
+    _validate_reference_ids(result, "parent_strategy_id", known, "tracked_records")
+    for value in result["chain_ids"].dropna():
+        if not all(part.isdigit() and int(part) > 0 for part in str(value).split("|")):
+            raise SchemaValidationError("tracked_records.chain_ids must contain positive chain IDs")
+    return result
+
+
+def load_source_registry(path: Path | str | None = None, *, strategies: pd.DataFrame | None = None) -> pd.DataFrame:
+    """Validate mechanism provenance without asserting freshness of any capture."""
+    result = _strip_strings(_validate_columns(
+        _read_csv(Path(path) if path is not None else DEFAULT_DATA_DIR / "source_registry.csv", "source_registry"),
+        SOURCE_REGISTRY_COLUMNS, "source_registry",
+    ))
+    _require_non_null(result, [c for c in SOURCE_REGISTRY_COLUMNS if c != "last_verified_utc"], "source_registry")
+    if result["source_id"].duplicated().any():
+        raise SchemaValidationError("source_registry.source_id must be unique")
+    known = set((load_strategies() if strategies is None else strategies)["strategy_id"])
+    _validate_reference_ids(result, "strategy_id", known, "source_registry")
+    for column, values in {
+        "mechanism_evidence_class": {"LIVE_OBSERVED", "LIVE_DERIVED", "HISTORICAL", "MODELLED", "STATIC_CONFIG", "MISSING/UNRESOLVED"},
+        "freshness_class": {"RUN_TIME_FRESH", "PERIODICALLY_FRESH", "TIME_SERIES_REQUIRED", "DEPLOYMENT_CONFIG_STATIC", "PROTOCOL_STATIC", "MODEL_ASSUMPTION"},
+        "amount_specific": {"TRUE", "FALSE"}, "config_specific": {"TRUE", "FALSE"},
+        "history_required": {"TRUE", "FALSE"}, "capture_status": {"NO_FRESH_CAPTURE_SUPPLIED"},
+        "confidence": {"HIGH", "MEDIUM", "LOW"},
+        "source_role": {"PROTOCOL_REFERENCE", "MARKET_OBSERVATION", "RETURN_HISTORY", "EXECUTION_QUOTE", "WITHDRAWAL_STATE", "INCENTIVE_OBSERVATION", "DEPENDENCY_REFERENCE", "MODEL_ASSUMPTION"},
+    }.items():
+        _validate_allowed_values(result, column, frozenset(values), "source_registry")
+    for value in result["chain_ids"]:
+        if not all(part.isdigit() and int(part) > 0 for part in str(value).split("|")):
+            raise SchemaValidationError("source_registry.chain_ids must contain positive chain IDs")
+    dates = pd.to_datetime(result["last_verified_utc"], format="ISO8601", errors="coerce", utc=True)
+    if (result["last_verified_utc"].notna() & dates.isna()).any():
+        raise SchemaValidationError("source_registry.last_verified_utc must be parseable when supplied")
     return result
 
 

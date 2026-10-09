@@ -156,4 +156,4 @@ def test_frozen_dataset_exposes_current_data_gaps_without_inventing_values() -> 
 
     morpho = table.loc[table["strategy_id"] == "MORPHO_LEND_0G"].iloc[0]
     assert morpho["technical_eligible"] == False
-    assert "execution_status=PENDING" in morpho["eligibility_reasons"]
+    assert "technical_eligibility=EXCLUDED_OBSERVED_UNINTEGRATED" in morpho["eligibility_reasons"]
