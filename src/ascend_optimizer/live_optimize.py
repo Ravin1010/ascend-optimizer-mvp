@@ -29,8 +29,6 @@ DEFAULT_LIVE_PATH = PROJECT_ROOT / "data" / "live_strategy_snapshots.csv"
 
 PriceFn = Callable[[], float]
 
-MODELLED_EXECUTION_STATUSES = frozenset({"MODELLED", "PARTIAL_MODELLED"})
-
 
 @dataclass(frozen=True)
 class LiveOptimizerRun:
@@ -479,27 +477,13 @@ def _apply_live_scope(
     *,
     include_modelled: bool,
 ) -> tuple[pd.DataFrame, set[str]]:
-    """Exclude explicitly modelled routes from LIVE allocation unless opted in."""
+    """Retain the public flag without letting legacy statuses change membership.
 
-    scoped = strategies.copy()
-    excluded_ids: set[str] = set()
-
-    if include_modelled:
-        return scoped, excluded_ids
-
-    mask = scoped["execution_status"].astype(str).isin(
-        MODELLED_EXECUTION_STATUSES
-    )
-    excluded_ids = set(
-        scoped.loc[mask, "strategy_id"].astype(str)
-    )
-
-    scoped.loc[
-        mask,
-        "technical_eligibility",
-    ] = "EXCLUDED_MODELLED_BY_LIVE_SCOPE"
-
-    return scoped, excluded_ids
+    The frozen universe has only integrated routes. Modelled snapshot components
+    remain governed by the existing checks; the flag cannot open a CLOSED gate
+    or promote a tracked opportunity. No evidence-validity claim is added here.
+    """
+    return strategies.copy(), set()
 
 
 def optimize_live(

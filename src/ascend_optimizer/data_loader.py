@@ -465,9 +465,7 @@ def _validate_strategy_metadata(result: pd.DataFrame) -> None:
         expected_gate = "CLOSED" if sid == "ASCEND_STAKE_A0G" else "CONDITIONAL" if sid in MVP_STRATEGY_IDS else "NOT_APPLICABLE"
         if row["reconciliation_category"] != expected_category or row["allocation_gate"] != expected_gate:
             raise SchemaValidationError(f"strategies.{sid} category/gate contradicts frozen universe")
-        legacy_excluded = str(row["technical_eligibility"]).startswith("EXCLUDED")
-        if legacy_excluded != (sid not in MVP_STRATEGY_IDS or sid == "ASCEND_STAKE_A0G"):
-            raise SchemaValidationError(f"strategies.{sid} legacy eligibility contradicts allocation gate")
+        # Legacy labels are compatibility inputs, not authority over gates.
         if row["record_role"] == "EMBEDDED_DEPENDENCY":
             if pd.isna(row["parent_strategy_id"]) or row["parent_strategy_id"] not in MVP_STRATEGY_IDS:
                 raise SchemaValidationError("embedded dependency requires an MVP parent_strategy_id")

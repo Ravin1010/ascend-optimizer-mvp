@@ -127,7 +127,7 @@ def test_live_optimizer_exposes_profile_specific_status() -> None:
     ]
 
 
-def test_live_optimizer_keeps_live_ascend_excluded_until_data_complete() -> None:
+def test_live_optimizer_keeps_live_ascend_gate_closed() -> None:
     strategies, snapshots = _demo_inputs()
 
     run = optimize_live(
@@ -146,13 +146,13 @@ def test_live_optimizer_keeps_live_ascend_excluded_until_data_complete() -> None
     assert ascend["scope_eligible"]
     assert ascend["scope_exclusion_reason"] == ""
     assert not ascend["profile_eligible"]
-    assert "technical_eligibility=EXCLUDED_LIVE_DATA_INCOMPLETE" in (
+    assert "allocation_gate=CLOSED" in (
         ascend["profile_exclusion_reasons"]
     )
     assert "ASCEND_STAKE_A0G" not in run.pipeline.result.allocations
 
 
-def test_include_modelled_flag_does_not_override_live_ascend_data_guard() -> None:
+def test_include_modelled_flag_does_not_override_closed_ascend_gate() -> None:
     strategies, snapshots = _demo_inputs()
 
     run = optimize_live(
@@ -172,7 +172,7 @@ def test_include_modelled_flag_does_not_override_live_ascend_data_guard() -> Non
     assert ascend["scope_eligible"]
     assert ascend["scope_exclusion_reason"] == ""
     assert not ascend["profile_eligible"]
-    assert "technical_eligibility=EXCLUDED_LIVE_DATA_INCOMPLETE" in (
+    assert "allocation_gate=CLOSED" in (
         ascend["profile_exclusion_reasons"]
     )
     assert run.include_modelled
@@ -335,9 +335,9 @@ def test_json_exposes_per_strategy_constraint_headroom() -> None:
         "strategy_concentration"
     ]
 
-    assert native_concentration["value"] == pytest.approx(0.40)
+    assert native_concentration["value"] == pytest.approx(0)
     assert native_concentration["limit"] == pytest.approx(0.60)
-    assert native_concentration["headroom"] == pytest.approx(0.20)
+    assert native_concentration["headroom"] == pytest.approx(0.60)
     assert native_concentration["state"] == "WITHIN_LIMIT"
 
     gimo = by_id["GIMO_STAKE_0G"]
@@ -345,10 +345,15 @@ def test_json_exposes_per_strategy_constraint_headroom() -> None:
         "strategy_concentration"
     ]
 
-    assert gimo_concentration["value"] == pytest.approx(0.60)
+    assert gimo_concentration["value"] == pytest.approx(0.40)
     assert gimo_concentration["limit"] == pytest.approx(0.60)
-    assert gimo_concentration["headroom"] == pytest.approx(0)
-    assert gimo_concentration["state"] == "AT_LIMIT"
+    assert gimo_concentration["headroom"] == pytest.approx(0.20)
+    assert gimo_concentration["state"] == "WITHIN_LIMIT"
+
+    jaine = by_id["JAINE_LP_0G_USDC"]["constraint_diagnostics"]["strategy_concentration"]
+    assert jaine["value"] == pytest.approx(0.60)
+    assert jaine["headroom"] == pytest.approx(0)
+    assert jaine["state"] == "AT_LIMIT"
 
     oku = by_id["OKU_LP_0G_USDC"]
     slippage = oku["constraint_diagnostics"]["slippage"]
@@ -359,3 +364,15 @@ def test_json_exposes_per_strategy_constraint_headroom() -> None:
         0.01 - slippage["value"]
     )
     assert slippage["state"] in {"NEAR_LIMIT", "EXCEEDED"}
+
+
+def test_legacy_modelled_status_cannot_remove_canonical_jaine_or_open_ascend() -> None:
+    strategies, snapshots = _demo_inputs()
+    strategies.loc[strategies.strategy_id.eq("JAINE_LP_0G_USDC"), "execution_status"] = "MODELLED"
+    strategies.loc[strategies.strategy_id.eq("JAINE_LP_0G_USDC"), "technical_eligibility"] = "EXCLUDED_LIQUIDITY_CONSTRAINED"
+    strategies.loc[strategies.strategy_id.eq("ASCEND_STAKE_A0G"), "technical_eligibility"] = "ELIGIBLE"
+    run = optimize_live(strategies, snapshots, amount=1000, price_usd=1,
+                        horizon_days=90, profile="Balanced", include_modelled=False)
+    assert run.pipeline.result.allocations["JAINE_LP_0G_USDC"] == pytest.approx(0.60)
+    assert "ASCEND_STAKE_A0G" not in run.pipeline.result.allocations
+    assert run.to_dict()["schema_version"] == "1.2"

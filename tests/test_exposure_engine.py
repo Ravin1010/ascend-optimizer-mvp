@@ -24,6 +24,14 @@ def _strategy(**overrides):
         "technical_eligibility": "ELIGIBLE",
         "bridge_required": "FALSE",
         "bridge_fraction": 0.0,
+        "optimizer_universe": "TRUE",
+        "reconciliation_category": "INTEGRATED_ALLOCATABLE",
+        "protocol_availability": "LIVE",
+        "integration_status": "IMPLEMENTED",
+        "allocation_gate": "CONDITIONAL",
+        "evidence_readiness": "NOT_ASSESSED",
+        "runtime_feasibility": "NOT_ASSESSED",
+        "live_capstone_proof": "NOT_ESTABLISHED",
     }
     row.update(overrides)
     return row
@@ -97,11 +105,16 @@ def test_missing_required_exposure_blocks_optimizer() -> None:
     assert "exit_time_days" in exposure.missing_exposures
 
 
-def test_pending_strategy_is_not_technically_eligible() -> None:
+def test_non_integrated_strategy_is_not_admitted() -> None:
     exposure = build_strategy_exposure(
         _strategy(
             execution_status="PENDING",
-            technical_eligibility="EXCLUDED_PENDING",
+            technical_eligibility="ELIGIBLE",  # Legacy cannot promote it.
+            optimizer_universe="FALSE",
+            reconciliation_category="OBSERVED_EXCLUDED",
+            protocol_availability="DEPLOYED_MARKET_UNRESOLVED",
+            integration_status="NOT_INTEGRATED",
+            allocation_gate="NOT_APPLICABLE",
         ),
         _snapshot(),
     )
@@ -109,7 +122,7 @@ def test_pending_strategy_is_not_technically_eligible() -> None:
     assert exposure.technical_eligible is False
     assert exposure.optimizer_eligible is False
     assert any(
-        reason.startswith("execution_status=PENDING")
+        reason == "optimizer_universe=FALSE"
         for reason in exposure.eligibility_reasons
     )
 
@@ -156,4 +169,40 @@ def test_frozen_dataset_exposes_current_data_gaps_without_inventing_values() -> 
 
     morpho = table.loc[table["strategy_id"] == "MORPHO_LEND_0G"].iloc[0]
     assert morpho["technical_eligible"] == False
-    assert "technical_eligibility=EXCLUDED_OBSERVED_UNINTEGRATED" in morpho["eligibility_reasons"]
+    assert "optimizer_universe=FALSE" in morpho["eligibility_reasons"]
+
+
+def test_legacy_labels_cannot_exclude_an_authoritative_conditional_member() -> None:
+    exposure = build_strategy_exposure(
+        _strategy(execution_status="PENDING", technical_eligibility="EXCLUDED_LIQUIDITY_CONSTRAINED"),
+        _snapshot(),
+    )
+    assert exposure.structural_candidate
+    assert exposure.allocation_admitted
+    assert exposure.optimizer_eligible  # Existing numerical checks only.
+    assert exposure.evidence_readiness == "NOT_ASSESSED"
+    assert exposure.runtime_feasibility == "NOT_ASSESSED"
+    assert exposure.live_capstone_proof == "NOT_ESTABLISHED"
+    assert not exposure.technical_eligibility.startswith("EXCLUDED")
+
+
+@pytest.mark.parametrize("field", [
+    "optimizer_universe", "reconciliation_category", "protocol_availability",
+    "integration_status", "allocation_gate", "evidence_readiness",
+    "runtime_feasibility", "live_capstone_proof",
+])
+def test_missing_authoritative_dimension_never_falls_back_to_legacy(field) -> None:
+    with pytest.raises(ValueError, match="authoritative metadata"):
+        build_strategy_exposure(_strategy(**{field: None}), _snapshot())
+
+
+def test_closed_gate_is_not_cleared_by_complete_numeric_exposures() -> None:
+    exposure = build_strategy_exposure(
+        _strategy(reconciliation_category="INTEGRATED_GATED", allocation_gate="CLOSED", technical_eligibility="ELIGIBLE"),
+        _snapshot(),
+    )
+    assert exposure.structural_candidate
+    assert exposure.risk_data_complete
+    assert not exposure.allocation_admitted
+    assert not exposure.optimizer_eligible
+    assert "allocation_gate=CLOSED" in exposure.eligibility_reasons

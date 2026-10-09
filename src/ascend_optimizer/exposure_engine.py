@@ -24,9 +24,7 @@ from typing import Any
 
 import pandas as pd
 
-
-PENDING_EXECUTION_STATUSES = frozenset({"PENDING"})
-EXCLUDED_TECHNICAL_PREFIXES = ("EXCLUDED",)
+from .strategy_state import strategy_state
 
 LP_CATEGORIES = frozenset({"LIQUIDITY_PROVISION"})
 SLASHING_CATEGORIES = frozenset(
@@ -59,6 +57,17 @@ class StrategyExposure:
     execution_status: str
     technical_eligibility: str
     data_status: str
+    optimizer_universe: str
+    reconciliation_category: str
+    protocol_availability: str
+    integration_status: str
+    allocation_gate: str
+    evidence_readiness: str
+    runtime_feasibility: str
+    live_capstone_proof: str
+    parent_strategy_id: str | None
+    structural_candidate: bool
+    allocation_admitted: bool
 
     liquidity_usd: float | None
     entry_slippage_rate: float | None
@@ -139,21 +148,6 @@ def _resolve_lp_stress(
     return _optional_float(snapshot.get("lp_stress_loss_20pct"))
 
 
-def _technical_eligibility(
-    execution_status: str,
-    technical_eligibility: str,
-) -> tuple[bool, tuple[str, ...]]:
-    reasons: list[str] = []
-
-    if execution_status in PENDING_EXECUTION_STATUSES:
-        reasons.append(f"execution_status={execution_status}")
-
-    if technical_eligibility.startswith(EXCLUDED_TECHNICAL_PREFIXES):
-        reasons.append(f"technical_eligibility={technical_eligibility}")
-
-    return not reasons, tuple(reasons)
-
-
 def build_strategy_exposure(
     strategy: pd.Series | dict[str, Any],
     snapshot: pd.Series | dict[str, Any],
@@ -171,13 +165,13 @@ def build_strategy_exposure(
 
     category = _required_string(strategy, "category")
     execution_status = _required_string(strategy, "execution_status")
-    technical_eligibility = _required_string(strategy, "technical_eligibility")
+    state = strategy_state(strategy)
+    technical_eligibility = state.legacy_technical_eligibility
     data_status = _required_string(snapshot, "data_status")
 
-    technical_eligible, eligibility_reasons = _technical_eligibility(
-        execution_status,
-        technical_eligibility,
-    )
+    # Compatibility boolean now means metadata admission, not membership.
+    technical_eligible = state.allocation_admitted
+    eligibility_reasons = state.admission_reasons
 
     values = {
         "liquidity_usd": _optional_float(snapshot.get("liquidity_usd")),
@@ -211,6 +205,7 @@ def build_strategy_exposure(
         execution_status=execution_status,
         technical_eligibility=technical_eligibility,
         data_status=data_status,
+        **state.reporting_fields(),
         liquidity_usd=values["liquidity_usd"],
         entry_slippage_rate=values["entry_slippage_rate"],
         exit_slippage_rate=values["exit_slippage_rate"],
@@ -296,7 +291,7 @@ def build_exposure_table(
     strategies: pd.DataFrame,
     snapshots: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Return optimizer-ready exposure records as a dataframe."""
+    """Report exposures, structural state and current numerical admission checks."""
 
     rows: list[dict[str, Any]] = []
 

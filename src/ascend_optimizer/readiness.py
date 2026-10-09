@@ -18,6 +18,7 @@ import pandas as pd
 from .data_loader import load_snapshots, load_strategies
 from .exposure_engine import build_exposure_table, latest_snapshot_rows
 from .lp_execution import LP_ROUTE_CONFIG
+from .strategy_state import strategy_state
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -32,7 +33,11 @@ def build_readiness_table(
     strategies: pd.DataFrame,
     snapshots: pd.DataFrame,
 ) -> pd.DataFrame:
-    """Build one latest-state readiness row for every frozen strategy."""
+    """Report all records with membership/gate/measurement states separated.
+
+    return_ready and optimizer_eligible describe existing numerical checks only;
+    NOT_ASSESSED metadata remains unknown, not validated live evidence.
+    """
 
     latest = latest_snapshot_rows(snapshots)
     latest_by_id = {
@@ -48,11 +53,14 @@ def build_readiness_table(
     for _, strategy in strategies.iterrows():
         strategy_id = str(strategy["strategy_id"])
         snapshot = latest_by_id.get(strategy_id)
+        state = strategy_state(strategy)
+        state_fields = state.reporting_fields()
 
         if snapshot is None:
             rows.append(
                 {
                     "strategy_id": strategy_id,
+                    **state_fields,
                     "execution_status": strategy["execution_status"],
                     "data_status": "MISSING",
                     "gross_apr": pd.NA,
@@ -62,22 +70,21 @@ def build_readiness_table(
                     "optimizer_eligible": False,
                     "missing_exposures": "no_live_snapshot",
                     "runtime_resolvable_exposures": "",
-                    "next_gap": "collect_or_model_snapshot",
+                    "next_gap": (
+                        "optimizer_universe" if not state.structural_candidate else
+                        "allocation_gate" if not state.allocation_admitted else
+                        "collect_or_model_snapshot"
+                    ),
                 }
             )
             continue
 
         exposure_row = exposure_by_id.loc[strategy_id]
 
-        technical_eligibility = str(
-            strategy["technical_eligibility"]
-        )
-        embedded_explanatory = (
-            technical_eligibility == "EXCLUDED_EMBEDDED"
-        )
+        non_candidate = not state.structural_candidate
 
         base_yield_ready = (
-            not embedded_explanatory
+            not non_candidate
             and (
                 _has_value(snapshot.get("gross_apy"))
                 or _has_value(snapshot.get("gross_apr"))
@@ -124,15 +131,15 @@ def build_readiness_table(
         missing = "|".join(unresolved_fields)
         runtime_resolvable = "|".join(runtime_resolvable_fields)
 
-        if embedded_explanatory:
-            next_gap = "technical_eligibility"
+        if non_candidate:
+            next_gap = "optimizer_universe"
+        elif not state.allocation_admitted:
+            next_gap = "allocation_gate"
         elif not return_ready:
             if not base_yield_ready:
                 next_gap = "yield"
             else:
                 next_gap = "yield_fee_status"
-        elif not bool(exposure_row["technical_eligible"]):
-            next_gap = "technical_eligibility"
         elif unresolved_fields:
             next_gap = unresolved_fields[0]
         elif runtime_resolvable_fields:
@@ -143,21 +150,22 @@ def build_readiness_table(
         rows.append(
             {
                 "strategy_id": strategy_id,
+                **state_fields,
                 "execution_status": strategy["execution_status"],
                 "data_status": snapshot["data_status"],
                 "gross_apr": (
                     pd.NA
-                    if embedded_explanatory
+                    if non_candidate
                     else snapshot.get("gross_apr")
                 ),
                 "gross_apy": (
                     pd.NA
-                    if embedded_explanatory
+                    if non_candidate
                     else snapshot.get("gross_apy")
                 ),
                 "incentive_apy": (
                     pd.NA
-                    if embedded_explanatory
+                    if non_candidate
                     else snapshot.get("incentive_apy")
                 ),
                 "return_ready": return_ready,
@@ -188,25 +196,29 @@ def print_readiness_report(table: pd.DataFrame) -> None:
         print(
             f"{row['strategy_id']:<24} "
             f"return={'YES' if row['return_ready'] else 'NO ':<3} "
-            f"optimizer={'YES' if row['optimizer_eligible'] else 'NO ':<3} "
+            f"numeric-checks={'YES' if row['optimizer_eligible'] else 'NO ':<3} "
             f"APR={_format_percent(row['gross_apr']):>8} "
             f"APY={_format_percent(row['gross_apy']):>8} "
             f"incentive={_format_percent(row['incentive_apy']):>8}"
         )
         print(
-            f"  data={row['data_status']}; "
+            f"  member={row['optimizer_universe']}; gate={row['allocation_gate']}; "
+            f"evidence={row['evidence_readiness']}; runtime={row['runtime_feasibility']}; "
+            f"proof={row['live_capstone_proof']}; data={row['data_status']}; "
             f"next_gap={row['next_gap']}; "
             f"missing={row['missing_exposures'] or '-'}; "
             f"runtime={row['runtime_resolvable_exposures'] or '-'}"
         )
 
-    ready_count = int(table["optimizer_eligible"].sum())
-    return_ready_count = int(table["return_ready"].sum())
+    members = table[table["structural_candidate"]]
+    ready_count = int(members["optimizer_eligible"].sum())
+    return_ready_count = int(members["return_ready"].sum())
 
     print()
     print(
-        f"Return-ready strategies: {return_ready_count}/{len(table)}; "
-        f"optimizer-ready strategies: {ready_count}/{len(table)}"
+        f"Return-ready strategies: {return_ready_count}/{len(members)}; "
+        f"numeric-check eligible strategies: {ready_count}/{len(members)} "
+        "(not evidence validity or execution proof)"
     )
 
 

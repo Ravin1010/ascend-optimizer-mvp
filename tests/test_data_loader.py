@@ -120,7 +120,6 @@ def test_reconciled_universe_and_gate_are_distinct_from_evidence() -> None:
 @pytest.mark.parametrize("strategy_id,column,value", [
     ("ASCEND_RESTAKE", "optimizer_universe", "TRUE"),
     ("ASCEND_STAKE_A0G", "allocation_gate", "CONDITIONAL"),
-    ("JAINE_LP_0G_USDC", "technical_eligibility", "EXCLUDED_LIQUIDITY_CONSTRAINED"),
     ("GIMO_STAKE_0G", "execution_chain_id", "16602"),
     ("ASCEND_RESTAKE", "parent_strategy_id", "UNKNOWN"),
 ])
@@ -178,3 +177,12 @@ def test_demo_snapshot_contract_remains_explicitly_non_live() -> None:
     snapshots = load_snapshots(load_strategies(), PROJECT_ROOT / "data/demo_strategy_snapshots.csv")
     assert len(snapshots) == 7
     assert snapshots.source.eq("DEMO_ONLY_ASSUMPTION").all()
+
+
+def test_legacy_eligibility_cannot_override_metadata_at_load_time() -> None:
+    frame = pd.read_csv(PROJECT_ROOT / "data/strategies.csv", dtype="string")
+    frame.loc[frame.strategy_id.eq("JAINE_LP_0G_USDC"), "technical_eligibility"] = "EXCLUDED_LIQUIDITY_CONSTRAINED"
+    frame.loc[frame.strategy_id.eq("ASCEND_STAKE_A0G"), "technical_eligibility"] = "ELIGIBLE"
+    result = validate_strategies(frame).set_index("strategy_id")
+    assert result.loc["JAINE_LP_0G_USDC", "allocation_gate"] == "CONDITIONAL"
+    assert result.loc["ASCEND_STAKE_A0G", "allocation_gate"] == "CLOSED"

@@ -38,9 +38,10 @@ def test_current_scaffold_surfaces_missing_data_without_fabrication() -> None:
     embedded = candidates[
         candidates["strategy_id"] == "ASCEND_RESTAKE"
     ].iloc[0]
-    others = candidates[
-        candidates["strategy_id"] != "ASCEND_RESTAKE"
-    ]
+    others = candidates[candidates["structural_candidate"]]
+    assert int(candidates["structural_candidate"].sum()) == 5
+    morpho = candidates[candidates["strategy_id"] == "MORPHO_LEND_0G"].iloc[0]
+    assert morpho["return_error"] == "non_candidate_no_independent_return"
 
     assert others["return_error"].str.contains(
         "gross_apy or gross_apr"
@@ -97,19 +98,17 @@ def test_demo_balanced_allocation() -> None:
         profile="Balanced",
     ).result
 
-    # Jaine is production-excluded for insufficient live liquidity and Oku's
-    # demo slippage exceeds the Balanced profile limit. Gimo therefore reaches
-    # the 60% concentration cap and Native fills the remaining 40%.
+    # Jaine has the highest admitted demo coefficient and reaches Balanced's
+    # 60% cap. Oku fails slippage; Gimo fills the remaining 40%.
+    # These are synthetic current-solver results, not live-capital suitability.
     assert result.allocations == pytest.approx(
         {
-            "GIMO_STAKE_0G": 0.60,
-            "NATIVE_STAKE_0G": 0.40,
+            "JAINE_LP_0G_USDC": 0.60,
+            "GIMO_STAKE_0G": 0.40,
         }
     )
-    assert result.portfolio_lp_il_stress == pytest.approx(0)
-    assert result.portfolio_slashing_stress_loss == pytest.approx(
-        0.60 * 0.015 + 0.40 * 0.01
-    )
+    assert result.portfolio_lp_il_stress == pytest.approx(0.60 * 0.08)
+    assert result.portfolio_slashing_stress_loss == pytest.approx(0.40 * 0.015)
 
 
 def test_demo_aggressive_allocation() -> None:
@@ -124,20 +123,18 @@ def test_demo_aggressive_allocation() -> None:
         profile="Aggressive",
     ).result
 
-    # Jaine is production-excluded for insufficient live liquidity. Oku is the
-    # highest-return eligible demo route and reaches Aggressive's 80%
-    # concentration cap; Gimo fills the remaining 20%.
+    # After demo execution costs Jaine has the highest net coefficient.
+    # It reaches the 80% concentration cap; Oku fills the remaining 20%.
+    # The aggregate demo LP stress is 8.4%, within the existing profile limit.
     assert result.allocations == pytest.approx(
         {
-            "OKU_LP_0G_USDC": 0.80,
-            "GIMO_STAKE_0G": 0.20,
+            "JAINE_LP_0G_USDC": 0.80,
+            "OKU_LP_0G_USDC": 0.20,
         }
     )
     assert result.portfolio_bridge_exposure == pytest.approx(0)
-    assert result.portfolio_lp_il_stress == pytest.approx(0.80 * 0.10)
-    assert result.portfolio_slashing_stress_loss == pytest.approx(
-        0.20 * 0.015
-    )
+    assert result.portfolio_lp_il_stress == pytest.approx(0.80 * 0.08 + 0.20 * 0.10)
+    assert result.portfolio_slashing_stress_loss == pytest.approx(0)
 
 
 def test_morpho_stays_excluded_even_with_demo_numbers() -> None:
@@ -259,12 +256,11 @@ def test_pipeline_annotates_profile_specific_eligibility() -> None:
         "profile_exclusion_reasons"
     ]
 
-    # Jaine remains observable in the candidate table, but its static
-    # production liquidity gate overrides otherwise acceptable demo slippage.
-    assert not jaine["profile_eligible"]
-    assert "technical_eligibility=EXCLUDED_LIQUIDITY_CONSTRAINED" in jaine[
-        "profile_exclusion_reasons"
-    ]
+    # Conditional member passes these existing synthetic runtime/profile checks.
+    assert jaine["structural_candidate"]
+    assert jaine["profile_eligible"]
+    assert jaine["profile_exclusion_reasons"] == ""
+    assert run.result.allocations["JAINE_LP_0G_USDC"] == pytest.approx(0.60)
 
 
 
@@ -287,3 +283,34 @@ def test_embedded_restaking_has_no_independent_return_candidate() -> None:
     assert pd.isna(row["net_apy"])
     assert row["return_error"] == "embedded_exposure_no_independent_return"
     assert not row["optimizer_eligible"]
+
+
+def test_solver_receives_only_five_members_and_non_members_have_no_return(monkeypatch) -> None:
+    import src.ascend_optimizer.pipeline as pipeline_module
+    from src.ascend_optimizer.data_loader import MVP_STRATEGY_IDS
+
+    strategies, snapshots = _demo_inputs()
+    strategies.loc[:, "technical_eligibility"] = "ELIGIBLE"
+    strategies.loc[:, "execution_status"] = "LIVE"
+    original_solver = pipeline_module.optimize_portfolio
+    received = set()
+
+    def spy(candidates, **kwargs):
+        received.update(candidates.strategy_id)
+        return original_solver(candidates, **kwargs)
+
+    monkeypatch.setattr(pipeline_module, "optimize_portfolio", spy)
+    run = run_optimizer_pipeline(strategies, snapshots, amount=1000, asset_price_usd=1,
+                                 horizon_days=90, profile="Aggressive")
+    assert received == MVP_STRATEGY_IDS
+    assert len(run.candidates) == 7  # Reporting inventory, not universe count.
+    rows = run.candidates.set_index("strategy_id")
+    for sid in ("ASCEND_RESTAKE", "MORPHO_LEND_0G"):
+        assert not rows.loc[sid, "structural_candidate"]
+        assert pd.isna(rows.loc[sid, "net_return_horizon"])
+        assert pd.isna(rows.loc[sid, "net_profit_usd"])
+        assert sid not in run.result.allocations
+    assert rows.loc["ASCEND_RESTAKE", "parent_strategy_id"] == "ASCEND_STAKE_A0G"
+    assert rows.loc["ASCEND_STAKE_A0G", "structural_candidate"]
+    assert rows.loc["ASCEND_STAKE_A0G", "risk_data_complete"]
+    assert "ASCEND_STAKE_A0G" not in run.result.allocations

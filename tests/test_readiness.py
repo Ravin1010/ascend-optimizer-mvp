@@ -91,7 +91,7 @@ def test_readiness_separates_return_and_exposure_gaps() -> None:
     assert jaine["return_ready"]
     assert not jaine["optimizer_eligible"]
     assert jaine["missing_exposures"] == ""
-    assert jaine["next_gap"] == "technical_eligibility"
+    assert jaine["next_gap"] == "runtime_lp_quote"
     assert "entry_slippage_rate" in jaine["runtime_resolvable_exposures"]
     assert "exit_slippage_rate" in jaine["runtime_resolvable_exposures"]
     assert "lp_stress_loss_20pct" in jaine["runtime_resolvable_exposures"]
@@ -119,7 +119,7 @@ def test_missing_live_snapshot_is_reported_explicitly() -> None:
 
     assert morpho["data_status"] == "MISSING"
     assert morpho["missing_exposures"] == "no_live_snapshot"
-    assert morpho["next_gap"] == "collect_or_model_snapshot"
+    assert morpho["next_gap"] == "optimizer_universe"
 
 
 
@@ -146,7 +146,7 @@ def test_embedded_restaking_never_appears_return_ready() -> None:
     assert not row["return_ready"]
     assert not row["optimizer_eligible"]
     assert pd.isna(row["gross_apy"])
-    assert row["next_gap"] == "technical_eligibility"
+    assert row["next_gap"] == "optimizer_universe"
 
 
 
@@ -186,7 +186,7 @@ def test_runtime_lp_fields_do_not_look_like_collection_gaps() -> None:
 
 
 
-def test_static_jaine_liquidity_exclusion_precedes_runtime_quote_gap() -> None:
+def test_jaine_runtime_quote_gap_is_not_a_static_liquidity_exclusion() -> None:
     strategies = load_strategies(PROJECT_ROOT / "data" / "strategies.csv")
 
     frame = pd.DataFrame(
@@ -213,4 +213,19 @@ def test_static_jaine_liquidity_exclusion_precedes_runtime_quote_gap() -> None:
 
     assert jaine["return_ready"]
     assert not jaine["optimizer_eligible"]
-    assert jaine["next_gap"] == "technical_eligibility"
+    assert jaine["next_gap"] == "runtime_lp_quote"
+
+
+def test_ascend_gate_is_separate_from_usable_return_and_complete_exposures() -> None:
+    strategies = load_strategies()
+    from src.ascend_optimizer.data_loader import load_snapshots
+    snapshots = load_snapshots(strategies, PROJECT_ROOT / "data/demo_strategy_snapshots.csv")
+    strategies.loc[strategies.strategy_id.eq("ASCEND_STAKE_A0G"), "technical_eligibility"] = "ELIGIBLE"
+    row = build_readiness_table(strategies, snapshots).set_index("strategy_id").loc["ASCEND_STAKE_A0G"]
+    assert row["structural_candidate"]
+    assert row["return_ready"]  # Supplied synthetic APY, not a gate-clearing rule.
+    assert row["missing_exposures"] == ""
+    assert row["allocation_gate"] == "CLOSED"
+    assert not row["optimizer_eligible"]
+    assert row["next_gap"] == "allocation_gate"
+    assert row["evidence_readiness"] == "INCOMPLETE"

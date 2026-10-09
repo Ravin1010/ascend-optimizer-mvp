@@ -14,7 +14,7 @@ amount rather than freezing a generic slippage number into collected snapshots.
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 import pandas as pd
@@ -33,6 +33,7 @@ from .net_return_engine import (
 )
 from .optimizer import PortfolioResult, optimize_portfolio
 from .profiles import ProfileName, RiskProfile
+from .strategy_state import strategy_state
 
 
 LPQuoteFn = Callable[..., LPExecutionQuote]
@@ -139,7 +140,11 @@ def build_optimizer_candidates(
     performance_fee_rate: float = 0.0,
     lp_quote_fn: LPQuoteFn = estimate_lp_execution_slippage,
 ) -> pd.DataFrame:
-    """Join latest returns with measurable and runtime-resolved exposures."""
+    """Build diagnostic rows; structural_candidate identifies solver members.
+
+    Non-members remain reportable but have no independent return coefficient.
+    Existing numerical checks do not certify evidence validity or live proof.
+    """
 
     latest, runtime_errors = resolve_runtime_lp_exposures(
         snapshots,
@@ -184,8 +189,13 @@ def build_optimizer_candidates(
             continue
 
         strategy_meta = strategy_meta_by_id[strategy_id]
-        if str(strategy_meta["technical_eligibility"]) == "EXCLUDED_EMBEDDED":
-            row["return_error"] = "embedded_exposure_no_independent_return"
+        state = strategy_state(strategy_meta)
+        if not state.structural_candidate:
+            row["return_error"] = (
+                "embedded_exposure_no_independent_return"
+                if state.reconciliation_category == "EMBEDDED_NON_ALLOCATABLE"
+                else "non_candidate_no_independent_return"
+            )
             return_rows.append(row)
             continue
 
@@ -249,14 +259,25 @@ def run_optimizer_pipeline(
 
     portfolio_value_usd = float(amount) * float(asset_price_usd)
 
+    # Keep all tracked rows in diagnostics, but never give non-members to the
+    # independent allocation solver. CLOSED members remain in this five-row
+    # structural set and fail metadata admission regardless of measurements.
+    independent = candidates[candidates["structural_candidate"]].copy()
     result = optimize_portfolio(
-        candidates,
+        independent,
         portfolio_value_usd=portfolio_value_usd,
         profile=profile,
     )
 
+    non_members = candidates[~candidates["structural_candidate"]]
+    excluded = dict(result.excluded_strategies)
+    for _, row in non_members.iterrows():
+        excluded[str(row["strategy_id"])] = (
+            "optimizer_eligible=False", *str(row["eligibility_reasons"]).split("|"),
+        )
+    result = replace(result, excluded_strategies=excluded)
+
     annotated = candidates.copy()
-    excluded = result.excluded_strategies
     annotated["profile_eligible"] = annotated["strategy_id"].map(
         lambda strategy_id: str(strategy_id) not in excluded
     )
