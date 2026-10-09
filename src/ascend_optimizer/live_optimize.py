@@ -22,6 +22,7 @@ from .collectors.native_staking import fetch_0g_price_usd
 from .data_loader import load_snapshots, load_strategies
 from .pipeline import PipelineRun, run_optimizer_pipeline
 from .profiles import get_profile
+from .result_contract import SCHEMA_VERSION, strategy_contract
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -41,6 +42,12 @@ class LiveOptimizerRun:
     profile: str
     pipeline: PipelineRun
     include_modelled: bool
+    price_acquisition_mode: str
+    submitted_price_usd: float | None
+    management_fee_rate: float
+    performance_fee_rate: float
+    submitted_asset: str
+    submitted_profile: str
 
     @property
     def portfolio_value_usd(self) -> float:
@@ -119,6 +126,13 @@ class LiveOptimizerRun:
             strategy_rows.append(
                 {
                     "strategy_id": strategy_id,
+                    **strategy_contract(
+                        row, weight=allocation_weight,
+                        profile_eligible=profile_eligible,
+                        optimizer_eligible=optimizer_eligible,
+                        legacy_reasons=list(dict.fromkeys(scope_reasons + profile_reasons)),
+                    ),
+                    # Compatibility summary only; explicit dimensions are primary.
                     "status": status,
                     "optimizer_eligible": optimizer_eligible,
                     "profile_eligible": profile_eligible,
@@ -286,8 +300,40 @@ class LiveOptimizerRun:
             triggered_constraints.append("max_exit_time_days")
 
         return {
-            "schema_version": "1.2",
+            "schema_version": SCHEMA_VERSION,
+            "run_scope": {
+                "capital_scope": "DECISION_SLEEVE",
+                "constraint_scope": "DECISION_SLEEVE",
+                "whole_portfolio_compliance": "NOT_ASSESSED",
+            },
+            "valuation": {
+                "asset": self.asset,
+                "price_usd": float(self.asset_price_usd),
+                "decision_value_usd": float(self.portfolio_value_usd),
+                "acquisition_mode": self.price_acquisition_mode,
+                "provenance_status": "NOT_REPRESENTED",
+            },
+            "outcome": {
+                "state": "RECOMMENDATION_GENERATED" if result.deployed_weight > 0 else "NO_POSITIVE_ALLOCATION",
+                "recommendation_basis": "CURRENT_INPUTS_AND_NUMERICAL_CHECKS",
+                "execution_readiness": "NOT_ESTABLISHED",
+                "live_capstone_proof": "NOT_ESTABLISHED",
+            },
             "input": {
+                "submitted": {
+                    "decision_asset": self.submitted_asset,
+                    "decision_amount": float(self.amount),
+                    "horizon_days": float(self.horizon_days),
+                    "profile": self.submitted_profile,
+                    "price_usd_override": self.submitted_price_usd,
+                    "management_fee_rate": float(self.management_fee_rate),
+                    "performance_fee_rate": float(self.performance_fee_rate),
+                    "include_modelled": bool(self.include_modelled),
+                },
+                "decision_asset": self.asset,
+                "decision_amount": float(self.amount),
+                "decision_value_usd": float(self.portfolio_value_usd),
+                # Legacy aliases below describe the decision sleeve, not total holdings.
                 "asset": self.asset,
                 "amount": float(self.amount),
                 "asset_price_usd": float(self.asset_price_usd),
@@ -299,6 +345,7 @@ class LiveOptimizerRun:
                 "include_modelled": bool(self.include_modelled),
             },
             "profile_constraints": {
+                "scope": "DECISION_SLEEVE",
                 "max_strategy_concentration": float(
                     risk_profile.max_strategy_concentration
                 ),
@@ -335,6 +382,7 @@ class LiveOptimizerRun:
                 },
             },
             "portfolio": {
+                "scope": "DECISION_SLEEVE",
                 "allocations": allocations,
                 "idle": {
                     "weight": float(result.idle_weight),
@@ -558,6 +606,12 @@ def optimize_live(
         profile=risk_profile.name.value,
         pipeline=pipeline,
         include_modelled=include_modelled,
+        price_acquisition_mode="FETCHED" if price_usd is None else "USER_OVERRIDE",
+        submitted_price_usd=None if price_usd is None else float(price_usd),
+        management_fee_rate=float(management_fee_rate),
+        performance_fee_rate=float(performance_fee_rate),
+        submitted_asset=str(asset),
+        submitted_profile=str(profile),
     )
 
 

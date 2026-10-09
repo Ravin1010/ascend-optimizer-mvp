@@ -1,9 +1,10 @@
 import { execFile } from "node:child_process";
 import path from "node:path";
 import { promisify } from "node:util";
-import { NextResponse } from "next/server";
+import { NextResponse } from "next/server.js";
 
 import type { RiskProfile } from "@/lib/types";
+import { parseOptimizerResponse } from "../../../lib/optimizer-response.ts";
 
 export const runtime = "nodejs";
 
@@ -18,6 +19,7 @@ interface OptimizeRequest {
   amount?: number;
   horizon_days?: number;
   profile?: RiskProfile;
+  include_modelled?: boolean;
 }
 
 export async function POST(request: Request) {
@@ -32,6 +34,9 @@ export async function POST(request: Request) {
     );
   }
 
+  if (body.include_modelled !== undefined && typeof body.include_modelled !== "boolean") {
+    return NextResponse.json({ error: "include_modelled must be boolean" }, { status: 400 });
+  }
   const amount = Number(body.amount);
   const horizonDays = Number(body.horizon_days ?? 90);
   const profile = body.profile ?? "Balanced";
@@ -72,6 +77,7 @@ export async function POST(request: Request) {
         "--profile",
         profile,
         "--json",
+        ...(body.include_modelled ? ["--include-modelled"] : []),
       ],
       {
         cwd: repoRoot,
@@ -80,7 +86,7 @@ export async function POST(request: Request) {
       },
     );
 
-    return NextResponse.json(JSON.parse(stdout));
+    return NextResponse.json(parseOptimizerResponse(stdout));
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Optimizer execution failed";

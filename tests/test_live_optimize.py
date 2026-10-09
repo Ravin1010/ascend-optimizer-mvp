@@ -193,7 +193,7 @@ def test_live_optimizer_to_dict_is_frontend_ready_and_json_safe() -> None:
 
     payload = run.to_dict()
 
-    assert payload["schema_version"] == "1.2"
+    assert payload["schema_version"] == "1.3"
     assert payload["input"]["asset"] == "0G"
     assert payload["input"]["profile"] == "Balanced"
     assert payload["input"]["portfolio_value_usd"] == pytest.approx(1000)
@@ -217,7 +217,7 @@ def test_live_optimizer_to_dict_is_frontend_ready_and_json_safe() -> None:
     # Strict JSON serialization must never rely on non-standard NaN tokens.
     encoded = json.dumps(payload, allow_nan=False)
     decoded = json.loads(encoded)
-    assert decoded["schema_version"] == "1.2"
+    assert decoded["schema_version"] == "1.3"
 
 
 def test_live_optimizer_json_uses_null_for_missing_values() -> None:
@@ -375,7 +375,7 @@ def test_legacy_modelled_status_cannot_remove_canonical_jaine_or_open_ascend() -
                         horizon_days=90, profile="Balanced", include_modelled=False)
     assert run.pipeline.result.allocations["JAINE_LP_0G_USDC"] == pytest.approx(0.60)
     assert "ASCEND_STAKE_A0G" not in run.pipeline.result.allocations
-    assert run.to_dict()["schema_version"] == "1.2"
+    assert run.to_dict()["schema_version"] == "1.3"
 
 
 def test_compatibility_flag_preserves_scope_and_terminal_wording(capsys) -> None:
@@ -392,7 +392,7 @@ def test_compatibility_flag_preserves_scope_and_terminal_wording(capsys) -> None
         assert set(members.strategy_id) == MVP_STRATEGY_IDS
         assert members.set_index("strategy_id").loc["ASCEND_STAKE_A0G", "allocation_gate"] == "CLOSED"
         assert "ASCEND_STAKE_A0G" not in run.pipeline.result.allocations
-        assert run.to_dict()["schema_version"] == "1.2"
+        assert run.to_dict()["schema_version"] == "1.3"
         assert run.to_dict()["input"]["include_modelled"] is flag
         allocations.append(run.pipeline.result.allocations)
         print_live_run(run)

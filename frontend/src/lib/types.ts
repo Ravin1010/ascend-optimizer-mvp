@@ -1,3 +1,34 @@
+// Schema 1.3: numerical recommendation is not evidence validity or execution proof.
+export type UniverseMembership = "TRUE" | "FALSE";
+export type ReconciliationCategory = "INTEGRATED_ALLOCATABLE" | "INTEGRATED_GATED" | "EMBEDDED_NON_ALLOCATABLE" | "OBSERVED_EXCLUDED";
+export type AllocationGate = "CONDITIONAL" | "CLOSED" | "NOT_APPLICABLE";
+export type EvidenceReadiness = "NOT_ASSESSED" | "INCOMPLETE" | "NOT_APPLICABLE";
+export type RuntimeFeasibility = "NOT_ASSESSED" | "NOT_APPLICABLE";
+export type ProofState = "NOT_ESTABLISHED" | "NOT_APPLICABLE";
+export type AnalysisScope = "DECISION_SLEEVE";
+export type AllocationResult = "NOT_CANDIDATE" | "GATED" | "EXCLUDED" | "ALLOCATED_POSITIVE" | "ELIGIBLE_ZERO";
+export type ReasonCode = "NOT_IN_OPTIMIZER_UNIVERSE" | "ALLOCATION_GATE_CLOSED" | "MISSING_RETURN_DATA" | "RETURN_CALCULATION_UNAVAILABLE" | "MISSING_EXPOSURE_DATA" | "RUNTIME_QUOTE_UNAVAILABLE" | "PROFILE_SLIPPAGE_LIMIT" | "PROFILE_EXIT_TIME_LIMIT" | "LEGACY_LIQUIDITY_BOUND" | "UNCLASSIFIED_RUNTIME_REASON" | "ELIGIBLE_ZERO_ALLOCATION";
+export type RunOutcome = "RECOMMENDATION_GENERATED" | "NO_POSITIVE_ALLOCATION";
+export interface StrategyReason {
+  code: ReasonCode;
+  kind: "EXCLUSION" | "DATA_GAP" | "RUNTIME_GAP" | "ALLOCATION_RESULT";
+  detail: string;
+  fields: string[];
+}
+export interface StrategyState {
+  optimizer_universe: UniverseMembership;
+  reconciliation_category: ReconciliationCategory;
+  protocol_availability: "LIVE" | "DEPLOYED_MARKET_UNRESOLVED";
+  integration_status: "IMPLEMENTED" | "EMBEDDED" | "NOT_INTEGRATED";
+  allocation_gate: AllocationGate;
+  evidence_readiness: EvidenceReadiness;
+  runtime_feasibility: RuntimeFeasibility;
+  live_capstone_proof: ProofState;
+  parent_strategy_id: string | null;
+  structural_candidate: boolean;
+  /** Metadata admission to existing checks; not execution readiness. */
+  allocation_admitted: boolean;
+}
 export type RiskProfile = "Conservative" | "Balanced" | "Aggressive";
 
 export interface OptimizerAllocation {
@@ -6,7 +37,17 @@ export interface OptimizerAllocation {
   amount_usd: number;
 }
 
-export interface OptimizerStrategy {
+export interface OptimizerStrategy extends StrategyState {
+  numerical_admissibility: {
+    optimizer_checks_passed: boolean;
+    profile_checks_passed: boolean;
+    basis: "CURRENT_NUMERICAL_CHECKS";
+  };
+  allocation_result: AllocationResult;
+  reasons: StrategyReason[];
+  execution_readiness: "NOT_ESTABLISHED";
+  constraint_diagnostics_basis: "LEGACY_STRATEGY_COEFFICIENTS_AND_SLEEVE_WEIGHTS";
+  /** Legacy summary; authoritative dimensions above are primary. */
   strategy_id: string;
   status: "PROFILE_ELIGIBLE" | "PROFILE_EXCLUDED" | "SCOPE_EXCLUDED";
   optimizer_eligible: boolean;
@@ -53,17 +94,51 @@ export interface ConstraintDiagnostic {
 }
 
 export interface OptimizerResponse {
-  schema_version: string;
+  schema_version: "1.3";
+  run_scope: {
+    capital_scope: AnalysisScope;
+    constraint_scope: AnalysisScope;
+    whole_portfolio_compliance: "NOT_ASSESSED";
+  };
+  valuation: {
+    asset: "0G";
+    price_usd: number;
+    decision_value_usd: number;
+    acquisition_mode: "FETCHED" | "USER_OVERRIDE";
+    provenance_status: "NOT_REPRESENTED";
+  };
+  outcome: {
+    state: RunOutcome;
+    recommendation_basis: "CURRENT_INPUTS_AND_NUMERICAL_CHECKS";
+    execution_readiness: "NOT_ESTABLISHED";
+    live_capstone_proof: "NOT_ESTABLISHED";
+  };
   input: {
+    /** Accepted numeric inputs plus original submitted asset/profile labels. */
+    submitted: {
+      decision_asset: string;
+      decision_amount: number;
+      horizon_days: number;
+      profile: string;
+      price_usd_override: number | null;
+      management_fee_rate: number;
+      performance_fee_rate: number;
+      include_modelled: boolean;
+    };
+    decision_asset: "0G";
+    decision_amount: number;
+    decision_value_usd: number;
     asset: string;
     amount: number;
     asset_price_usd: number;
+    /** Legacy alias of decision_value_usd, never total user holdings. */
     portfolio_value_usd: number;
     horizon_days: number;
     profile: RiskProfile;
     include_modelled: boolean;
   };
   profile_constraints: {
+    scope: AnalysisScope;
     max_strategy_concentration: number;
     max_bridge_exposure: number;
     max_entry_exit_slippage: number;
@@ -81,7 +156,9 @@ export interface OptimizerResponse {
       portfolio_slashing_stress_loss: number;
     };
   };
+  /** Recommendation for the decision sleeve only. */
   portfolio: {
+    scope: AnalysisScope;
     allocations: OptimizerAllocation[];
     idle: {
       weight: number;
