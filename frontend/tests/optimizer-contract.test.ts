@@ -91,3 +91,14 @@ test("optional amount-aware comparison retains unknown admission and failure sem
     selected_amount_revalidation: "FAILED", recommendation: {allocations: {}}}};
   assert.throws(() => parseOptimizerResponse(JSON.stringify(malformed)));
 });
+
+
+test("repository admission diagnostics remain additive and unknown", () => {
+  const positives = fixture.amount_aware?.candidates.filter(c => c.weight > 0 && c.strategy_id !== "ASCEND_STAKE_A0G") ?? [];
+  assert.ok(positives.length > 0);
+  for (const candidate of positives) {
+    assert.equal(candidate.technical_admission, "UNKNOWN");
+    assert.equal(candidate.admission_evidence?.capture, null);
+    assert.ok(candidate.admission_evidence?.diagnostics?.includes("NO_MATCHING_CAPTURE"));
+  }
+});

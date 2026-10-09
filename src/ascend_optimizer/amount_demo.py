@@ -1,6 +1,6 @@
 """Reproducible Iteration 13 comparison; local demo assumptions, no RPC calls.
 
-Default: admission UNKNOWN (do not manufacture capacity). --synthetic-support
+Default: canonical repository admission captures (empty baseline -> UNKNOWN). --synthetic-support
 explicitly tests the solver with modelled point admission and nonlinear quotes.
 """
 from __future__ import annotations
@@ -40,7 +40,7 @@ def main() -> None:
         amount_run = run_amount_optimizer(strategies, snapshots, decision_amount=1000, price_usd=1,
                                           horizon_days=90, profile=profile, **kwargs)
         outputs.append(legacy.to_dict(amount_aware=amount_run))
-    print(json.dumps({'evidence': 'SYNTHETIC_DEMO_ONLY', 'admission_basis': 'MODELLED_POINT_SUPPORT' if args.synthetic_support else 'UNKNOWN',
+    print(json.dumps({'evidence': 'SYNTHETIC_DEMO_ONLY', 'admission_basis': 'MODELLED_POINT_SUPPORT' if args.synthetic_support else 'REPOSITORY_CAPTURE_PROVIDER',
                       'runs': outputs}, allow_nan=False, indent=2))
 
 

@@ -1,0 +1,1 @@
+evidence_id,strategy_id,chain_id,evidence_type,admission_status,amount_0g,amount_usd,scalar_headroom_0g,scalar_headroom_usd,source_id,source_role,mechanism,evidence_class,observation_timestamp,retrieval_timestamp,block_number,block_hash,config_identity,config_required,tested_amount_0g,tested_amount_usd,valuation_price_usd,capture_status,notes

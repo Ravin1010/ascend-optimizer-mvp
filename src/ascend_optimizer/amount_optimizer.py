@@ -43,6 +43,8 @@ class AdmissionEvidence:
     mechanism: str
     evidence_class: str
     scalar_headroom_usd: float | None = None
+    capture: dict | None = None
+    diagnostics: tuple[str, ...] = ()
 
 
 def unknown_admission(*, strategy: pd.Series, amount_0g: float, **kwargs) -> AdmissionEvidence:
@@ -136,6 +138,7 @@ def evaluate_candidate(strategy: pd.Series, snapshot: pd.Series | None, *, weigh
         c = replace(c, technical_admission=evidence.status.value, admission_evidence=evidence)
         if evidence.status != AdmissionState.SUPPORTED:
             reasons.append("TECHNICAL_ADMISSION_" + evidence.status.value)
+            reasons.extend(evidence.diagnostics)
     except (ValueError, CollectionError) as exc:
         reasons.append("ADMISSION_EVIDENCE_UNAVAILABLE: " + str(exc))
     if snapshot is None:
@@ -259,10 +262,13 @@ class AmountAwareRun:
 
 def run_amount_optimizer(strategies: pd.DataFrame, snapshots: pd.DataFrame, *, decision_amount: float,
                          price_usd: float, horizon_days: float, profile: RiskProfile | str,
-                         admission_fn: AdmissionFn = unknown_admission,
+                         admission_fn: AdmissionFn | None = None,
                          lp_quote_fn: QuoteFn = estimate_lp_execution_slippage,
                          management_fee_rate: float = 0, performance_fee_rate: float = 0) -> AmountAwareRun:
     profile = profile if isinstance(profile, RiskProfile) else get_profile(profile)
+    if admission_fn is None:
+        from .admission_provider import RepositoryAdmissionProvider
+        admission_fn = RepositoryAdmissionProvider(strategies=strategies)
     for name, value in (("decision_amount", decision_amount), ("price_usd", price_usd), ("horizon_days", horizon_days)):
         if not isfinite(value) or value <= 0:
             raise ValueError(f"{name} must be finite and positive")

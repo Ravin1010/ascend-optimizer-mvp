@@ -188,6 +188,9 @@ export type TechnicalAdmission = "SUPPORTED" | "UNSUPPORTED" | "UNKNOWN";
 export interface AdmissionEvidence {
   status: TechnicalAdmission; strategy_id: string; amount_0g: number; chain_id: number;
   source: string; mechanism: string; evidence_class: string; scalar_headroom_usd: number | null;
+  /** Optional per-capture provenance; no TTL/freshness certification. */
+  capture?: AdmissionCapture | null;
+  diagnostics?: string[];
 }
 export interface AmountCandidate {
   strategy_id: string; weight: number; amount_0g: number; amount_usd: number;
@@ -232,4 +235,24 @@ export interface AmountAwareComparison {
     expected_net_profit_usd: number; expected_net_return_horizon: number; coefficient_amount_0g: number;
     quote_policy: "FULL_NOTIONAL_ONLY_WHEN_PREFILLED_SLIPPAGE_MISSING"; exclusions: Record<string, string[]>;
   };
+}
+
+
+export interface AdmissionCapture {
+  evidence_id: string; strategy_id: string; chain_id: number;
+  evidence_type: "EXACT_POINT" | "SCALAR_BOUND";
+  admission_status: "SUPPORTED" | "UNSUPPORTED";
+  amount_0g: number | null; amount_usd: number | null;
+  scalar_headroom_0g: number | null; scalar_headroom_usd: number | null;
+  source_id: string;
+  source_role: "CONFIGURED_VALIDATOR_ADMISSION" | "GIMO_PROTOCOL_ADMISSION" | "REGISTERED_LP_ADMISSION" | "SOURCECORE_ADMISSION";
+  mechanism: string;
+  evidence_class: "LIVE_OBSERVED" | "LIVE_DERIVED" | "HISTORICAL" | "MODELLED" | "STATIC_CONFIG";
+  observation_timestamp: string | null; retrieval_timestamp: string | null;
+  block_number: number | null; block_hash: string | null;
+  config_identity: string | null; config_required: boolean;
+  tested_amount_0g: number | null; tested_amount_usd: number | null;
+  valuation_price_usd: number | null;
+  capture_status: "CAPTURED" | "NO_FRESH_CAPTURE_SUPPLIED" | "SOURCE_UNVERIFIED" | "CONFIG_UNRESOLVED" | "INVALID";
+  notes: string;
 }
