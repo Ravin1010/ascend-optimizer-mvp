@@ -23,6 +23,7 @@ from .data_loader import load_snapshots, load_strategies
 from .pipeline import PipelineRun, run_optimizer_pipeline
 from .profiles import get_profile
 from .result_contract import SCHEMA_VERSION, strategy_contract
+from .amount_optimizer import AmountAwareRun
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -61,7 +62,7 @@ class LiveOptimizerRun:
         return (1.0 + horizon_return) ** (365.0 / self.horizon_days) - 1.0
 
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self, *, amount_aware: AmountAwareRun | None = None) -> dict[str, object]:
         """Return a stable, JSON-safe frontend contract for this optimizer run."""
 
         result = self.pipeline.result
@@ -299,7 +300,7 @@ class LiveOptimizerRun:
         if "exit_time_exceeds_profile_limit" in exclusion_text:
             triggered_constraints.append("max_exit_time_days")
 
-        return {
+        payload = {
             "schema_version": SCHEMA_VERSION,
             "run_scope": {
                 "capital_scope": "DECISION_SLEEVE",
@@ -421,6 +422,22 @@ class LiveOptimizerRun:
                 "message": str(result.solver_message),
             },
         }
+        if amount_aware is not None:
+            if (amount_aware.decision_amount != self.amount or amount_aware.price_usd != self.asset_price_usd
+                    or amount_aware.horizon_days != self.horizon_days or amount_aware.profile != self.profile
+                    or amount_aware.management_fee_rate != self.management_fee_rate
+                    or amount_aware.performance_fee_rate != self.performance_fee_rate):
+                raise ValueError("amount-aware and benchmark run contexts must match")
+            payload["amount_aware"] = amount_aware.to_dict()
+            payload["amount_aware"]["benchmark"] = {
+                "method": "LEGACY_LINEAR", "allocations": dict(result.allocations),
+                "idle_weight": result.idle_weight, "expected_net_profit_usd": result.expected_net_profit_usd,
+                "expected_net_return_horizon": result.expected_net_return_horizon,
+                "coefficient_amount_0g": self.amount,
+                "quote_policy": "FULL_NOTIONAL_ONLY_WHEN_PREFILLED_SLIPPAGE_MISSING",
+                "exclusions": {key: list(value) for key, value in result.excluded_strategies.items()},
+            }
+        return payload
 
 
 def _constraint_diagnostic(

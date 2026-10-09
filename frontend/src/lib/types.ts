@@ -95,6 +95,8 @@ export interface ConstraintDiagnostic {
 
 export interface OptimizerResponse {
   schema_version: "1.3";
+  /** Optional comparison; original portfolio remains the legacy benchmark. */
+  amount_aware?: AmountAwareComparison;
   run_scope: {
     capital_scope: AnalysisScope;
     constraint_scope: AnalysisScope;
@@ -178,5 +180,56 @@ export interface OptimizerResponse {
   solver: {
     status: number;
     message: string;
+  };
+}
+
+
+export type TechnicalAdmission = "SUPPORTED" | "UNSUPPORTED" | "UNKNOWN";
+export interface AdmissionEvidence {
+  status: TechnicalAdmission; strategy_id: string; amount_0g: number; chain_id: number;
+  source: string; mechanism: string; evidence_class: string; scalar_headroom_usd: number | null;
+}
+export interface AmountCandidate {
+  strategy_id: string; weight: number; amount_0g: number; amount_usd: number;
+  net_profit_usd: number | null; net_return_horizon: number | null; net_apy: number | null;
+  fixed_execution_cost_usd: number | null;
+  technical_admission: TechnicalAdmission | "NOT_REQUIRED";
+  admission_evidence: AdmissionEvidence | null;
+  runtime_execution: "NOT_TESTED" | "NOT_REQUIRED" | "TESTED_PROXY" | "SNAPSHOT_PROXY" | "FAILED";
+  eligible: boolean; rejection_reasons: string[];
+  quote_context: {
+    amount_0g: number; price_usd: number;
+    quote: {strategy_id: string; fee_tier: number; entry_slippage_rate: number; exit_slippage_rate: number;
+      entry_amount_out_usdc: number; exit_amount_out_0g: number};
+    snapshot_notes: string; basis: "CURRENT_QUOTER_AND_MODELLED_EXIT_INVENTORY";
+    registered_configuration_alignment: "NOT_ESTABLISHED";
+    exit_inventory: "CURRENT_TARGET_PROXY_NOT_FUTURE_POSITION";
+  } | null;
+  entry_slippage_rate: number | null; exit_slippage_rate: number | null;
+  bridge_fraction: number | null; lp_stress_loss_20pct: number | null;
+  slashing_stress_loss: number | null; exit_time_days: number | null;
+}
+export interface AmountAwareComparison {
+  method: "AMOUNT_GRID_ENUMERATION_V1"; scope: AnalysisScope; whole_portfolio_compliance: "NOT_ASSESSED";
+  profile: RiskProfile; decision_amount_0g: number; decision_value_usd: number; price_usd: number; horizon_days: number;
+  management_fee_rate: number; performance_fee_rate: number;
+  grid: number[]; weight_tolerance: number; profit_tolerance_usd: number; combinations_tested: number;
+  selected_amount_revalidation: "PASSED" | "FAILED" | "NOT_REQUIRED"; revalidation_errors: string[];
+  outcome: RunOutcome | "SELECTED_REVALIDATION_FAILED";
+  execution_readiness: "NOT_ESTABLISHED"; live_capstone_proof: "NOT_ESTABLISHED";
+  risk_basis: "LEGACY_SLEEVE_COEFFICIENTS";
+  cost_basis: "EXISTING_FIXED_USD_LIFECYCLE_CONVENTION_PROVENANCE_UNRESOLVED";
+  candidates: AmountCandidate[]; proposed_selected: AmountCandidate[];
+  strategy_results: Record<string, "ALLOCATED_POSITIVE" | "ELIGIBLE_ZERO" | "EXCLUDED" | "GATED" | "REVALIDATION_FAILED">;
+  reported_non_members: string[];
+  recommendation: {
+    allocations: Record<string, {weight: number; amount_0g: number; amount_usd: number}>;
+    idle_weight: number; idle_amount_0g: number; expected_net_profit_usd: number; expected_net_return_horizon: number;
+    legacy_stress: {bridge_fraction: number; lp_stress_loss_20pct: number; slashing_stress_loss: number};
+  } | null;
+  benchmark?: {
+    method: "LEGACY_LINEAR"; allocations: Record<string, number>; idle_weight: number;
+    expected_net_profit_usd: number; expected_net_return_horizon: number; coefficient_amount_0g: number;
+    quote_policy: "FULL_NOTIONAL_ONLY_WHEN_PREFILLED_SLIPPAGE_MISSING"; exclusions: Record<string, string[]>;
   };
 }

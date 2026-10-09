@@ -71,6 +71,25 @@ export function parseOptimizerResponse(stdout: string): OptimizerResponse {
       }
     }
   }
+  if (root.amount_aware !== undefined) {
+    const extension = record(root.amount_aware);
+    oneOf(extension.method, ["AMOUNT_GRID_ENUMERATION_V1"]);
+    oneOf(extension.scope, ["DECISION_SLEEVE"]);
+    oneOf(extension.whole_portfolio_compliance, ["NOT_ASSESSED"]);
+    oneOf(extension.selected_amount_revalidation, ["PASSED", "FAILED", "NOT_REQUIRED"]);
+    oneOf(extension.outcome, ["RECOMMENDATION_GENERATED", "NO_POSITIVE_ALLOCATION", "SELECTED_REVALIDATION_FAILED"]);
+    oneOf(extension.execution_readiness, ["NOT_ESTABLISHED"]);
+    oneOf(extension.live_capstone_proof, ["NOT_ESTABLISHED"]);
+    if (!Array.isArray(extension.candidates)) throw new Error("Missing amount candidates");
+    for (const value of extension.candidates) {
+      const candidate = record(value);
+      oneOf(candidate.technical_admission, ["SUPPORTED", "UNSUPPORTED", "UNKNOWN", "NOT_REQUIRED"]);
+      if (typeof candidate.eligible !== "boolean") throw new Error("Missing candidate eligibility");
+    }
+    if (extension.selected_amount_revalidation === "FAILED" && extension.recommendation !== null) {
+      throw new Error("Failed revalidation cannot carry a recommendation");
+    }
+  }
   // Preserve all fields, including legacy aliases; never reconstruct/pick keys.
   return parsed as OptimizerResponse;
 }

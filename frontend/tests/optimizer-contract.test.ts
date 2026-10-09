@@ -13,13 +13,15 @@ const script = `import sys,os
 sys.path.insert(0,os.getcwd())
 from src.ascend_optimizer.data_loader import load_strategies, load_snapshots
 from src.ascend_optimizer.live_optimize import optimize_live
+from src.ascend_optimizer.amount_optimizer import run_amount_optimizer
 import json,sys
 s=load_strategies(); snapshots=load_snapshots(s, 'data/demo_strategy_snapshots.csv')
 a=sys.argv[1:]
 def arg(name, default):
  return a[a.index(name)+1] if name in a else default
 run=optimize_live(s,snapshots,amount=float(arg('--amount','1000')),horizon_days=float(arg('--horizon-days','90')),profile=arg('--profile','Balanced'),price_usd=1,include_modelled='--include-modelled' in a)
-print(json.dumps(run.to_dict(), allow_nan=False))
+amount_run=run_amount_optimizer(s,snapshots,decision_amount=run.amount,price_usd=run.asset_price_usd,horizon_days=run.horizon_days,profile=run.profile)
+print(json.dumps(run.to_dict(amount_aware=amount_run), allow_nan=False))
 `;
 const fixture: OptimizerResponse = parseOptimizerResponse(execFileSync(process.env.PYTHON_BIN ?? "python", ["-c", script], {cwd: root, encoding: "utf8"}));
 const temporary = mkdtempSync(path.join(tmpdir(), "ascend-contract-"));
@@ -76,4 +78,16 @@ test("API fails rather than returning an incompatible result as success", async 
     const body: unknown = await response.json();
     assert.equal((body as {error: string}).error, "Optimizer execution failed");
   } finally { process.env.PYTHON_BIN = executable; }
+});
+
+
+test("optional amount-aware comparison retains unknown admission and failure semantics", () => {
+  assert.equal(fixture.schema_version, "1.3");
+  assert.equal(fixture.amount_aware?.scope, "DECISION_SLEEVE");
+  assert.equal(fixture.amount_aware?.recommendation?.idle_weight, 1);
+  assert.equal(fixture.amount_aware?.outcome, "NO_POSITIVE_ALLOCATION");
+  assert.equal(fixture.amount_aware?.candidates.filter(c => c.weight > 0 && c.eligible).length, 0);
+  const malformed = {...fixture, amount_aware: {...fixture.amount_aware,
+    selected_amount_revalidation: "FAILED", recommendation: {allocations: {}}}};
+  assert.throws(() => parseOptimizerResponse(JSON.stringify(malformed)));
 });
