@@ -1,0 +1,21 @@
+{
+  "version": "EVALUATION_POLICY_V1",
+  "artifact_type": "SYNTHETIC_EVALUATION_CONFIGURATION",
+  "label": "SYNTHETIC_EVALUATION_ONLY",
+  "scope": "DECISION_SLEEVE",
+  "whole_portfolio_compliance": "NOT_ASSESSED",
+  "decision_capital": "Only this run's explicitly designated native-0G decision amount",
+  "existing_positions": "EXOGENOUS_OUTSIDE_OPTIMIZED_STATE",
+  "whole_portfolio_acquisition_required": false,
+  "profiles": {
+    "Conservative": {"max_strategy_concentration": "0.40", "max_slashing_stress_loss": "0.02", "max_decision_sleeve_lp_absolute_stress_loss": "0.05"},
+    "Balanced": {"max_strategy_concentration": "0.60", "max_slashing_stress_loss": "0.05", "max_decision_sleeve_lp_absolute_stress_loss": "0.10"},
+    "Aggressive": {"max_strategy_concentration": "0.80", "max_slashing_stress_loss": "0.10", "max_decision_sleeve_lp_absolute_stress_loss": "0.20"}
+  },
+  "lp_rule": "WORST_ABSOLUTE_LOSS_ACROSS_LP_SHOCKS_V1",
+  "risk_aggregation": "INDEPENDENT_STRESS_BUDGET_ENVELOPE_NOT_JOINT_EVENT",
+  "deadline_rule": "Optional maximum delay from exit decision to native 0G; unresolved positive timing fails closed",
+  "ascend_gate": "CLOSED; analysis override never grants allocation feasibility",
+  "bridge_rule": "No new blocking bridge constraint without actual user-capital bridge exposure evidence",
+  "assumptions": ["SYNTHETIC_EVALUATION_ONLY: 5%/10%/20% LP absolute-loss limits are transparent policy choices, not calibrated probabilities or production risk advice", "Legacy IL thresholds keep their compatibility meaning", "Holding horizon, time-to-cash and cash deadline are separate", "Existing holdings, LP NFTs, staking balances and prior pending exits are outside decision-sleeve state"]
+}

@@ -1,7 +1,8 @@
 """Deterministic amount-aware decision-sleeve search, separate from the LP benchmark.
 
 Admission providers must supply explicit point/bound evidence; no TVL fallback.
-No holdings acquisition, freshness enforcement or new stress model is performed.
+No holdings acquisition. Default risk uses legacy compatibility coefficients;
+optional explicit synthetic policy supplies final risk and deadline feasibility.
 """
 from __future__ import annotations
 
@@ -104,7 +105,10 @@ def evaluate_candidate(strategy: pd.Series, snapshot: pd.Series | None, *, weigh
                        lp_quote_fn: QuoteFn = estimate_lp_execution_slippage,
                        management_fee_rate: float = 0, performance_fee_rate: float = 0,
                        stage: str = "CANDIDATE", as_of: datetime | None = None,
-                       economics_fn=None, economics_mode: str = "PRODUCTION") -> AmountCandidate:
+                       economics_fn=None, economics_mode: str = "PRODUCTION",
+                       evaluation_policy_mode: str | None = None) -> AmountCandidate:
+    if evaluation_policy_mode is not None and (evaluation_policy_mode != "SYNTHETIC_EVALUATION_ONLY" or economics_mode != "SYNTHETIC_EVALUATION_ONLY" or economics_fn is None):
+        raise ValueError("policy candidates require explicit synthetic economics and policy mode")
     sid = str(strategy.strategy_id)
     state = strategy_state(strategy)
     if sid not in MVP_STRATEGY_IDS or not state.structural_candidate:
@@ -218,6 +222,8 @@ def evaluate_candidate(strategy: pd.Series, snapshot: pd.Series | None, *, weigh
     fields = ("entry_slippage_rate", "exit_slippage_rate", "exit_time_days", "bridge_fraction", "lp_stress_loss_20pct", "slashing_stress_loss")
     values = {field: _number(getattr(exposure, field)) for field in fields}
     for field, value in values.items():
+        if evaluation_policy_mode is not None and field not in {"entry_slippage_rate", "exit_slippage_rate"}:
+            continue  # Final synthetic policy owns risk/timing; legacy values remain diagnostics only.
         if value is None:
             reasons.append("MISSING_" + field)
         elif value < 0 or (field != "exit_time_days" and value > 1):
@@ -226,7 +232,7 @@ def evaluate_candidate(strategy: pd.Series, snapshot: pd.Series | None, *, weigh
     if all(values[f] is not None for f in ("entry_slippage_rate", "exit_slippage_rate")):
         if max(values["entry_slippage_rate"], values["exit_slippage_rate"]) > profile.max_entry_exit_slippage:
             reasons.append("PROFILE_SLIPPAGE_LIMIT")
-    if values["exit_time_days"] is not None and values["exit_time_days"] > profile.max_exit_time_days:
+    if evaluation_policy_mode is None and values["exit_time_days"] is not None and values["exit_time_days"] > profile.max_exit_time_days:
         reasons.append("PROFILE_EXIT_TIME_LIMIT")
     if economic_point is not None:
         return replace(c, net_profit_usd=economic_point.net_profit_usd,
@@ -267,6 +273,7 @@ class AmountAwareRun:
     reported_non_members: tuple[str, ...]
     management_fee_rate: float = 0
     performance_fee_rate: float = 0
+    evaluation_policy: dict | None = None
 
     def to_dict(self) -> dict:
         valid = self.revalidation != "FAILED"
@@ -274,7 +281,7 @@ class AmountAwareRun:
         profit = sum(c.net_profit_usd for c in self.selected)
         selected_ids = {c.strategy_id for c in self.selected}
         ids = list(dict.fromkeys(c.strategy_id for c in self.candidates))
-        return {
+        result = {
             "method": "AMOUNT_GRID_ENUMERATION_V1", "scope": "DECISION_SLEEVE",
             "whole_portfolio_compliance": "NOT_ASSESSED", "profile": self.profile,
             "decision_amount_0g": self.decision_amount, "decision_value_usd": self.decision_amount * self.price_usd,
@@ -298,10 +305,16 @@ class AmountAwareRun:
                 "allocations": {c.strategy_id: {"weight": c.weight, "amount_0g": c.amount_0g, "amount_usd": c.amount_usd} for c in self.selected},
                 "idle_weight": max(0, 1 - deployed), "idle_amount_0g": self.decision_amount * max(0, 1 - deployed),
                 "expected_net_profit_usd": profit, "expected_net_return_horizon": profit / (self.decision_amount * self.price_usd),
-                "legacy_stress": {f: sum(c.weight * getattr(c, f) for c in self.selected) for f in
+                "legacy_stress": {} if self.evaluation_policy is not None else {f: sum(c.weight * getattr(c, f) for c in self.selected) for f in
                                   ("bridge_fraction", "lp_stress_loss_20pct", "slashing_stress_loss")},
             },
         }
+        if self.evaluation_policy is not None:
+            result["evaluation_policy"] = self.evaluation_policy
+            result["risk_basis"] = "EVALUATION_POLICY_V1_RISK_STRESS_V1_SYNTHETIC"
+            if result["recommendation"] is not None:
+                result["recommendation"].pop("legacy_stress")
+        return result
 
 
 def run_amount_optimizer(strategies: pd.DataFrame, snapshots: pd.DataFrame, *, decision_amount: float,
@@ -311,8 +324,20 @@ def run_amount_optimizer(strategies: pd.DataFrame, snapshots: pd.DataFrame, *, d
                          management_fee_rate: float = 0, performance_fee_rate: float = 0,
                          as_of: datetime | None = None,
                          revalidation_as_of: datetime | None = None,
-                         economics_fn=None, economics_mode: str = "PRODUCTION") -> AmountAwareRun:
+                         economics_fn=None, economics_mode: str = "PRODUCTION",
+                         evaluation_policy_fn=None, evaluation_policy_mode: str | None = None,
+                         cash_deadline_days: str | None = None) -> AmountAwareRun:
     profile = profile if isinstance(profile, RiskProfile) else get_profile(profile)
+    policy_enabled = evaluation_policy_mode is not None or evaluation_policy_fn is not None
+    if policy_enabled:
+        from .evaluation_policy import LABEL, PolicyEvaluator, PolicyResult
+        if evaluation_policy_mode != LABEL or economics_mode != LABEL or economics_fn is None:
+            raise ValueError("final policy requires explicit synthetic economics and policy mode")
+        if profile != get_profile(profile.name):
+            raise ValueError("final policy uses frozen named profiles")
+        evaluation_policy_fn = evaluation_policy_fn or PolicyEvaluator()
+    elif cash_deadline_days is not None:
+        raise ValueError("cash deadline requires explicit synthetic policy mode")
     repository_mode = admission_fn is None
     if admission_fn is None:
         from .admission_provider import RepositoryAdmissionProvider
@@ -343,18 +368,47 @@ def run_amount_optimizer(strategies: pd.DataFrame, snapshots: pd.DataFrame, *, d
                                   admission_fn=admission_fn, lp_quote_fn=lp_quote_fn, stage=stage,
                                   as_of=revalidation_as_of if stage == "REVALIDATION" and revalidation_as_of is not None else as_of,
                                   management_fee_rate=management_fee_rate, performance_fee_rate=performance_fee_rate,
-                                  economics_fn=economics_fn, economics_mode=economics_mode)
+                                  economics_fn=economics_fn, economics_mode=economics_mode,
+                                  evaluation_policy_mode=evaluation_policy_mode)
+    def prepare_policy(stage):
+        with localcontext() as context:
+            context.prec = 60
+            value = Decimal(str(decision_amount)) * Decimal(str(price_usd))
+        return evaluation_policy_fn.prepare(profile=profile.name.value, decision_amount_0g=str(decision_amount),
+            decision_value=str(value), holding_horizon_days=str(horizon_days), cash_deadline_days=cash_deadline_days, stage=stage)
+    def assess_policy(session, combo):
+        with localcontext() as context:
+            context.prec = 60
+            weights = {c.strategy_id: str(c.weight) for c in combo}
+            idle = str(Decimal(1) - sum(Decimal(v) for v in weights.values()))
+        assessed = session(weights=weights, idle_weight=idle,
+            prior_rejections=tuple(reason for c in combo if c.weight > 0 for reason in c.rejection_reasons))
+        if not isinstance(assessed, PolicyResult) or assessed.scope != "DECISION_SLEEVE" or assessed.label != LABEL or assessed.policy_version != "EVALUATION_POLICY_V1" or assessed.profile != profile.name.value or assessed.decision_amount_0g != str(decision_amount) or assessed.holding_horizon_days != str(horizon_days) or assessed.cash_deadline_days != cash_deadline_days or assessed.candidate_weights != weights or Decimal(assessed.idle_weight) != Decimal(idle):
+            raise ValueError("typed policy assessment identity mismatch")
+        return assessed
     candidates = tuple(evaluate(meta, w, "CANDIDATE") for _, meta in members.iterrows() for w in grid)
     options = [[c for c in candidates if c.strategy_id == sid and c.eligible] for sid in members.strategy_id]
     best = tuple(group[0] for group in options)  # all zero
     best_profit = best_deployed = 0.0
+    policy_session = prepare_policy("CANDIDATE") if policy_enabled else None
+    best_policy = assess_policy(policy_session, best) if policy_enabled else None
+    if best_policy is not None and best_policy.overall != "PASS":
+        raise ValueError("valid all-idle allocation must pass evaluation policy")
     tested = 0
     for combo in product(*options):
         tested += 1
         deployed = sum(c.weight for c in combo)
         if deployed > 1 + WEIGHT_TOLERANCE:
             continue
-        if any(sum(c.weight * getattr(c, field) for c in combo) > limit + WEIGHT_TOLERANCE for field, limit in (
+        assessed_policy = None
+        if policy_enabled:
+            # Decimal feasibility, independent of float grid compatibility tolerance.
+            if sum(Decimal(str(c.weight)) for c in combo) > 1:
+                continue
+            assessed_policy = assess_policy(policy_session, combo)
+            if assessed_policy.overall != "PASS":
+                continue
+        elif any(sum(c.weight * getattr(c, field) for c in combo) > limit + WEIGHT_TOLERANCE for field, limit in (
             ("bridge_fraction", profile.max_bridge_exposure), ("lp_stress_loss_20pct", profile.max_portfolio_lp_il_stress),
             ("slashing_stress_loss", profile.max_slashing_stress_loss))):
             continue
@@ -365,6 +419,7 @@ def run_amount_optimizer(strategies: pd.DataFrame, snapshots: pd.DataFrame, *, d
                 abs(deployed - best_deployed) <= WEIGHT_TOLERANCE and tuple(-c.weight for c in combo) < tuple(-c.weight for c in best))
         if better:
             best, best_profit, best_deployed = combo, profit, deployed
+            best_policy = assessed_policy
     selected = tuple(c for c in best if c.weight > 0)
     errors = []
     # Repeat the exact selected points, no substitution/scaling/retry. Any change
@@ -384,7 +439,15 @@ def run_amount_optimizer(strategies: pd.DataFrame, snapshots: pd.DataFrame, *, d
         final_state = strategy_state(strategies[strategies.strategy_id == c.strategy_id].iloc[0])
         if not final_state.allocation_admitted:
             errors.append(c.strategy_id + ": metadata admission changed during revalidation")
+    if policy_enabled:
+        try:
+            refreshed_policy = assess_policy(prepare_policy("REVALIDATION"), best)
+            if refreshed_policy.overall != "PASS" or refreshed_policy != best_policy:
+                errors.append("Selected policy risk/config/deadline identity changed or failed")
+        except ValueError as exc:
+            errors.append("Selected policy revalidation failed: " + str(exc))
     return AmountAwareRun(decision_amount, price_usd, horizon_days, profile.name.value, grid, candidates, selected,
                           "FAILED" if errors else "PASSED" if selected else "NOT_REQUIRED", tuple(errors), tested,
                           tuple(strategies.loc[~strategies.strategy_id.isin(MVP_STRATEGY_IDS), "strategy_id"]),
-                          management_fee_rate, performance_fee_rate)
+                          management_fee_rate, performance_fee_rate,
+                          None if best_policy is None else asdict(best_policy))
