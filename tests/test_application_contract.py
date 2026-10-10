@@ -154,3 +154,42 @@ def test_exact_request_input_not_display_rounded():
     assert q['input']['decision_amount_0g']=='0.0000000000001'
     assert q['input']['holding_horizon_days']=='90.0000000000001'
     assert q['recommendation']['idle_amount_0g']==q['input']['decision_amount_0g']
+
+@pytest.mark.parametrize('sid',r.STRATEGIES)
+def test_schema_metadata_matches_authoritative_strategy_state(synthetic,production,sid):
+    from src.ascend_optimizer.data_loader import load_strategies
+    from src.ascend_optimizer.strategy_state import strategy_state
+    metadata=load_strategies()
+    canonical=strategy_state(metadata[metadata.strategy_id==sid].iloc[0])
+    for response in (synthetic,production):
+        row=next(s for s in response['strategies'] if s['strategy_id']==sid)
+        assert row['canonical_state']==canonical.reconciliation_category
+        assert row['structural_candidate']==canonical.structural_candidate is True
+        assert row['integration_state']==canonical.integration_status=='IMPLEMENTED'
+        assert row['allocation_gate']==canonical.allocation_gate
+        assert row['protocol_availability']==canonical.protocol_availability
+        assert row['canonical_state']==('INTEGRATED_GATED' if sid==r.ASCEND else 'INTEGRATED_ALLOCATABLE')
+        assert row['allocation_gate']==('CLOSED' if sid==r.ASCEND else 'CONDITIONAL')
+
+def test_no_invented_state_in_final_contract_source():
+    for path in ('src/ascend_optimizer/application_contract.py','frontend/src/lib/final-types.ts','frontend/src/lib/final-response.ts'):
+        assert 'INTEGRATED_CONDITIONAL' not in (ROOT/path).read_text()
+
+@pytest.mark.parametrize('mode,profile,deadline',[
+    ('PRODUCTION','Conservative',None),('PRODUCTION','Balanced',1),('PRODUCTION','Aggressive',None),
+    (p.LABEL,'Conservative',None),(p.LABEL,'Balanced',None),(p.LABEL,'Balanced',1),
+    (p.LABEL,'Balanced',8),(p.LABEL,'Aggressive',15)])
+def test_only_metadata_differs_from_iteration25_parent(mode,profile,deadline):
+    import types
+    before=types.ModuleType('src.ascend_optimizer._accepted_application_contract')
+    before.__file__=str(ROOT/'src/ascend_optimizer/application_contract.py')
+    before.__package__='src.ascend_optimizer'
+    source=subprocess.check_output(['git','show','7933258bcc8551b66a260d1aee83bf740d05ec61:src/ascend_optimizer/application_contract.py'],cwd=ROOT)
+    exec(compile(source,before.__file__,'exec'),before.__dict__)
+    args=dict(decision_amount_0g=1000,profile=profile,cash_deadline_days=deadline,evidence_mode=mode,
+              as_of=datetime(2026,10,10,tzinfo=timezone.utc))
+    old=before.optimize_request(**args);new=a.optimize_request(**args)
+    for old_row,new_row in zip(old['strategies'],new['strategies']):
+        for field in ('canonical_state','protocol_availability'):
+            old_row.pop(field);new_row.pop(field)
+    assert old==new

@@ -7,7 +7,7 @@ export type Measurement = {state:'ASSESSED'; value:string; unit:'USD'|'FRACTION'
 export type Economics = Record<'gross_income_usd'|'lifecycle_cost_usd'|'fixed_cost_usd'|'quote_execution_cost_usd'|'expected_net_profit_usd'|'expected_net_return'|'net_apy',Measurement>;
 export interface Limit {state:'PASS'|'FAIL'|'UNRESOLVED'|'NOT_ASSESSED'; value:string|null; limit:string}
 export interface FinalStrategy {
- strategy_id:StrategyId; display_name:string; canonical_state:'INTEGRATED_GATED'|'INTEGRATED_CONDITIONAL'; structural_candidate:true;
+ strategy_id:StrategyId; display_name:string; canonical_state:'INTEGRATED_ALLOCATABLE'|'INTEGRATED_GATED'; structural_candidate:true;
  allocation_gate:'CLOSED'|'CONDITIONAL'; allocation_result:AllocationResult; allocated_weight:string; allocated_amount_0g:string;
  technical_admission:'UNKNOWN'|'SUPPORTED'|'UNSUPPORTED'|'NOT_REQUIRED'; economics_state:'ASSESSED'|'MISSING'; economics:Economics;
  diagnostic_amount_0g:string; economics_basis:'SELECTED_EXACT_AMOUNT'|'UNSELECTED_CANDIDATE_DIAGNOSTIC';
@@ -15,7 +15,7 @@ export interface FinalStrategy {
  policy_feasibility:'PASS'|'FAIL'|'UNRESOLVED'|'NOT_ASSESSED'; rejection_reasons:string[]; binding_constraints:string[];
  evidence:{mode:EvidenceMode; class:'MODELLED'|'MISSING'; provenance:unknown};
  liquidity:{exit_type:'SYNCHRONOUS'|'ASYNCHRONOUS'|'QUEUE_BASED'|'UNRESOLVED'; time_to_cash_days:Measurement; deadline_state:DeadlineState; qualification:string; model_version:'EXIT_LIQUIDITY_V1'; output_asset:'native 0G'};
- protocol_availability:'EXTERNAL_PROTOCOL_REFERENCED'; integration_state:'IMPLEMENTED'; runtime_configuration:'UNRESOLVED'; execution_readiness:'NOT_ESTABLISHED'; public_proof:'NOT_ESTABLISHED';
+ protocol_availability:'LIVE'|'DEPLOYED_MARKET_UNRESOLVED'; integration_state:'IMPLEMENTED'; runtime_configuration:'UNRESOLVED'; execution_readiness:'NOT_ESTABLISHED'; public_proof:'NOT_ESTABLISHED';
 }
 export interface FinalResponse {
  schema_version:'1.4'; input:{decision_amount_0g:string;profile:RiskProfile;holding_horizon_days:string;cash_deadline_days:string|null;evidence_mode:EvidenceMode};

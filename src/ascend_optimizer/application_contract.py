@@ -8,6 +8,7 @@ from pathlib import Path
 from . import evaluation_policy as p, risk_stress as r, exit_liquidity as exits
 from .amount_optimizer import run_amount_optimizer
 from .data_loader import load_strategies, load_snapshots
+from .strategy_state import strategy_state
 from .final_evaluation_inputs import SyntheticInputs
 from .final_evaluation import fmt, legacy_candidates
 from .optimizer import optimize_portfolio
@@ -63,6 +64,8 @@ def optimize_request(*, decision_amount_0g, profile='Balanced', holding_horizon_
         run=run_amount_optimizer(strategies,snapshots,decision_amount=float(amount),price_usd=1,
             horizon_days=float(horizon),profile=profile,as_of=as_of or datetime.now(timezone.utc))
         if run.selected: raise ValueError('production interface requires qualified valuation before positive allocation')
+    metadata=inp.strategies if synthetic else strategies
+    canonical={sid:strategy_state(metadata[metadata.strategy_id==sid].iloc[0]) for sid in r.STRATEGIES}
     valid=run.revalidation!='FAILED'
     selected={c.strategy_id:c for c in run.selected} if valid else {}
     weights={s:Decimal(str(selected[s].weight)) if s in selected else Decimal(0) for s in r.STRATEGIES}
@@ -83,13 +86,14 @@ def optimize_request(*, decision_amount_0g, profile='Balanced', holding_horizon_
             check=session(weights=w,idle_weight=str(1-diagnostic_weight),prior_rejections=tuple(diagnostic.rejection_reasons))
             reasons=sorted(set(reasons)|set(check.rejection_reasons))
         risk_row=None if check is None else next(x for x in check.risk_budget['rows'] if x['strategy_id']==sid)
-        gated=sid==r.ASCEND
+        canonical_metadata=canonical[sid]
+        gated=canonical_metadata.allocation_gate=='CLOSED'
         allocation='GATED' if gated else 'ALLOCATED_POSITIVE' if weights[sid]>0 else 'EXCLUDED' if not any(c.eligible for c in points) or (check and check.overall!='PASS') else 'ELIGIBLE_ZERO'
         if allocation=='ELIGIBLE_ZERO': reasons.append('Lower expected net profit or candidate-level policy constraint; eligible zero allocation')
         x=exit_rows[sid]
         state='NOT_REQUESTED' if deadline is None else exits.deadline_compatible(x,deadline)
-        rows.append({'strategy_id':sid,'display_name':NAMES[sid],'canonical_state':'INTEGRATED_GATED' if gated else 'INTEGRATED_CONDITIONAL',
-            'structural_candidate':True,'allocation_gate':'CLOSED' if gated else 'CONDITIONAL','allocation_result':allocation,
+        rows.append({'strategy_id':sid,'display_name':NAMES[sid],'canonical_state':canonical_metadata.reconciliation_category,
+            'structural_candidate':canonical_metadata.structural_candidate,'allocation_gate':canonical_metadata.allocation_gate,'allocation_result':allocation,
             'allocated_weight':fmt(weights[sid]),'allocated_amount_0g':format((amount*weights[sid]).normalize(),'f'),
             'technical_admission':diagnostic.technical_admission,'economics_state':'ASSESSED' if diagnostic.economics_evidence else 'MISSING',
             'economics':economics(diagnostic),'diagnostic_amount_0g':format(Decimal(str(diagnostic.amount_0g)).normalize(),'f'),
@@ -103,7 +107,7 @@ def optimize_request(*, decision_amount_0g, profile='Balanced', holding_horizon_
             'evidence':{'mode':evidence_mode,'class':'MODELLED' if synthetic else 'MISSING','provenance':diagnostic.economics_evidence},
             'liquidity':{'exit_type':x.exit_type,'time_to_cash_days':measure(x.time_to_cash_days,'DAYS',basis=x.timing_evidence_class),
                 'deadline_state':state,'qualification':x.qualification_state,'model_version':x.exit_model_version,'output_asset':x.output_asset},
-            'protocol_availability':'EXTERNAL_PROTOCOL_REFERENCED','integration_state':'IMPLEMENTED',
+            'protocol_availability':canonical_metadata.protocol_availability,'integration_state':canonical_metadata.integration_status,
             'runtime_configuration':'UNRESOLVED','execution_readiness':'NOT_ESTABLISHED','public_proof':'NOT_ESTABLISHED'})
     totals={k:Decimal(0) for k in economics()}
     for c in selected.values():
