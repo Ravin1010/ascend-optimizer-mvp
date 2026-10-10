@@ -1,0 +1,823 @@
+{
+  "model_version": "RISK_STRESS_V1",
+  "scenario_version": "RISK_SCENARIOS_V1",
+  "label": "SYNTHETIC_EVALUATION_ONLY",
+  "evidence_class": "MODELLED",
+  "scenario_artifact_fingerprint": "5682143d5244cd45d113cb565faf187bc48cadf7bebf25d80e6cb92709d2e0ae",
+  "scenarios": [
+    {
+      "scenario_id": "RISK_SCENARIOS_V1:NATIVE_STAKING_5PCT",
+      "version": "RISK_SCENARIOS_V1",
+      "strategies": [
+        "NATIVE_STAKE_0G"
+      ],
+      "category": "STAKING_LOSS",
+      "model": "EXPOSURE_TIMES_SEVERITY",
+      "severity": "0.05",
+      "evidence_class": "MODELLED",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "meaning": "Severe loss on synthetic delegated/pending staking capital",
+      "exposure_basis": "MODELLED_STRATEGY_ALLOCATION_STAKING_EXPOSURE",
+      "assumptions": [
+        "5% frozen severe staking-loss evaluation benchmark, not probability",
+        "Full allocation treated as exposed; no configured validator selected",
+        "Configured validator concentration and actual pending exposure unresolved"
+      ]
+    },
+    {
+      "scenario_id": "RISK_SCENARIOS_V1:GIMO_UNDERLYING_5PCT",
+      "version": "RISK_SCENARIOS_V1",
+      "strategies": [
+        "GIMO_STAKE_0G"
+      ],
+      "category": "STAKING_LOSS",
+      "model": "EXPOSURE_TIMES_SEVERITY",
+      "severity": "0.05",
+      "evidence_class": "MODELLED",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "meaning": "One underlying staking loss represented by st0G",
+      "exposure_basis": "MODELLED_ST0G_UNDERLYING_STAKING_VALUE",
+      "assumptions": [
+        "Same severity benchmark as Native, distinct causal event",
+        "No second Gimo-specific slash is added",
+        "Gimo protocol risk and validator distribution unresolved; no correlation asserted"
+      ]
+    },
+    {
+      "scenario_id": "RISK_SCENARIOS_V1:LP_WORST_ABSOLUTE",
+      "version": "RISK_SCENARIOS_V1",
+      "strategies": [
+        "JAINE_LP_0G_USDC",
+        "OKU_LP_0G_USDC"
+      ],
+      "category": "LP_POSITION_VALUE",
+      "model": "WORST_ABSOLUTE_LP_SHOCKS_V1",
+      "severity": null,
+      "evidence_class": "MODELLED",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "meaning": "Worst absolute LP loss across the four versioned economic price shocks",
+      "exposure_basis": "LP_EVALUATION_CONFIG_V1_FULL_POSITION_INITIAL_VALUE",
+      "assumptions": [
+        "Uses V3_RANGE_INVENTORY_V1, not generic legacy IL proxy",
+        "IL and HODL market loss are attribution only and are never added",
+        "Each strategy worst case is a stress-budget envelope, not a joint price event",
+        "No fee income, quote impairment, gas or execution loss in LP stress"
+      ]
+    },
+    {
+      "scenario_id": "RISK_SCENARIOS_V1:ASCEND_ECONOMIC_HAIRCUT",
+      "version": "RISK_SCENARIOS_V1",
+      "strategies": [
+        "ASCEND_STAKE_A0G"
+      ],
+      "category": "SOURCECORE_VALUE_LOSS",
+      "model": "EXPOSURE_TIMES_SEVERITY",
+      "severity": "0.05",
+      "evidence_class": "MODELLED",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "meaning": "Illustrative 5% haircut of the single SourceCore/a0G economic value",
+      "exposure_basis": "MODELLED_SOURCECORE_A0G_VALUE_ONCE",
+      "assumptions": [
+        "5% is an illustrative sensitivity benchmark only, not calibrated operator/slash data",
+        "Embedded Mellow/Symbiotic exposure is contained in a0G value, never added again",
+        "Queue, remote dependency, oracle/accounting severities unresolved",
+        "Ascend remains CLOSED; analysis allocation is not a recommendation"
+      ]
+    },
+    {
+      "scenario_id": "RISK_SCENARIOS_V1:ASCEND_DEPENDENCIES_UNRESOLVED",
+      "version": "RISK_SCENARIOS_V1",
+      "strategies": [
+        "ASCEND_STAKE_A0G"
+      ],
+      "category": "DEPENDENCY_LOSS",
+      "model": "EXPOSURE_TIMES_SEVERITY",
+      "severity": null,
+      "evidence_class": "MISSING",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "meaning": "No defensible quantified dependency severity",
+      "exposure_basis": "SOURCECORE_QUEUE_REMOTE_ORACLE_DEPENDENCIES",
+      "assumptions": [
+        "Missing severity is not zero",
+        "Do not infer operator-level risk or open Ascend gate"
+      ]
+    }
+  ],
+  "notional_basis": "Each hypothetical strategy allocation=1000 modelled USD-equivalent; decision sleeve=5000",
+  "strategy_results": [
+    {
+      "strategy_id": "NATIVE_STAKE_0G",
+      "scenario_id": "RISK_SCENARIOS_V1:NATIVE_STAKING_5PCT",
+      "scenario_version": "RISK_SCENARIOS_V1",
+      "scenario_fingerprint": "69157e9789a1a0b2e2314087b210abbeae4897ec19fee5ed81ba72666c4f16d4",
+      "model_version": "RISK_STRESS_V1",
+      "risk_category": "STAKING_LOSS",
+      "exposure_basis": "MODELLED_STRATEGY_ALLOCATION_STAKING_EXPOSURE",
+      "allocation_value": "1000",
+      "stressed_exposure_amount": "1000",
+      "severity": "0.05",
+      "absolute_stressed_loss": "50.00",
+      "loss_fraction": "0.05",
+      "evidence_class": "MODELLED",
+      "stress_basis": "MODELLED",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "risk_assessment_state": "ASSESSED_MODELLED",
+      "aggregation_eligible": true,
+      "diagnostics": {
+        "configured_validator_concentration": "UNRESOLVED",
+        "delegated_pending_split": "UNRESOLVED",
+        "exposure_assumption": "Entire synthetic allocation; no additional pending balance added"
+      },
+      "provenance": [
+        "5% frozen severe staking-loss evaluation benchmark, not probability",
+        "Full allocation treated as exposed; no configured validator selected",
+        "Configured validator concentration and actual pending exposure unresolved"
+      ],
+      "reasons": [
+        "Independent deterministic scenario; no probability/correlation claim",
+        "Does not establish return evidence, admission, executable quote, exit liquidity or deployment"
+      ],
+      "value_unit": "MODELLED_USDC.e_VALUE_EQUIVALENT_USD",
+      "allocation_gate": "NOT_EVALUATED_BY_RISK_MODEL"
+    },
+    {
+      "strategy_id": "GIMO_STAKE_0G",
+      "scenario_id": "RISK_SCENARIOS_V1:GIMO_UNDERLYING_5PCT",
+      "scenario_version": "RISK_SCENARIOS_V1",
+      "scenario_fingerprint": "8a7b08a264f7c424262676c0423b2828bfd1252ff3ac32c895fb0db4a10204c0",
+      "model_version": "RISK_STRESS_V1",
+      "risk_category": "STAKING_LOSS",
+      "exposure_basis": "MODELLED_ST0G_UNDERLYING_STAKING_VALUE",
+      "allocation_value": "1000",
+      "stressed_exposure_amount": "1000",
+      "severity": "0.05",
+      "absolute_stressed_loss": "50.00",
+      "loss_fraction": "0.05",
+      "evidence_class": "MODELLED",
+      "stress_basis": "MODELLED",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "risk_assessment_state": "ASSESSED_MODELLED",
+      "aggregation_eligible": true,
+      "diagnostics": {
+        "gimo_specific_protocol_severity": null,
+        "gimo_protocol_risk": "UNRESOLVED",
+        "causal_losses_applied": 1,
+        "shared_severity_not_shared_event": true
+      },
+      "provenance": [
+        "Same severity benchmark as Native, distinct causal event",
+        "No second Gimo-specific slash is added",
+        "Gimo protocol risk and validator distribution unresolved; no correlation asserted"
+      ],
+      "reasons": [
+        "Independent deterministic scenario; no probability/correlation claim",
+        "Does not establish return evidence, admission, executable quote, exit liquidity or deployment"
+      ],
+      "value_unit": "MODELLED_USDC.e_VALUE_EQUIVALENT_USD",
+      "allocation_gate": "NOT_EVALUATED_BY_RISK_MODEL"
+    },
+    {
+      "strategy_id": "JAINE_LP_0G_USDC",
+      "scenario_id": "RISK_SCENARIOS_V1:LP_WORST_ABSOLUTE",
+      "scenario_version": "RISK_SCENARIOS_V1",
+      "scenario_fingerprint": "45fde8e37c78afac4baa5458d9c0984372a023d351c26798689b6b499b213984",
+      "model_version": "RISK_STRESS_V1",
+      "risk_category": "LP_POSITION_VALUE",
+      "exposure_basis": "LP_EVALUATION_CONFIG_V1_FULL_POSITION_INITIAL_VALUE",
+      "allocation_value": "1000",
+      "stressed_exposure_amount": "1000",
+      "severity": null,
+      "absolute_stressed_loss": "162.518804294528306334515039632594357738216744383062890900568",
+      "loss_fraction": "0.162518804294528306334515039632594357738216744383062890900568",
+      "evidence_class": "MODELLED",
+      "stress_basis": "MODELLED",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "risk_assessment_state": "ASSESSED_MODELLED",
+      "aggregation_eligible": true,
+      "diagnostics": {
+        "lp_absolute_stress_loss": "0.162518804294528306334515039632594357738216744383062890900568",
+        "worst_lp_scenario_id": "LP_SHOCKS_V1:DOWN_20",
+        "lp_config_id": "LP_EVALUATION_CONFIG_V1:JAINE_LP_0G_USDC:edbd3f5f802496df0f287b97ebaedf6ada257b74f47e4dc7f8710731000cac97",
+        "selection_rule": "WORST_ABSOLUTE_LOSS_ACROSS_LP_SHOCKS_V1",
+        "impermanent_loss_fraction": "-0.092013578543974554291294902105174329512497521425485582697584",
+        "hodl_market_loss": "0.07765008824415374813447748960924403202405797551500657214294",
+        "lp_vs_hodl_difference_per_unit": "-0.084868716050374558200037550023350325714158768868056318757628",
+        "range_state": "BELOW_RANGE",
+        "shock_results_per_unit": [
+          {
+            "strategy_id": "JAINE_LP_0G_USDC",
+            "config_id": "LP_EVALUATION_CONFIG_V1:JAINE_LP_0G_USDC:edbd3f5f802496df0f287b97ebaedf6ada257b74f47e4dc7f8710731000cac97",
+            "scenario_id": "LP_SHOCKS_V1:DOWN_20",
+            "evidence_class": "MODELLED",
+            "label": "SYNTHETIC_EVALUATION_ONLY",
+            "method_version": "V3_RANGE_INVENTORY_V1",
+            "shock": "-0.20",
+            "notional": "1",
+            "reference_price": "1",
+            "shocked_price": "0.80",
+            "pool_math_price": "0.00000000000080",
+            "liquidity": "8599488810373.08676108232248804395819316025376538352187264890",
+            "initial_w0g": "0.388250441220768740672387448046220160120289877575032860714701",
+            "initial_usdce": "0.611749558779231259327612551953779839879710122424967139285299",
+            "initial_value": "1.00000000000000000000000000000000000000000000000000000000000",
+            "initial_range_state": "IN_RANGE",
+            "range_state": "BELOW_RANGE",
+            "w0g": "1.04685149463183961708185620045925705282722906952117138637429",
+            "usdce": "0",
+            "lp_value": "0.837481195705471693665484960367405642261783255616937109099432",
+            "hodl_value": "0.922349911755846251865522510390755967975942024484993427857060",
+            "lp_vs_hodl_difference": "-0.084868716050374558200037550023350325714158768868056318757628",
+            "impermanent_loss_fraction": "-0.092013578543974554291294902105174329512497521425485582697584",
+            "absolute_lp_loss": "0.162518804294528306334515039632594357738216744383062890900568",
+            "hodl_market_loss": "0.07765008824415374813447748960924403202405797551500657214294",
+            "market_value_change": "-0.077650088244153748134477489609244032024057975515006572142940",
+            "rebalancing_value_change": "-0.084868716050374558200037550023350325714158768868056318757628",
+            "lp_value_change": "-0.162518804294528306334515039632594357738216744383062890900568",
+            "execution_effects_included": false,
+            "fee_income_included": false
+          },
+          {
+            "strategy_id": "JAINE_LP_0G_USDC",
+            "config_id": "LP_EVALUATION_CONFIG_V1:JAINE_LP_0G_USDC:edbd3f5f802496df0f287b97ebaedf6ada257b74f47e4dc7f8710731000cac97",
+            "scenario_id": "LP_SHOCKS_V1:DOWN_10",
+            "evidence_class": "MODELLED",
+            "label": "SYNTHETIC_EVALUATION_ONLY",
+            "method_version": "V3_RANGE_INVENTORY_V1",
+            "shock": "-0.10",
+            "notional": "1",
+            "reference_price": "1",
+            "shocked_price": "0.90",
+            "pool_math_price": "0.00000000000090",
+            "liquidity": "8599488810373.08676108232248804395819316025376538352187264890",
+            "initial_w0g": "0.388250441220768740672387448046220160120289877575032860714701",
+            "initial_usdce": "0.611749558779231259327612551953779839879710122424967139285299",
+            "initial_value": "1.00000000000000000000000000000000000000000000000000000000000",
+            "initial_range_state": "IN_RANGE",
+            "range_state": "IN_RANGE",
+            "w0g": "0.853418748817936883335053590734295025102402279592686158450239",
+            "usdce": "0.170452154579373911615779831568651399047585907702502919982376",
+            "lp_value": "0.938529028515517106617328063229516921639747959335920462587591",
+            "hodl_value": "0.961174955877923125932761255195377983987971012242496713928530",
+            "lp_vs_hodl_difference": "-0.022645927362406019315433191965861062348223052906576251340939",
+            "impermanent_loss_fraction": "-0.023560671471846206154835921253990721788126395779318177767487",
+            "absolute_lp_loss": "0.061470971484482893382671936770483078360252040664079537412409",
+            "hodl_market_loss": "0.03882504412207687406723874480462201601202898775750328607147",
+            "market_value_change": "-0.038825044122076874067238744804622016012028987757503286071470",
+            "rebalancing_value_change": "-0.022645927362406019315433191965861062348223052906576251340939",
+            "lp_value_change": "-0.061470971484482893382671936770483078360252040664079537412409",
+            "execution_effects_included": false,
+            "fee_income_included": false
+          },
+          {
+            "strategy_id": "JAINE_LP_0G_USDC",
+            "config_id": "LP_EVALUATION_CONFIG_V1:JAINE_LP_0G_USDC:edbd3f5f802496df0f287b97ebaedf6ada257b74f47e4dc7f8710731000cac97",
+            "scenario_id": "LP_SHOCKS_V1:UP_10",
+            "evidence_class": "MODELLED",
+            "label": "SYNTHETIC_EVALUATION_ONLY",
+            "method_version": "V3_RANGE_INVENTORY_V1",
+            "shock": "0.10",
+            "notional": "1",
+            "reference_price": "1",
+            "shocked_price": "1.10",
+            "pool_math_price": "0.00000000000110",
+            "liquidity": "8599488810373.08676108232248804395819316025376538352187264890",
+            "initial_w0g": "0.388250441220768740672387448046220160120289877575032860714701",
+            "initial_usdce": "0.611749558779231259327612551953779839879710122424967139285299",
+            "initial_value": "1.00000000000000000000000000000000000000000000000000000000000",
+            "initial_range_state": "IN_RANGE",
+            "range_state": "ABOVE_RANGE",
+            "w0g": "0",
+            "usdce": "1.01835757267434960440004107673873479757792169063964712824471",
+            "lp_value": "1.01835757267434960440004107673873479757792169063964712824471",
+            "hodl_value": "1.03882504412207687406723874480462201601202898775750328607147",
+            "lp_vs_hodl_difference": "-0.02046747144772726966719766806588721843410729711785615782676",
+            "impermanent_loss_fraction": "-0.019702520230463415345054159109602043051248799893019776338189",
+            "absolute_lp_loss": "0",
+            "hodl_market_loss": "0",
+            "market_value_change": "0.03882504412207687406723874480462201601202898775750328607147",
+            "rebalancing_value_change": "-0.02046747144772726966719766806588721843410729711785615782676",
+            "lp_value_change": "0.01835757267434960440004107673873479757792169063964712824471",
+            "execution_effects_included": false,
+            "fee_income_included": false
+          },
+          {
+            "strategy_id": "JAINE_LP_0G_USDC",
+            "config_id": "LP_EVALUATION_CONFIG_V1:JAINE_LP_0G_USDC:edbd3f5f802496df0f287b97ebaedf6ada257b74f47e4dc7f8710731000cac97",
+            "scenario_id": "LP_SHOCKS_V1:UP_20",
+            "evidence_class": "MODELLED",
+            "label": "SYNTHETIC_EVALUATION_ONLY",
+            "method_version": "V3_RANGE_INVENTORY_V1",
+            "shock": "0.20",
+            "notional": "1",
+            "reference_price": "1",
+            "shocked_price": "1.20",
+            "pool_math_price": "0.00000000000120",
+            "liquidity": "8599488810373.08676108232248804395819316025376538352187264890",
+            "initial_w0g": "0.388250441220768740672387448046220160120289877575032860714701",
+            "initial_usdce": "0.611749558779231259327612551953779839879710122424967139285299",
+            "initial_value": "1.00000000000000000000000000000000000000000000000000000000000",
+            "initial_range_state": "IN_RANGE",
+            "range_state": "ABOVE_RANGE",
+            "w0g": "0",
+            "usdce": "1.01835757267434960440004107673873479757792169063964712824471",
+            "lp_value": "1.01835757267434960440004107673873479757792169063964712824471",
+            "hodl_value": "1.07765008824415374813447748960924403202405797551500657214294",
+            "lp_vs_hodl_difference": "-0.05929251556980414373443641287050923444613628487535944389823",
+            "impermanent_loss_fraction": "-0.055020192747732376607940440517276016601099941020794059135832",
+            "absolute_lp_loss": "0",
+            "hodl_market_loss": "0",
+            "market_value_change": "0.07765008824415374813447748960924403202405797551500657214294",
+            "rebalancing_value_change": "-0.05929251556980414373443641287050923444613628487535944389823",
+            "lp_value_change": "0.01835757267434960440004107673873479757792169063964712824471",
+            "execution_effects_included": false,
+            "fee_income_included": false
+          }
+        ],
+        "only_absolute_loss_aggregated": true,
+        "fees_execution_costs_included": false
+      },
+      "provenance": [
+        "Uses V3_RANGE_INVENTORY_V1, not generic legacy IL proxy",
+        "IL and HODL market loss are attribution only and are never added",
+        "Each strategy worst case is a stress-budget envelope, not a joint price event",
+        "No fee income, quote impairment, gas or execution loss in LP stress"
+      ],
+      "reasons": [
+        "Independent deterministic scenario; no probability/correlation claim",
+        "Does not establish return evidence, admission, executable quote, exit liquidity or deployment"
+      ],
+      "value_unit": "MODELLED_USDC.e_VALUE_EQUIVALENT_USD",
+      "allocation_gate": "NOT_EVALUATED_BY_RISK_MODEL"
+    },
+    {
+      "strategy_id": "OKU_LP_0G_USDC",
+      "scenario_id": "RISK_SCENARIOS_V1:LP_WORST_ABSOLUTE",
+      "scenario_version": "RISK_SCENARIOS_V1",
+      "scenario_fingerprint": "45fde8e37c78afac4baa5458d9c0984372a023d351c26798689b6b499b213984",
+      "model_version": "RISK_STRESS_V1",
+      "risk_category": "LP_POSITION_VALUE",
+      "exposure_basis": "LP_EVALUATION_CONFIG_V1_FULL_POSITION_INITIAL_VALUE",
+      "allocation_value": "1000",
+      "stressed_exposure_amount": "1000",
+      "severity": null,
+      "absolute_stressed_loss": "120.632485554988245373414372609617526322235411830460635593690",
+      "loss_fraction": "0.12063248555498824537341437260961752632223541183046063559369",
+      "evidence_class": "MODELLED",
+      "stress_basis": "MODELLED",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "risk_assessment_state": "ASSESSED_MODELLED",
+      "aggregation_eligible": true,
+      "diagnostics": {
+        "lp_absolute_stress_loss": "0.120632485554988245373414372609617526322235411830460635593690",
+        "worst_lp_scenario_id": "LP_SHOCKS_V1:DOWN_20",
+        "lp_config_id": "LP_EVALUATION_CONFIG_V1:OKU_LP_0G_USDC:c3bfea639baf4e1b2e6124a6e29697e302e0ae889fc37f9a07013653fc369550",
+        "selection_rule": "WORST_ABSOLUTE_LOSS_ACROSS_LP_SHOCKS_V1",
+        "impermanent_loss_fraction": "-0.043646155337452402344490442695356101301285474423715555395090",
+        "hodl_market_loss": "0.0804998386812578841885226491449171654945104088934766404979721",
+        "lp_vs_hodl_difference_per_unit": "-0.040132646873730361184891723464700360827725002936983995095718",
+        "range_state": "IN_RANGE",
+        "shock_results_per_unit": [
+          {
+            "strategy_id": "OKU_LP_0G_USDC",
+            "config_id": "LP_EVALUATION_CONFIG_V1:OKU_LP_0G_USDC:c3bfea639baf4e1b2e6124a6e29697e302e0ae889fc37f9a07013653fc369550",
+            "scenario_id": "LP_SHOCKS_V1:DOWN_20",
+            "evidence_class": "MODELLED",
+            "label": "SYNTHETIC_EVALUATION_ONLY",
+            "method_version": "V3_RANGE_INVENTORY_V1",
+            "shock": "-0.20",
+            "notional": "1",
+            "reference_price": "1.1",
+            "shocked_price": "0.880",
+            "pool_math_price": "1136363636363.63636363636363636363636363636363636363636363636",
+            "liquidity": "3433185795612.98143300318840127774218202474282574417583864538",
+            "initial_w0g": "0.365908357642081291766012041567805297702320040424893820445328",
+            "initial_usdce": "0.597500806593710579057386754275414172527447955532616797510138",
+            "initial_value": "0.999999999999999999999999999999999999999999999999999999999999",
+            "initial_range_state": "IN_RANGE",
+            "range_state": "IN_RANGE",
+            "w0g": "0.752282494628709084823016305069952930245697248176053842387964",
+            "usdce": "0.217358919171747759982331278928823895061551009774611983104901",
+            "lp_value": "0.879367514445011754626585627390382473677764588169539364406309",
+            "hodl_value": "0.919500161318742115811477350855082834505489591106523359502027",
+            "lp_vs_hodl_difference": "-0.040132646873730361184891723464700360827725002936983995095718",
+            "impermanent_loss_fraction": "-0.043646155337452402344490442695356101301285474423715555395090",
+            "absolute_lp_loss": "0.120632485554988245373414372609617526322235411830460635593690",
+            "hodl_market_loss": "0.0804998386812578841885226491449171654945104088934766404979721",
+            "market_value_change": "-0.080499838681257884188522649144917165494510408893476640497972",
+            "rebalancing_value_change": "-0.040132646873730361184891723464700360827725002936983995095718",
+            "lp_value_change": "-0.120632485554988245373414372609617526322235411830460635593690",
+            "execution_effects_included": false,
+            "fee_income_included": false
+          },
+          {
+            "strategy_id": "OKU_LP_0G_USDC",
+            "config_id": "LP_EVALUATION_CONFIG_V1:OKU_LP_0G_USDC:c3bfea639baf4e1b2e6124a6e29697e302e0ae889fc37f9a07013653fc369550",
+            "scenario_id": "LP_SHOCKS_V1:DOWN_10",
+            "evidence_class": "MODELLED",
+            "label": "SYNTHETIC_EVALUATION_ONLY",
+            "method_version": "V3_RANGE_INVENTORY_V1",
+            "shock": "-0.10",
+            "notional": "1",
+            "reference_price": "1.1",
+            "shocked_price": "0.990",
+            "pool_math_price": "1010101010101.01010101010101010101010101010101010101010101010",
+            "liquidity": "3433185795612.98143300318840127774218202474282574417583864538",
+            "initial_w0g": "0.365908357642081291766012041567805297702320040424893820445328",
+            "initial_usdce": "0.597500806593710579057386754275414172527447955532616797510138",
+            "initial_value": "0.999999999999999999999999999999999999999999999999999999999999",
+            "initial_range_state": "IN_RANGE",
+            "range_state": "IN_RANGE",
+            "w0g": "0.542975690997569784424858797631105300332954262795076272988345",
+            "usdce": "0.412721902630546548307035429163841078079741391389584608670334",
+            "lp_value": "0.950267836718140634887645638818635325409366111556710118928796",
+            "hodl_value": "0.959750080659371057905738675427541417252744795553261679751013",
+            "lp_vs_hodl_difference": "-0.009482243941230423018093036608906091843378683996551560822217",
+            "impermanent_loss_fraction": "-0.009879909501769352952696204867004720469140789118118087687697",
+            "absolute_lp_loss": "0.0497321632818593651123543611813646745906338884432898810712030",
+            "hodl_market_loss": "0.0402499193406289420942613245724585827472552044467383202489860",
+            "market_value_change": "-0.040249919340628942094261324572458582747255204446738320248986",
+            "rebalancing_value_change": "-0.009482243941230423018093036608906091843378683996551560822217",
+            "lp_value_change": "-0.049732163281859365112354361181364674590633888443289881071203",
+            "execution_effects_included": false,
+            "fee_income_included": false
+          },
+          {
+            "strategy_id": "OKU_LP_0G_USDC",
+            "config_id": "LP_EVALUATION_CONFIG_V1:OKU_LP_0G_USDC:c3bfea639baf4e1b2e6124a6e29697e302e0ae889fc37f9a07013653fc369550",
+            "scenario_id": "LP_SHOCKS_V1:UP_10",
+            "evidence_class": "MODELLED",
+            "label": "SYNTHETIC_EVALUATION_ONLY",
+            "method_version": "V3_RANGE_INVENTORY_V1",
+            "shock": "0.10",
+            "notional": "1",
+            "reference_price": "1.1",
+            "shocked_price": "1.210",
+            "pool_math_price": "826446280991.735537190082644628099173553719008264462809917355",
+            "liquidity": "3433185795612.98143300318840127774218202474282574417583864538",
+            "initial_w0g": "0.365908357642081291766012041567805297702320040424893820445328",
+            "initial_usdce": "0.597500806593710579057386754275414172527447955532616797510138",
+            "initial_value": "0.999999999999999999999999999999999999999999999999999999999999",
+            "initial_range_state": "IN_RANGE",
+            "range_state": "IN_RANGE",
+            "w0g": "0.213572135607540426472459555327206399069954933924028065964877",
+            "usdce": "0.773249541917013770534797859538529602234320620956082051446167",
+            "lp_value": "1.03167182600213768656647392148444934510896609100415601126367",
+            "hodl_value": "1.04024991934062894209426132457245858274725520444673832024898",
+            "lp_vs_hodl_difference": "-0.00857809333849125552778740308800923763828911344258230898531",
+            "impermanent_loss_fraction": "-0.008246185055153430140413192577851097770411707021860273847579",
+            "absolute_lp_loss": "0",
+            "hodl_market_loss": "0",
+            "market_value_change": "0.040249919340628942094261324572458582747255204446738320248981",
+            "rebalancing_value_change": "-0.00857809333849125552778740308800923763828911344258230898531",
+            "lp_value_change": "0.031671826002137686566473921484449345108966091004156011263671",
+            "execution_effects_included": false,
+            "fee_income_included": false
+          },
+          {
+            "strategy_id": "OKU_LP_0G_USDC",
+            "config_id": "LP_EVALUATION_CONFIG_V1:OKU_LP_0G_USDC:c3bfea639baf4e1b2e6124a6e29697e302e0ae889fc37f9a07013653fc369550",
+            "scenario_id": "LP_SHOCKS_V1:UP_20",
+            "evidence_class": "MODELLED",
+            "label": "SYNTHETIC_EVALUATION_ONLY",
+            "method_version": "V3_RANGE_INVENTORY_V1",
+            "shock": "0.20",
+            "notional": "1",
+            "reference_price": "1.1",
+            "shocked_price": "1.320",
+            "pool_math_price": "757575757575.757575757575757575757575757575757575757575757576",
+            "liquidity": "3433185795612.98143300318840127774218202474282574417583864538",
+            "initial_w0g": "0.365908357642081291766012041567805297702320040424893820445328",
+            "initial_usdce": "0.597500806593710579057386754275414172527447955532616797510138",
+            "initial_value": "0.999999999999999999999999999999999999999999999999999999999999",
+            "initial_range_state": "IN_RANGE",
+            "range_state": "IN_RANGE",
+            "w0g": "0.0806988183992658154625118242483364351811462677110477850908056",
+            "usdce": "0.941175342763389427301985694642195468103567464129365664556948",
+            "lp_value": "1.04769778305042030371250130264999956254268053750794874087681",
+            "hodl_value": "1.08049983868125788418852264914491716549451040889347664049797",
+            "lp_vs_hodl_difference": "-0.03280205563083758047602134649491760295182987138552789962116",
+            "impermanent_loss_fraction": "-0.030358223533723289039229641456568678760343377294320593041816",
+            "absolute_lp_loss": "0",
+            "hodl_market_loss": "0",
+            "market_value_change": "0.080499838681257884188522649144917165494510408893476640497971",
+            "rebalancing_value_change": "-0.03280205563083758047602134649491760295182987138552789962116",
+            "lp_value_change": "0.047697783050420303712501302649999562542680537507948740876811",
+            "execution_effects_included": false,
+            "fee_income_included": false
+          }
+        ],
+        "only_absolute_loss_aggregated": true,
+        "fees_execution_costs_included": false
+      },
+      "provenance": [
+        "Uses V3_RANGE_INVENTORY_V1, not generic legacy IL proxy",
+        "IL and HODL market loss are attribution only and are never added",
+        "Each strategy worst case is a stress-budget envelope, not a joint price event",
+        "No fee income, quote impairment, gas or execution loss in LP stress"
+      ],
+      "reasons": [
+        "Independent deterministic scenario; no probability/correlation claim",
+        "Does not establish return evidence, admission, executable quote, exit liquidity or deployment"
+      ],
+      "value_unit": "MODELLED_USDC.e_VALUE_EQUIVALENT_USD",
+      "allocation_gate": "NOT_EVALUATED_BY_RISK_MODEL"
+    },
+    {
+      "strategy_id": "ASCEND_STAKE_A0G",
+      "scenario_id": "RISK_SCENARIOS_V1:ASCEND_ECONOMIC_HAIRCUT",
+      "scenario_version": "RISK_SCENARIOS_V1",
+      "scenario_fingerprint": "d047e8ef2525a09bdbf7953a0852413dc4ab7898d297e50366630b6003f38a36",
+      "model_version": "RISK_STRESS_V1",
+      "risk_category": "SOURCECORE_VALUE_LOSS",
+      "exposure_basis": "MODELLED_SOURCECORE_A0G_VALUE_ONCE",
+      "allocation_value": "1000",
+      "stressed_exposure_amount": "1000",
+      "severity": "0.05",
+      "absolute_stressed_loss": "50.00",
+      "loss_fraction": "0.05",
+      "evidence_class": "MODELLED",
+      "stress_basis": "MODELLED",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "risk_assessment_state": "PARTIALLY_ASSESSED",
+      "aggregation_eligible": true,
+      "diagnostics": {
+        "sourcecore_a0g_value": "Counted once",
+        "embedded_mellow_symbiotic": "Contained in a0G exposure; not additive",
+        "queue_funding_severity": null,
+        "remote_dependency_severity": null,
+        "oracle_accounting_severity": null,
+        "operator_data": "UNRESOLVED",
+        "allocation_gate": "CLOSED"
+      },
+      "provenance": [
+        "5% is an illustrative sensitivity benchmark only, not calibrated operator/slash data",
+        "Embedded Mellow/Symbiotic exposure is contained in a0G value, never added again",
+        "Queue, remote dependency, oracle/accounting severities unresolved",
+        "Ascend remains CLOSED; analysis allocation is not a recommendation"
+      ],
+      "reasons": [
+        "Independent deterministic scenario; no probability/correlation claim",
+        "Does not establish return evidence, admission, executable quote, exit liquidity or deployment",
+        "Ascend CLOSED; hypothetical analysis only, not allocatable"
+      ],
+      "value_unit": "MODELLED_USDC.e_VALUE_EQUIVALENT_USD",
+      "allocation_gate": "CLOSED"
+    },
+    {
+      "strategy_id": "ASCEND_STAKE_A0G",
+      "scenario_id": "RISK_SCENARIOS_V1:ASCEND_DEPENDENCIES_UNRESOLVED",
+      "scenario_version": "RISK_SCENARIOS_V1",
+      "scenario_fingerprint": "5a6c2deb82dc85a295a466f0724e6da4265e7d833436b054011725c1a7f081ab",
+      "model_version": "RISK_STRESS_V1",
+      "risk_category": "DEPENDENCY_LOSS",
+      "exposure_basis": "SOURCECORE_QUEUE_REMOTE_ORACLE_DEPENDENCIES",
+      "allocation_value": "1000",
+      "stressed_exposure_amount": "1000",
+      "severity": null,
+      "absolute_stressed_loss": null,
+      "loss_fraction": null,
+      "evidence_class": "MISSING",
+      "stress_basis": "UNRESOLVED",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "risk_assessment_state": "UNRESOLVED",
+      "aggregation_eligible": false,
+      "diagnostics": {
+        "sourcecore_a0g_value": "Counted once",
+        "embedded_mellow_symbiotic": "Contained in a0G exposure; not additive",
+        "queue_funding_severity": null,
+        "remote_dependency_severity": null,
+        "oracle_accounting_severity": null,
+        "operator_data": "UNRESOLVED",
+        "allocation_gate": "CLOSED"
+      },
+      "provenance": [
+        "Missing severity is not zero",
+        "Do not infer operator-level risk or open Ascend gate"
+      ],
+      "reasons": [
+        "Independent deterministic scenario; no probability/correlation claim",
+        "Does not establish return evidence, admission, executable quote, exit liquidity or deployment",
+        "Ascend CLOSED; hypothetical analysis only, not allocatable",
+        "MISSING_SEVERITY_IS_NOT_ZERO"
+      ],
+      "value_unit": "MODELLED_USDC.e_VALUE_EQUIVALENT_USD",
+      "allocation_gate": "CLOSED"
+    }
+  ],
+  "decision_sleeve_budget": {
+    "model_version": "RISK_STRESS_V1",
+    "label": "SYNTHETIC_EVALUATION_ONLY",
+    "evidence_class": "MODELLED",
+    "aggregation_rule": "INDEPENDENT_STRESS_BUDGET_ENVELOPE_NOT_JOINT_EVENT",
+    "joint_event_assumed": false,
+    "correlation": "UNRESOLVED_NOT_INFERRED",
+    "decision_value": "5000",
+    "idle_weight": "0.0",
+    "rows": [
+      {
+        "strategy_id": "NATIVE_STAKE_0G",
+        "scenario_id": "RISK_SCENARIOS_V1:NATIVE_STAKING_5PCT",
+        "weight": "0.2",
+        "strategy_stress_loss_fraction": "0.05",
+        "absolute_strategy_stress_loss": "50.00",
+        "weighted_contribution": "0.010",
+        "risk_category": "STAKING_LOSS",
+        "risk_assessment_state": "ASSESSED_MODELLED",
+        "allocation_gate": "NOT_EVALUATED_BY_RISK_MODEL"
+      },
+      {
+        "strategy_id": "GIMO_STAKE_0G",
+        "scenario_id": "RISK_SCENARIOS_V1:GIMO_UNDERLYING_5PCT",
+        "weight": "0.2",
+        "strategy_stress_loss_fraction": "0.05",
+        "absolute_strategy_stress_loss": "50.00",
+        "weighted_contribution": "0.010",
+        "risk_category": "STAKING_LOSS",
+        "risk_assessment_state": "ASSESSED_MODELLED",
+        "allocation_gate": "NOT_EVALUATED_BY_RISK_MODEL"
+      },
+      {
+        "strategy_id": "JAINE_LP_0G_USDC",
+        "scenario_id": "RISK_SCENARIOS_V1:LP_WORST_ABSOLUTE",
+        "weight": "0.2",
+        "strategy_stress_loss_fraction": "0.162518804294528306334515039632594357738216744383062890900568",
+        "absolute_strategy_stress_loss": "162.518804294528306334515039632594357738216744383062890900568",
+        "weighted_contribution": "0.0325037608589056612669030079265188715476433488766125781801136",
+        "risk_category": "LP_POSITION_VALUE",
+        "risk_assessment_state": "ASSESSED_MODELLED",
+        "allocation_gate": "NOT_EVALUATED_BY_RISK_MODEL"
+      },
+      {
+        "strategy_id": "OKU_LP_0G_USDC",
+        "scenario_id": "RISK_SCENARIOS_V1:LP_WORST_ABSOLUTE",
+        "weight": "0.2",
+        "strategy_stress_loss_fraction": "0.12063248555498824537341437260961752632223541183046063559369",
+        "absolute_strategy_stress_loss": "120.632485554988245373414372609617526322235411830460635593690",
+        "weighted_contribution": "0.024126497110997649074682874521923505264447082366092127118738",
+        "risk_category": "LP_POSITION_VALUE",
+        "risk_assessment_state": "ASSESSED_MODELLED",
+        "allocation_gate": "NOT_EVALUATED_BY_RISK_MODEL"
+      },
+      {
+        "strategy_id": "ASCEND_STAKE_A0G",
+        "scenario_id": "RISK_SCENARIOS_V1:ASCEND_ECONOMIC_HAIRCUT",
+        "weight": "0.2",
+        "strategy_stress_loss_fraction": "0.05",
+        "absolute_strategy_stress_loss": "50.00",
+        "weighted_contribution": "0.010",
+        "risk_category": "SOURCECORE_VALUE_LOSS",
+        "risk_assessment_state": "PARTIALLY_ASSESSED",
+        "allocation_gate": "CLOSED"
+      }
+    ],
+    "state": "ASSESSED_MODELLED",
+    "unresolved_positive_allocations": [],
+    "total_decision_sleeve_stress_loss": "433.151289849516551707929412242211884060452156213523526494258",
+    "total_loss_fraction": "0.0866302579699033103415858824484423768120904312427047052988516",
+    "lp_absolute_stress_loss": "0.0566302579699033103415858824484423768120904312427047052988516",
+    "staking_stress_loss": "0.020",
+    "closed_gate_analysis_only": true,
+    "limitations": [
+      "Sum of independent stress budgets is not a joint-event scenario or probability",
+      "Only named quantified components covered; unresolved dependency risks remain",
+      "Does not imply production admission or portfolio recommendation"
+    ]
+  },
+  "profile_constraint_mapping": [
+    {
+      "profile": "Conservative",
+      "mode": "SYNTHETIC_EVALUATION_ONLY",
+      "optimizer_integration": "LEGACY_OPTIMIZERS_UNCHANGED",
+      "max_strategy_concentration": {
+        "limit": "0.4",
+        "result": "PASS"
+      },
+      "max_slashing_stress_loss": {
+        "limit": "0.02",
+        "meaning": "Weighted independent underlying-staking loss budget, not shared causal event",
+        "result": "PASS"
+      },
+      "max_decision_sleeve_lp_absolute_stress_loss": {
+        "limit": null,
+        "basis": "UNRESOLVED_NO_NEW_PROFILE_DEFAULT",
+        "result": "UNRESOLVED"
+      },
+      "max_portfolio_lp_il_stress": {
+        "limit": "0.02",
+        "result": "LEGACY_COMPATIBILITY_ONLY_NOT_APPLIED_TO_ABSOLUTE_LOSS"
+      },
+      "max_bridge_exposure": {
+        "limit": "0.1",
+        "result": "UNRESOLVED_NO_BRIDGE_EXPOSURE_INPUT; REMOTE_DEPENDENCY_IS_NOT_USER_CAPITAL_BRIDGE"
+      },
+      "max_exit_time_days": {
+        "limit": "7.0",
+        "result": "LEGACY_ONLY; NEW_EXIT_PRIMITIVE_NOT_RANKING_OR_DEADLINE_INPUT"
+      },
+      "overall_risk_clearance": "NOT_ESTABLISHED"
+    },
+    {
+      "profile": "Balanced",
+      "mode": "SYNTHETIC_EVALUATION_ONLY",
+      "optimizer_integration": "LEGACY_OPTIMIZERS_UNCHANGED",
+      "max_strategy_concentration": {
+        "limit": "0.6",
+        "result": "PASS"
+      },
+      "max_slashing_stress_loss": {
+        "limit": "0.05",
+        "meaning": "Weighted independent underlying-staking loss budget, not shared causal event",
+        "result": "PASS"
+      },
+      "max_decision_sleeve_lp_absolute_stress_loss": {
+        "limit": null,
+        "basis": "UNRESOLVED_NO_NEW_PROFILE_DEFAULT",
+        "result": "UNRESOLVED"
+      },
+      "max_portfolio_lp_il_stress": {
+        "limit": "0.05",
+        "result": "LEGACY_COMPATIBILITY_ONLY_NOT_APPLIED_TO_ABSOLUTE_LOSS"
+      },
+      "max_bridge_exposure": {
+        "limit": "0.25",
+        "result": "UNRESOLVED_NO_BRIDGE_EXPOSURE_INPUT; REMOTE_DEPENDENCY_IS_NOT_USER_CAPITAL_BRIDGE"
+      },
+      "max_exit_time_days": {
+        "limit": "30.0",
+        "result": "LEGACY_ONLY; NEW_EXIT_PRIMITIVE_NOT_RANKING_OR_DEADLINE_INPUT"
+      },
+      "overall_risk_clearance": "NOT_ESTABLISHED"
+    },
+    {
+      "profile": "Aggressive",
+      "mode": "SYNTHETIC_EVALUATION_ONLY",
+      "optimizer_integration": "LEGACY_OPTIMIZERS_UNCHANGED",
+      "max_strategy_concentration": {
+        "limit": "0.8",
+        "result": "PASS"
+      },
+      "max_slashing_stress_loss": {
+        "limit": "0.1",
+        "meaning": "Weighted independent underlying-staking loss budget, not shared causal event",
+        "result": "PASS"
+      },
+      "max_decision_sleeve_lp_absolute_stress_loss": {
+        "limit": null,
+        "basis": "UNRESOLVED_NO_NEW_PROFILE_DEFAULT",
+        "result": "UNRESOLVED"
+      },
+      "max_portfolio_lp_il_stress": {
+        "limit": "0.1",
+        "result": "LEGACY_COMPATIBILITY_ONLY_NOT_APPLIED_TO_ABSOLUTE_LOSS"
+      },
+      "max_bridge_exposure": {
+        "limit": "0.5",
+        "result": "UNRESOLVED_NO_BRIDGE_EXPOSURE_INPUT; REMOTE_DEPENDENCY_IS_NOT_USER_CAPITAL_BRIDGE"
+      },
+      "max_exit_time_days": {
+        "limit": "90.0",
+        "result": "LEGACY_ONLY; NEW_EXIT_PRIMITIVE_NOT_RANKING_OR_DEADLINE_INPUT"
+      },
+      "overall_risk_clearance": "NOT_ESTABLISHED"
+    }
+  ],
+  "explicit_lp_limit_example": {
+    "profile": "Balanced",
+    "mode": "SYNTHETIC_EVALUATION_ONLY",
+    "optimizer_integration": "LEGACY_OPTIMIZERS_UNCHANGED",
+    "max_strategy_concentration": {
+      "limit": "0.6",
+      "result": "PASS"
+    },
+    "max_slashing_stress_loss": {
+      "limit": "0.05",
+      "meaning": "Weighted independent underlying-staking loss budget, not shared causal event",
+      "result": "PASS"
+    },
+    "max_decision_sleeve_lp_absolute_stress_loss": {
+      "limit": "0.10",
+      "basis": "EXPLICIT_SYNTHETIC_USER_LIMIT",
+      "result": "PASS"
+    },
+    "max_portfolio_lp_il_stress": {
+      "limit": "0.05",
+      "result": "LEGACY_COMPATIBILITY_ONLY_NOT_APPLIED_TO_ABSOLUTE_LOSS"
+    },
+    "max_bridge_exposure": {
+      "limit": "0.25",
+      "result": "UNRESOLVED_NO_BRIDGE_EXPOSURE_INPUT; REMOTE_DEPENDENCY_IS_NOT_USER_CAPITAL_BRIDGE"
+    },
+    "max_exit_time_days": {
+      "limit": "30.0",
+      "result": "LEGACY_ONLY; NEW_EXIT_PRIMITIVE_NOT_RANKING_OR_DEADLINE_INPUT"
+    },
+    "overall_risk_clearance": "NOT_ESTABLISHED"
+  },
+  "public_deployment_performed": false,
+  "public_deployment_required": false,
+  "limitations": [
+    "Independent budget envelope, not a simultaneous Native/Gimo/Ascend slash",
+    "Incomplete dependency risks; overall risk clearance not established",
+    "Legacy optimizer thresholds remain in use; new LP threshold defaults are deliberately unresolved"
+  ]
+}

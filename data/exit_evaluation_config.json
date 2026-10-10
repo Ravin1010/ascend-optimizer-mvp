@@ -1,0 +1,97 @@
+{
+  "version": "EXIT_EVALUATION_V1",
+  "artifact_type": "SYNTHETIC_EVALUATION_CONFIGURATION",
+  "label": "SYNTHETIC_EVALUATION_ONLY",
+  "configurations": [
+    {
+      "config_id": "EXIT_EVALUATION_V1:NATIVE_STAKE_0G",
+      "strategy_id": "NATIVE_STAKE_0G",
+      "version": "EXIT_EVALUATION_V1",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "evidence_class": "MODELLED",
+      "request_processing_days": "0",
+      "waiting_maturity_days": "7",
+      "funding_wait_days": "0",
+      "claim_processing_days": "0.1",
+      "assumptions": [
+        "SYNTHETIC_EVALUATION_ONLY: illustrative deterministic duration, not calibrated/live protocol timing",
+        "Request is assumed possible at the exit decision; no existing queue state is claimed",
+        "Stages are sequential durations, not overlapping cumulative timestamps",
+        "Maturity and claim processing are distinct; funding wait is incremental after maturity",
+        "No deployed/configured route, admission or live liquidity proof"
+      ]
+    },
+    {
+      "config_id": "EXIT_EVALUATION_V1:GIMO_STAKE_0G",
+      "strategy_id": "GIMO_STAKE_0G",
+      "version": "EXIT_EVALUATION_V1",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "evidence_class": "MODELLED",
+      "request_processing_days": "0",
+      "waiting_maturity_days": "10",
+      "funding_wait_days": "0",
+      "claim_processing_days": "0.1",
+      "assumptions": [
+        "SYNTHETIC_EVALUATION_ONLY: illustrative deterministic duration, not calibrated/live protocol timing",
+        "Request is assumed possible at the exit decision; no existing queue state is claimed",
+        "Stages are sequential durations, not overlapping cumulative timestamps",
+        "Maturity and claim processing are distinct; funding wait is incremental after maturity",
+        "No deployed/configured route, admission or live liquidity proof"
+      ]
+    },
+    {
+      "config_id": "EXIT_EVALUATION_V1:JAINE_LP_0G_USDC",
+      "strategy_id": "JAINE_LP_0G_USDC",
+      "version": "EXIT_EVALUATION_V1",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "evidence_class": "MODELLED",
+      "request_processing_days": "0.01",
+      "waiting_maturity_days": "0",
+      "funding_wait_days": "0",
+      "claim_processing_days": "0",
+      "assumptions": [
+        "SYNTHETIC_EVALUATION_ONLY: illustrative deterministic duration, not calibrated/live protocol timing",
+        "Request is assumed possible at the exit decision; no existing queue state is claimed",
+        "Stages are sequential durations, not overlapping cumulative timestamps",
+        "LP protocol waiting is zero, but successful execution and processing latency remain assumptions",
+        "No deployed/configured route, admission or live liquidity proof"
+      ]
+    },
+    {
+      "config_id": "EXIT_EVALUATION_V1:OKU_LP_0G_USDC",
+      "strategy_id": "OKU_LP_0G_USDC",
+      "version": "EXIT_EVALUATION_V1",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "evidence_class": "MODELLED",
+      "request_processing_days": "0.02",
+      "waiting_maturity_days": "0",
+      "funding_wait_days": "0",
+      "claim_processing_days": "0",
+      "assumptions": [
+        "SYNTHETIC_EVALUATION_ONLY: illustrative deterministic duration, not calibrated/live protocol timing",
+        "Request is assumed possible at the exit decision; no existing queue state is claimed",
+        "Stages are sequential durations, not overlapping cumulative timestamps",
+        "LP protocol waiting is zero, but successful execution and processing latency remain assumptions",
+        "No deployed/configured route, admission or live liquidity proof"
+      ]
+    },
+    {
+      "config_id": "EXIT_EVALUATION_V1:ASCEND_STAKE_A0G",
+      "strategy_id": "ASCEND_STAKE_A0G",
+      "version": "EXIT_EVALUATION_V1",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "evidence_class": "MODELLED",
+      "request_processing_days": "0.1",
+      "waiting_maturity_days": "7",
+      "funding_wait_days": "7",
+      "claim_processing_days": "0.1",
+      "assumptions": [
+        "SYNTHETIC_EVALUATION_ONLY: illustrative deterministic duration, not calibrated/live protocol timing",
+        "Request is assumed possible at the exit decision; no existing queue state is claimed",
+        "Stages are sequential durations, not overlapping cumulative timestamps",
+        "Maturity and claim processing are distinct; funding wait is incremental after maturity",
+        "Ascend CLOSED; hypothetical exit analysis only"
+      ]
+    }
+  ]
+}

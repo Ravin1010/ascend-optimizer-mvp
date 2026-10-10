@@ -1,0 +1,105 @@
+{
+  "version": "RISK_SCENARIOS_V1",
+  "artifact_type": "SYNTHETIC_EVALUATION_CONFIGURATION",
+  "label": "SYNTHETIC_EVALUATION_ONLY",
+  "aggregation_rule": "INDEPENDENT_STRESS_BUDGET_ENVELOPE_NOT_JOINT_EVENT",
+  "scenarios": [
+    {
+      "scenario_id": "RISK_SCENARIOS_V1:NATIVE_STAKING_5PCT",
+      "version": "RISK_SCENARIOS_V1",
+      "strategies": [
+        "NATIVE_STAKE_0G"
+      ],
+      "category": "STAKING_LOSS",
+      "model": "EXPOSURE_TIMES_SEVERITY",
+      "severity": "0.05",
+      "evidence_class": "MODELLED",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "meaning": "Severe loss on synthetic delegated/pending staking capital",
+      "exposure_basis": "MODELLED_STRATEGY_ALLOCATION_STAKING_EXPOSURE",
+      "assumptions": [
+        "5% frozen severe staking-loss evaluation benchmark, not probability",
+        "Full allocation treated as exposed; no configured validator selected",
+        "Configured validator concentration and actual pending exposure unresolved"
+      ]
+    },
+    {
+      "scenario_id": "RISK_SCENARIOS_V1:GIMO_UNDERLYING_5PCT",
+      "version": "RISK_SCENARIOS_V1",
+      "strategies": [
+        "GIMO_STAKE_0G"
+      ],
+      "category": "STAKING_LOSS",
+      "model": "EXPOSURE_TIMES_SEVERITY",
+      "severity": "0.05",
+      "evidence_class": "MODELLED",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "meaning": "One underlying staking loss represented by st0G",
+      "exposure_basis": "MODELLED_ST0G_UNDERLYING_STAKING_VALUE",
+      "assumptions": [
+        "Same severity benchmark as Native, distinct causal event",
+        "No second Gimo-specific slash is added",
+        "Gimo protocol risk and validator distribution unresolved; no correlation asserted"
+      ]
+    },
+    {
+      "scenario_id": "RISK_SCENARIOS_V1:LP_WORST_ABSOLUTE",
+      "version": "RISK_SCENARIOS_V1",
+      "strategies": [
+        "JAINE_LP_0G_USDC",
+        "OKU_LP_0G_USDC"
+      ],
+      "category": "LP_POSITION_VALUE",
+      "model": "WORST_ABSOLUTE_LP_SHOCKS_V1",
+      "severity": null,
+      "evidence_class": "MODELLED",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "meaning": "Worst absolute LP loss across the four versioned economic price shocks",
+      "exposure_basis": "LP_EVALUATION_CONFIG_V1_FULL_POSITION_INITIAL_VALUE",
+      "assumptions": [
+        "Uses V3_RANGE_INVENTORY_V1, not generic legacy IL proxy",
+        "IL and HODL market loss are attribution only and are never added",
+        "Each strategy worst case is a stress-budget envelope, not a joint price event",
+        "No fee income, quote impairment, gas or execution loss in LP stress"
+      ]
+    },
+    {
+      "scenario_id": "RISK_SCENARIOS_V1:ASCEND_ECONOMIC_HAIRCUT",
+      "version": "RISK_SCENARIOS_V1",
+      "strategies": [
+        "ASCEND_STAKE_A0G"
+      ],
+      "category": "SOURCECORE_VALUE_LOSS",
+      "model": "EXPOSURE_TIMES_SEVERITY",
+      "severity": "0.05",
+      "evidence_class": "MODELLED",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "meaning": "Illustrative 5% haircut of the single SourceCore/a0G economic value",
+      "exposure_basis": "MODELLED_SOURCECORE_A0G_VALUE_ONCE",
+      "assumptions": [
+        "5% is an illustrative sensitivity benchmark only, not calibrated operator/slash data",
+        "Embedded Mellow/Symbiotic exposure is contained in a0G value, never added again",
+        "Queue, remote dependency, oracle/accounting severities unresolved",
+        "Ascend remains CLOSED; analysis allocation is not a recommendation"
+      ]
+    },
+    {
+      "scenario_id": "RISK_SCENARIOS_V1:ASCEND_DEPENDENCIES_UNRESOLVED",
+      "version": "RISK_SCENARIOS_V1",
+      "strategies": [
+        "ASCEND_STAKE_A0G"
+      ],
+      "category": "DEPENDENCY_LOSS",
+      "model": "EXPOSURE_TIMES_SEVERITY",
+      "severity": null,
+      "evidence_class": "MISSING",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "meaning": "No defensible quantified dependency severity",
+      "exposure_basis": "SOURCECORE_QUEUE_REMOTE_ORACLE_DEPENDENCIES",
+      "assumptions": [
+        "Missing severity is not zero",
+        "Do not infer operator-level risk or open Ascend gate"
+      ]
+    }
+  ]
+}

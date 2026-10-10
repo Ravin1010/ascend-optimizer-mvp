@@ -1,0 +1,522 @@
+{
+  "model_version": "EXIT_LIQUIDITY_V1",
+  "config_version": "EXIT_EVALUATION_V1",
+  "label": "SYNTHETIC_EVALUATION_ONLY",
+  "evidence_class": "MODELLED",
+  "configurations": [
+    {
+      "config_id": "EXIT_EVALUATION_V1:NATIVE_STAKE_0G",
+      "strategy_id": "NATIVE_STAKE_0G",
+      "version": "EXIT_EVALUATION_V1",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "evidence_class": "MODELLED",
+      "request_processing_days": "0",
+      "waiting_maturity_days": "7",
+      "funding_wait_days": "0",
+      "claim_processing_days": "0.1",
+      "assumptions": [
+        "SYNTHETIC_EVALUATION_ONLY: illustrative deterministic duration, not calibrated/live protocol timing",
+        "Request is assumed possible at the exit decision; no existing queue state is claimed",
+        "Stages are sequential durations, not overlapping cumulative timestamps",
+        "Maturity and claim processing are distinct; funding wait is incremental after maturity",
+        "No deployed/configured route, admission or live liquidity proof"
+      ]
+    },
+    {
+      "config_id": "EXIT_EVALUATION_V1:GIMO_STAKE_0G",
+      "strategy_id": "GIMO_STAKE_0G",
+      "version": "EXIT_EVALUATION_V1",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "evidence_class": "MODELLED",
+      "request_processing_days": "0",
+      "waiting_maturity_days": "10",
+      "funding_wait_days": "0",
+      "claim_processing_days": "0.1",
+      "assumptions": [
+        "SYNTHETIC_EVALUATION_ONLY: illustrative deterministic duration, not calibrated/live protocol timing",
+        "Request is assumed possible at the exit decision; no existing queue state is claimed",
+        "Stages are sequential durations, not overlapping cumulative timestamps",
+        "Maturity and claim processing are distinct; funding wait is incremental after maturity",
+        "No deployed/configured route, admission or live liquidity proof"
+      ]
+    },
+    {
+      "config_id": "EXIT_EVALUATION_V1:JAINE_LP_0G_USDC",
+      "strategy_id": "JAINE_LP_0G_USDC",
+      "version": "EXIT_EVALUATION_V1",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "evidence_class": "MODELLED",
+      "request_processing_days": "0.01",
+      "waiting_maturity_days": "0",
+      "funding_wait_days": "0",
+      "claim_processing_days": "0",
+      "assumptions": [
+        "SYNTHETIC_EVALUATION_ONLY: illustrative deterministic duration, not calibrated/live protocol timing",
+        "Request is assumed possible at the exit decision; no existing queue state is claimed",
+        "Stages are sequential durations, not overlapping cumulative timestamps",
+        "LP protocol waiting is zero, but successful execution and processing latency remain assumptions",
+        "No deployed/configured route, admission or live liquidity proof"
+      ]
+    },
+    {
+      "config_id": "EXIT_EVALUATION_V1:OKU_LP_0G_USDC",
+      "strategy_id": "OKU_LP_0G_USDC",
+      "version": "EXIT_EVALUATION_V1",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "evidence_class": "MODELLED",
+      "request_processing_days": "0.02",
+      "waiting_maturity_days": "0",
+      "funding_wait_days": "0",
+      "claim_processing_days": "0",
+      "assumptions": [
+        "SYNTHETIC_EVALUATION_ONLY: illustrative deterministic duration, not calibrated/live protocol timing",
+        "Request is assumed possible at the exit decision; no existing queue state is claimed",
+        "Stages are sequential durations, not overlapping cumulative timestamps",
+        "LP protocol waiting is zero, but successful execution and processing latency remain assumptions",
+        "No deployed/configured route, admission or live liquidity proof"
+      ]
+    },
+    {
+      "config_id": "EXIT_EVALUATION_V1:ASCEND_STAKE_A0G",
+      "strategy_id": "ASCEND_STAKE_A0G",
+      "version": "EXIT_EVALUATION_V1",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "evidence_class": "MODELLED",
+      "request_processing_days": "0.1",
+      "waiting_maturity_days": "7",
+      "funding_wait_days": "7",
+      "claim_processing_days": "0.1",
+      "assumptions": [
+        "SYNTHETIC_EVALUATION_ONLY: illustrative deterministic duration, not calibrated/live protocol timing",
+        "Request is assumed possible at the exit decision; no existing queue state is claimed",
+        "Stages are sequential durations, not overlapping cumulative timestamps",
+        "Maturity and claim processing are distinct; funding wait is incremental after maturity",
+        "Ascend CLOSED; hypothetical exit analysis only"
+      ]
+    }
+  ],
+  "production_source_path_only": [
+    {
+      "strategy_id": "NATIVE_STAKE_0G",
+      "exit_model_version": "EXIT_LIQUIDITY_V1",
+      "exit_type": "ASYNCHRONOUS",
+      "requestable_now_state": "UNRESOLVED",
+      "request_step": "Validator undelegation request",
+      "waiting_step": "Unbonding/maturity",
+      "claim_step": "Validator withdraw processing and adapter claim; native 0G",
+      "waiting_maturity_days": null,
+      "request_processing_days": null,
+      "funding_wait_days": null,
+      "claim_processing_days": null,
+      "time_to_cash_days": null,
+      "maturity_state": "UNRESOLVED",
+      "funding_state": "UNRESOLVED",
+      "claimability_state": "UNRESOLVED",
+      "output_asset": "native 0G",
+      "evidence_class": "STATIC_CONFIG",
+      "timing_evidence_class": "MISSING",
+      "qualification_state": "UNRESOLVED",
+      "holding_horizon_days": null,
+      "config_id": null,
+      "config_fingerprint": null,
+      "provenance": [
+        "contracts/adapters/Native0GStakingAdapter.sol"
+      ],
+      "assumptions": [
+        "Source-fixed adapter flow; no configured/deployed route or current position state",
+        "No authoritative current duration/requestability/funding evidence supplied"
+      ],
+      "reasons": [
+        "Time-to-cash starts at exit decision; holding horizon is separate",
+        "Does not establish quote feasibility, technical admission or public deployment",
+        "UNRESOLVED_TIME_TO_CASH; missing duration is not zero",
+        "Validator binding, maturity state and withdrawal-fee reserve unresolved"
+      ],
+      "mode": "PRODUCTION",
+      "quote_validity": "NOT_ASSESSED_SEPARATE_ITERATION19_BOUNDARY",
+      "execution_readiness": "NOT_ESTABLISHED",
+      "allocation_gate": "NOT_EVALUATED_BY_EXIT_MODEL"
+    },
+    {
+      "strategy_id": "GIMO_STAKE_0G",
+      "exit_model_version": "EXIT_LIQUIDITY_V1",
+      "exit_type": "ASYNCHRONOUS",
+      "requestable_now_state": "UNRESOLVED",
+      "request_step": "st0G unstake/request",
+      "waiting_step": "Pending maturity period",
+      "claim_step": "stakePool.withdraw and serialized adapter claim; native 0G",
+      "waiting_maturity_days": null,
+      "request_processing_days": null,
+      "funding_wait_days": null,
+      "claim_processing_days": null,
+      "time_to_cash_days": null,
+      "maturity_state": "UNRESOLVED",
+      "funding_state": "UNRESOLVED",
+      "claimability_state": "UNRESOLVED",
+      "output_asset": "native 0G",
+      "evidence_class": "STATIC_CONFIG",
+      "timing_evidence_class": "MISSING",
+      "qualification_state": "UNRESOLVED",
+      "holding_horizon_days": null,
+      "config_id": null,
+      "config_fingerprint": null,
+      "provenance": [
+        "contracts/adapters/GimoAdapter.sol"
+      ],
+      "assumptions": [
+        "Source-fixed adapter flow; no configured/deployed route or current position state",
+        "No authoritative current duration/requestability/funding evidence supplied"
+      ],
+      "reasons": [
+        "Time-to-cash starts at exit decision; holding horizon is separate",
+        "Does not establish quote feasibility, technical admission or public deployment",
+        "UNRESOLVED_TIME_TO_CASH; missing duration is not zero",
+        "Adapter serializes one outstanding protocol withdrawal; current busy state unresolved"
+      ],
+      "mode": "PRODUCTION",
+      "quote_validity": "NOT_ASSESSED_SEPARATE_ITERATION19_BOUNDARY",
+      "execution_readiness": "NOT_ESTABLISHED",
+      "allocation_gate": "NOT_EVALUATED_BY_EXIT_MODEL"
+    },
+    {
+      "strategy_id": "JAINE_LP_0G_USDC",
+      "exit_model_version": "EXIT_LIQUIDITY_V1",
+      "exit_type": "SYNCHRONOUS",
+      "requestable_now_state": "UNRESOLVED",
+      "request_step": "Remove LP liquidity and swap residual USDC.e to W0G",
+      "waiting_step": "No protocol waiting period",
+      "claim_step": "Unwrap W0G and transfer native 0G in synchronous unwind",
+      "waiting_maturity_days": "0",
+      "request_processing_days": null,
+      "funding_wait_days": "0",
+      "claim_processing_days": null,
+      "time_to_cash_days": null,
+      "maturity_state": "UNRESOLVED",
+      "funding_state": "UNRESOLVED",
+      "claimability_state": "UNRESOLVED",
+      "output_asset": "native 0G",
+      "evidence_class": "STATIC_CONFIG",
+      "timing_evidence_class": "MISSING",
+      "qualification_state": "PARTIALLY_ASSESSED",
+      "holding_horizon_days": null,
+      "config_id": null,
+      "config_fingerprint": null,
+      "provenance": [
+        "contracts/adapters/JaineLPAdapter.sol"
+      ],
+      "assumptions": [
+        "Source-fixed adapter flow; no configured/deployed route or current position state",
+        "No authoritative current duration/requestability/funding evidence supplied"
+      ],
+      "reasons": [
+        "Time-to-cash starts at exit decision; holding horizon is separate",
+        "Does not establish quote feasibility, technical admission or public deployment",
+        "Synchronous protocol operation is not guaranteed successful execution or instant cash",
+        "UNRESOLVED_TIME_TO_CASH; missing duration is not zero"
+      ],
+      "mode": "PRODUCTION",
+      "quote_validity": "NOT_ASSESSED_SEPARATE_ITERATION19_BOUNDARY",
+      "execution_readiness": "NOT_ESTABLISHED",
+      "allocation_gate": "NOT_EVALUATED_BY_EXIT_MODEL"
+    },
+    {
+      "strategy_id": "OKU_LP_0G_USDC",
+      "exit_model_version": "EXIT_LIQUIDITY_V1",
+      "exit_type": "SYNCHRONOUS",
+      "requestable_now_state": "UNRESOLVED",
+      "request_step": "Remove LP liquidity and Router02 swap residual USDC.e to W0G",
+      "waiting_step": "No protocol waiting period",
+      "claim_step": "Unwrap W0G and transfer native 0G in synchronous unwind",
+      "waiting_maturity_days": "0",
+      "request_processing_days": null,
+      "funding_wait_days": "0",
+      "claim_processing_days": null,
+      "time_to_cash_days": null,
+      "maturity_state": "UNRESOLVED",
+      "funding_state": "UNRESOLVED",
+      "claimability_state": "UNRESOLVED",
+      "output_asset": "native 0G",
+      "evidence_class": "STATIC_CONFIG",
+      "timing_evidence_class": "MISSING",
+      "qualification_state": "PARTIALLY_ASSESSED",
+      "holding_horizon_days": null,
+      "config_id": null,
+      "config_fingerprint": null,
+      "provenance": [
+        "contracts/adapters/V3LiquidityAdapter.sol"
+      ],
+      "assumptions": [
+        "Source-fixed adapter flow; no configured/deployed route or current position state",
+        "No authoritative current duration/requestability/funding evidence supplied"
+      ],
+      "reasons": [
+        "Time-to-cash starts at exit decision; holding horizon is separate",
+        "Does not establish quote feasibility, technical admission or public deployment",
+        "Synchronous protocol operation is not guaranteed successful execution or instant cash",
+        "UNRESOLVED_TIME_TO_CASH; missing duration is not zero"
+      ],
+      "mode": "PRODUCTION",
+      "quote_validity": "NOT_ASSESSED_SEPARATE_ITERATION19_BOUNDARY",
+      "execution_readiness": "NOT_ESTABLISHED",
+      "allocation_gate": "NOT_EVALUATED_BY_EXIT_MODEL"
+    },
+    {
+      "strategy_id": "ASCEND_STAKE_A0G",
+      "exit_model_version": "EXIT_LIQUIDITY_V1",
+      "exit_type": "QUEUE_BASED",
+      "requestable_now_state": "UNRESOLVED",
+      "request_step": "SourceCore requestWithdrawal",
+      "waiting_step": "Epoch/queue maturity then funding",
+      "claim_step": "Claim epoch W0G, unwrap and settle native 0G",
+      "waiting_maturity_days": null,
+      "request_processing_days": null,
+      "funding_wait_days": null,
+      "claim_processing_days": null,
+      "time_to_cash_days": null,
+      "maturity_state": "UNRESOLVED",
+      "funding_state": "UNRESOLVED",
+      "claimability_state": "UNRESOLVED",
+      "output_asset": "native 0G",
+      "evidence_class": "STATIC_CONFIG",
+      "timing_evidence_class": "MISSING",
+      "qualification_state": "UNRESOLVED",
+      "holding_horizon_days": null,
+      "config_id": null,
+      "config_fingerprint": null,
+      "provenance": [
+        "contracts/adapters/AscendProtocolAdapter.sol"
+      ],
+      "assumptions": [
+        "Source-fixed adapter flow; no configured/deployed route or current position state",
+        "No authoritative current duration/requestability/funding evidence supplied"
+      ],
+      "reasons": [
+        "Time-to-cash starts at exit decision; holding horizon is separate",
+        "Does not establish quote feasibility, technical admission or public deployment",
+        "UNRESOLVED_TIME_TO_CASH; missing duration is not zero",
+        "Ascend CLOSED; epoch maturity, funding and claimability are separate, unresolved at runtime"
+      ],
+      "mode": "PRODUCTION",
+      "quote_validity": "NOT_ASSESSED_SEPARATE_ITERATION19_BOUNDARY",
+      "execution_readiness": "NOT_ESTABLISHED",
+      "allocation_gate": "CLOSED"
+    }
+  ],
+  "synthetic_exit_results": [
+    {
+      "strategy_id": "NATIVE_STAKE_0G",
+      "exit_model_version": "EXIT_LIQUIDITY_V1",
+      "exit_type": "ASYNCHRONOUS",
+      "requestable_now_state": "ASSUMED_REQUESTABLE_FOR_EVALUATION",
+      "request_step": "Validator undelegation request",
+      "waiting_step": "Unbonding/maturity",
+      "claim_step": "Validator withdraw processing and adapter claim; native 0G",
+      "waiting_maturity_days": "7",
+      "request_processing_days": "0",
+      "funding_wait_days": "0",
+      "claim_processing_days": "0.1",
+      "time_to_cash_days": "7.1",
+      "maturity_state": "ASSUMED_MATURE_AFTER_WAIT",
+      "funding_state": "ASSUMED_FUNDED_AFTER_WAIT",
+      "claimability_state": "CONDITIONAL_ON_REQUEST_MATURITY_FUNDING_AND_EXECUTION",
+      "output_asset": "native 0G",
+      "evidence_class": "MODELLED",
+      "timing_evidence_class": "MODELLED",
+      "qualification_state": "ASSESSED_MODELLED",
+      "holding_horizon_days": "90",
+      "config_id": "EXIT_EVALUATION_V1:NATIVE_STAKE_0G",
+      "config_fingerprint": "aa5f4be00e684c5faa4c5a57f2873be50cb6de07993bb5637b71f82ceedb575b",
+      "provenance": [
+        "contracts/adapters/Native0GStakingAdapter.sol"
+      ],
+      "assumptions": [
+        "SYNTHETIC_EVALUATION_ONLY: illustrative deterministic duration, not calibrated/live protocol timing",
+        "Request is assumed possible at the exit decision; no existing queue state is claimed",
+        "Stages are sequential durations, not overlapping cumulative timestamps",
+        "Maturity and claim processing are distinct; funding wait is incremental after maturity",
+        "No deployed/configured route, admission or live liquidity proof"
+      ],
+      "reasons": [
+        "Time-to-cash starts at exit decision; holding horizon is separate",
+        "Does not establish quote feasibility, technical admission or public deployment",
+        "Validator binding, maturity state and withdrawal-fee reserve unresolved"
+      ],
+      "mode": "SYNTHETIC_EVALUATION_ONLY",
+      "quote_validity": "NOT_ASSESSED_SEPARATE_ITERATION19_BOUNDARY",
+      "execution_readiness": "NOT_ESTABLISHED",
+      "allocation_gate": "NOT_EVALUATED_BY_EXIT_MODEL"
+    },
+    {
+      "strategy_id": "GIMO_STAKE_0G",
+      "exit_model_version": "EXIT_LIQUIDITY_V1",
+      "exit_type": "ASYNCHRONOUS",
+      "requestable_now_state": "ASSUMED_REQUESTABLE_FOR_EVALUATION",
+      "request_step": "st0G unstake/request",
+      "waiting_step": "Pending maturity period",
+      "claim_step": "stakePool.withdraw and serialized adapter claim; native 0G",
+      "waiting_maturity_days": "10",
+      "request_processing_days": "0",
+      "funding_wait_days": "0",
+      "claim_processing_days": "0.1",
+      "time_to_cash_days": "10.1",
+      "maturity_state": "ASSUMED_MATURE_AFTER_WAIT",
+      "funding_state": "ASSUMED_FUNDED_AFTER_WAIT",
+      "claimability_state": "CONDITIONAL_ON_REQUEST_MATURITY_FUNDING_AND_EXECUTION",
+      "output_asset": "native 0G",
+      "evidence_class": "MODELLED",
+      "timing_evidence_class": "MODELLED",
+      "qualification_state": "ASSESSED_MODELLED",
+      "holding_horizon_days": "90",
+      "config_id": "EXIT_EVALUATION_V1:GIMO_STAKE_0G",
+      "config_fingerprint": "81319808634bb441b2b119a87e6cc5c1bd58825cb16735ef9b7c1ab6e963646e",
+      "provenance": [
+        "contracts/adapters/GimoAdapter.sol"
+      ],
+      "assumptions": [
+        "SYNTHETIC_EVALUATION_ONLY: illustrative deterministic duration, not calibrated/live protocol timing",
+        "Request is assumed possible at the exit decision; no existing queue state is claimed",
+        "Stages are sequential durations, not overlapping cumulative timestamps",
+        "Maturity and claim processing are distinct; funding wait is incremental after maturity",
+        "No deployed/configured route, admission or live liquidity proof"
+      ],
+      "reasons": [
+        "Time-to-cash starts at exit decision; holding horizon is separate",
+        "Does not establish quote feasibility, technical admission or public deployment",
+        "Adapter serializes one outstanding protocol withdrawal; current busy state unresolved"
+      ],
+      "mode": "SYNTHETIC_EVALUATION_ONLY",
+      "quote_validity": "NOT_ASSESSED_SEPARATE_ITERATION19_BOUNDARY",
+      "execution_readiness": "NOT_ESTABLISHED",
+      "allocation_gate": "NOT_EVALUATED_BY_EXIT_MODEL"
+    },
+    {
+      "strategy_id": "JAINE_LP_0G_USDC",
+      "exit_model_version": "EXIT_LIQUIDITY_V1",
+      "exit_type": "SYNCHRONOUS",
+      "requestable_now_state": "ASSUMED_REQUESTABLE_FOR_EVALUATION",
+      "request_step": "Remove LP liquidity and swap residual USDC.e to W0G",
+      "waiting_step": "No protocol waiting period",
+      "claim_step": "Unwrap W0G and transfer native 0G in synchronous unwind",
+      "waiting_maturity_days": "0",
+      "request_processing_days": "0.01",
+      "funding_wait_days": "0",
+      "claim_processing_days": "0",
+      "time_to_cash_days": "0.01",
+      "maturity_state": "ASSUMED_MATURE_AFTER_WAIT",
+      "funding_state": "ASSUMED_FUNDED_AFTER_WAIT",
+      "claimability_state": "CONDITIONAL_ON_REQUEST_MATURITY_FUNDING_AND_EXECUTION",
+      "output_asset": "native 0G",
+      "evidence_class": "MODELLED",
+      "timing_evidence_class": "MODELLED",
+      "qualification_state": "ASSESSED_MODELLED",
+      "holding_horizon_days": "90",
+      "config_id": "EXIT_EVALUATION_V1:JAINE_LP_0G_USDC",
+      "config_fingerprint": "7c609f0c89a02a3ef95e461f4f2ea3ebaaea4d82e4672fd1080ed5c90d22d7d4",
+      "provenance": [
+        "contracts/adapters/JaineLPAdapter.sol"
+      ],
+      "assumptions": [
+        "SYNTHETIC_EVALUATION_ONLY: illustrative deterministic duration, not calibrated/live protocol timing",
+        "Request is assumed possible at the exit decision; no existing queue state is claimed",
+        "Stages are sequential durations, not overlapping cumulative timestamps",
+        "LP protocol waiting is zero, but successful execution and processing latency remain assumptions",
+        "No deployed/configured route, admission or live liquidity proof"
+      ],
+      "reasons": [
+        "Time-to-cash starts at exit decision; holding horizon is separate",
+        "Does not establish quote feasibility, technical admission or public deployment"
+      ],
+      "mode": "SYNTHETIC_EVALUATION_ONLY",
+      "quote_validity": "NOT_ASSESSED_SEPARATE_ITERATION19_BOUNDARY",
+      "execution_readiness": "NOT_ESTABLISHED",
+      "allocation_gate": "NOT_EVALUATED_BY_EXIT_MODEL"
+    },
+    {
+      "strategy_id": "OKU_LP_0G_USDC",
+      "exit_model_version": "EXIT_LIQUIDITY_V1",
+      "exit_type": "SYNCHRONOUS",
+      "requestable_now_state": "ASSUMED_REQUESTABLE_FOR_EVALUATION",
+      "request_step": "Remove LP liquidity and Router02 swap residual USDC.e to W0G",
+      "waiting_step": "No protocol waiting period",
+      "claim_step": "Unwrap W0G and transfer native 0G in synchronous unwind",
+      "waiting_maturity_days": "0",
+      "request_processing_days": "0.02",
+      "funding_wait_days": "0",
+      "claim_processing_days": "0",
+      "time_to_cash_days": "0.02",
+      "maturity_state": "ASSUMED_MATURE_AFTER_WAIT",
+      "funding_state": "ASSUMED_FUNDED_AFTER_WAIT",
+      "claimability_state": "CONDITIONAL_ON_REQUEST_MATURITY_FUNDING_AND_EXECUTION",
+      "output_asset": "native 0G",
+      "evidence_class": "MODELLED",
+      "timing_evidence_class": "MODELLED",
+      "qualification_state": "ASSESSED_MODELLED",
+      "holding_horizon_days": "90",
+      "config_id": "EXIT_EVALUATION_V1:OKU_LP_0G_USDC",
+      "config_fingerprint": "52d13c3b518dc070fe43c8fab3e7564b7958c679684b49ba9d716e5ea4b0603b",
+      "provenance": [
+        "contracts/adapters/V3LiquidityAdapter.sol"
+      ],
+      "assumptions": [
+        "SYNTHETIC_EVALUATION_ONLY: illustrative deterministic duration, not calibrated/live protocol timing",
+        "Request is assumed possible at the exit decision; no existing queue state is claimed",
+        "Stages are sequential durations, not overlapping cumulative timestamps",
+        "LP protocol waiting is zero, but successful execution and processing latency remain assumptions",
+        "No deployed/configured route, admission or live liquidity proof"
+      ],
+      "reasons": [
+        "Time-to-cash starts at exit decision; holding horizon is separate",
+        "Does not establish quote feasibility, technical admission or public deployment"
+      ],
+      "mode": "SYNTHETIC_EVALUATION_ONLY",
+      "quote_validity": "NOT_ASSESSED_SEPARATE_ITERATION19_BOUNDARY",
+      "execution_readiness": "NOT_ESTABLISHED",
+      "allocation_gate": "NOT_EVALUATED_BY_EXIT_MODEL"
+    },
+    {
+      "strategy_id": "ASCEND_STAKE_A0G",
+      "exit_model_version": "EXIT_LIQUIDITY_V1",
+      "exit_type": "QUEUE_BASED",
+      "requestable_now_state": "ASSUMED_REQUESTABLE_FOR_EVALUATION",
+      "request_step": "SourceCore requestWithdrawal",
+      "waiting_step": "Epoch/queue maturity then funding",
+      "claim_step": "Claim epoch W0G, unwrap and settle native 0G",
+      "waiting_maturity_days": "7",
+      "request_processing_days": "0.1",
+      "funding_wait_days": "7",
+      "claim_processing_days": "0.1",
+      "time_to_cash_days": "14.2",
+      "maturity_state": "ASSUMED_MATURE_AFTER_WAIT",
+      "funding_state": "ASSUMED_FUNDED_AFTER_WAIT",
+      "claimability_state": "CONDITIONAL_ON_REQUEST_MATURITY_FUNDING_AND_EXECUTION",
+      "output_asset": "native 0G",
+      "evidence_class": "MODELLED",
+      "timing_evidence_class": "MODELLED",
+      "qualification_state": "ASSESSED_MODELLED",
+      "holding_horizon_days": "90",
+      "config_id": "EXIT_EVALUATION_V1:ASCEND_STAKE_A0G",
+      "config_fingerprint": "5e8e2993be131a5158c00cc220eff1f2545dbdb8dab13d83c8612b01b4b366ad",
+      "provenance": [
+        "contracts/adapters/AscendProtocolAdapter.sol"
+      ],
+      "assumptions": [
+        "SYNTHETIC_EVALUATION_ONLY: illustrative deterministic duration, not calibrated/live protocol timing",
+        "Request is assumed possible at the exit decision; no existing queue state is claimed",
+        "Stages are sequential durations, not overlapping cumulative timestamps",
+        "Maturity and claim processing are distinct; funding wait is incremental after maturity",
+        "Ascend CLOSED; hypothetical exit analysis only"
+      ],
+      "reasons": [
+        "Time-to-cash starts at exit decision; holding horizon is separate",
+        "Does not establish quote feasibility, technical admission or public deployment",
+        "Ascend CLOSED; epoch maturity, funding and claimability are separate, unresolved at runtime"
+      ],
+      "mode": "SYNTHETIC_EVALUATION_ONLY",
+      "quote_validity": "NOT_ASSESSED_SEPARATE_ITERATION19_BOUNDARY",
+      "execution_readiness": "NOT_ESTABLISHED",
+      "allocation_gate": "CLOSED"
+    }
+  ],
+  "cash_deadline_optimization_implemented": false,
+  "public_deployment_performed": false
+}
