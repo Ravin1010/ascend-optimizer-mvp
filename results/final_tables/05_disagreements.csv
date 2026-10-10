@@ -1,0 +1,11 @@
+Measure,Value
+Comparable scenarios,49
+Allocation disagreements,27
+Same allocation,22
+Mean common-rescore delta USD,43.395279634804
+Median common-rescore delta USD,0
+POSITIVE profit deltas,19
+NEGATIVE profit deltas,7
+ZERO profit deltas,23
+MULTIPLE,26
+OBJECTIVE_DIFFERENCE,1

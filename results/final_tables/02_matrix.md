@@ -1,0 +1,17 @@
+# Deterministic synthetic evaluation matrix
+
+SYNTHETIC_EVALUATION_ONLY
+
+| Measure | Count |
+| --- | --- |
+| Total scenarios | 49 |
+| Core scenarios | 27 |
+| Core rows | 108 |
+| Targeted scenarios | 22 |
+| Normalized rows | 196 |
+| Highest Yield rows | 49 |
+| Equal Weight rows | 49 |
+| Legacy Linear rows | 49 |
+| Policy-Aware Amount rows | 49 |
+
+SYNTHETIC_EVALUATION_ONLY

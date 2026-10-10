@@ -1,0 +1,28 @@
+{
+  "allocation_disagreements": 27,
+  "controlled_pairs": [
+    [
+      "FIXED_100",
+      "FIXED_ZERO_CONTROL"
+    ],
+    [
+      "QUOTE_CURVE",
+      "QUOTE_CONSTANT_CONTROL"
+    ]
+  ],
+  "deployment": "NOT_REQUIRED_NOT_PLANNED_NOT_PERFORMED",
+  "label": "SYNTHETIC_EVALUATION_ONLY",
+  "mean_profit_delta_usd": "43.395279634804",
+  "median_profit_delta_usd": "0",
+  "ordinary_contributors": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+  "profit_basis": "COMMON_POST_SELECTION_EXACT_ALLOCATION_RESCORE",
+  "profit_delta_sign_counts": {
+    "NEGATIVE": 7,
+    "POSITIVE": 19,
+    "ZERO": 23
+  },
+  "scenario_count": 49,
+  "scope": "DECISION_SLEEVE",
+  "version": "CAPSTONE_FINDINGS_V1",
+  "whole_portfolio_compliance": "NOT_ASSESSED"
+}

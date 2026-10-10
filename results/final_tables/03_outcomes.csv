@@ -1,0 +1,5 @@
+Method,Recommendation rows,Idle rows,Recommendation rate
+Highest Yield,45,4,91.8%
+Equal Weight,45,4,91.8%
+Legacy Linear,35,14,71.4%
+Policy-Aware Amount,36,13,73.5%

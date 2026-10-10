@@ -1,0 +1,5 @@
+scenario_id,method,NATIVE_STAKE_0G,GIMO_STAKE_0G,JAINE_LP_0G_USDC,OKU_LP_0G_USDC,ASCEND_STAKE_A0G,idle
+FIXED_100,Policy-Aware Amount,0,0,0,0,0,1
+FIXED_ZERO_CONTROL,Policy-Aware Amount,0.6,0,0,0,0,0.4
+FIXED_1000,Policy-Aware Amount,0.6,0,0,0,0,0.4
+FIXED_10000,Policy-Aware Amount,0.6,0,0,0,0,0.4

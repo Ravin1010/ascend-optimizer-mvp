@@ -1,0 +1,3 @@
+# Optional Iteration 24 figure renderer; no optimizer/runtime dependency changes.
+-r requirements.txt
+matplotlib==3.10.8
