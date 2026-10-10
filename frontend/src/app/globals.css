@@ -1050,3 +1050,23 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+/* Decision-sleeve interface; current-request diagnostics only. */
+.dashboardLayout { display:grid; grid-template-columns: minmax(240px, 300px) minmax(0,1fr); gap:24px; align-items:start; margin-top:24px; }
+.scopeBanner {margin-top:24px;}
+.inputPanel {display:flex;flex-direction:column;gap:18px;position:sticky;top:16px;}
+.inputPanel label {display:flex; flex-direction:column;gap:8px;}
+.inputPanel input,.inputPanel select {width:100%;background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:12px;}
+.results {min-width:0;display:flex;flex-direction:column;gap:20px;}
+.results .panel {min-width:0;overflow-wrap:anywhere;}
+.notice {border-left:3px solid var(--accent);}
+.strategyEntry summary {padding:18px;cursor:pointer;overflow-wrap:anywhere;}
+.strategyDetails {overflow-wrap:anywhere;}
+.detailGrid {margin:16px 0;}
+.detailGrid dd {margin:8px 0;font-weight:600;}
+.detailGrid dt {color:var(--muted);}
+.diagnosticReasons {padding-left:20px;overflow-wrap:anywhere;}
+.provenance {white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;max-height:320px;overflow:auto;}
+@media(max-width:760px) {.dashboardLayout{grid-template-columns:minmax(0,1fr);} .inputPanel{position:static;} .topbar{display:flex;flex-wrap:wrap;} .allocationRow{flex-wrap:wrap;gap:8px;} .detailGrid,.constraintGrid{grid-template-columns:minmax(0,1fr);} .shell{width:calc(100% - 24px);}}
+.results .detailGrid,.results .constraintGrid {grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
+@media(max-width:760px) {.results .detailGrid,.results .constraintGrid{grid-template-columns:minmax(0,1fr);}}

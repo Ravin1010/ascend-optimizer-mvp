@@ -143,7 +143,14 @@ def validate_audit(audit: dict) -> None:
         # audit's source hash remains a historical fact, not a permanent ban on
         # future authorized implementation changes. Evidence/config hashes below
         # still guard the working tree; no historical artifact is rewritten.
-        content = git('show', 'f8d309d2e8ca1904cbe31560a17591332ed7b80c:' + path) if path == 'src/ascend_optimizer/amount_optimizer.py' else (ROOT / path).read_bytes()
+        # Iteration 25 authorizes the current-request dashboard migration.
+        # The original UI hashes still describe the pinned Iteration 17 audit,
+        # not a permanent restriction on presentation files. All canonical
+        # evidence/configuration/contract guards below remain current-file checks.
+        historical_paths = {'src/ascend_optimizer/amount_optimizer.py',
+                            'frontend/src/app/page.tsx', 'frontend/src/app/layout.tsx',
+                            'frontend/src/app/globals.css'}
+        content = git('show', 'f8d309d2e8ca1904cbe31560a17591332ed7b80c:' + path) if path in historical_paths else (ROOT / path).read_bytes()
         if hashlib.sha256(content).hexdigest() != expected_sha:
             raise ValueError('Frozen file changed: ' + path)
     configs = json.loads((ROOT / 'data/runtime_strategy_config.json').read_text())

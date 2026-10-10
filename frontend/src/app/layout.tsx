@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Ascend Optimizer",
-  description: "Live 0G strategy and yield optimizer",
+  description: "Decision-sleeve optimizer prototype with explicit evidence qualification",
 };
 
 export default function RootLayout({

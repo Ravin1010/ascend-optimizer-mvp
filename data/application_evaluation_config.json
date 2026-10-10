@@ -1,0 +1,43 @@
+{
+  "version": "APPLICATION_EVALUATION_V1",
+  "label": "SYNTHETIC_EVALUATION_ONLY",
+  "package": {
+    "version": "SYNTHETIC_ECONOMIC_PACKAGE_V1",
+    "price_usd": "1",
+    "returns": {
+      "NATIVE_STAKE_0G": "0.12",
+      "GIMO_STAKE_0G": "0.14",
+      "JAINE_LP_0G_USDC": "0.24",
+      "OKU_LP_0G_USDC": "0.20",
+      "ASCEND_STAKE_A0G": "0.50"
+    },
+    "fixed_costs": {
+      "NATIVE_STAKE_0G": "2",
+      "GIMO_STAKE_0G": "3",
+      "JAINE_LP_0G_USDC": "5",
+      "OKU_LP_0G_USDC": "4",
+      "ASCEND_STAKE_A0G": "3"
+    },
+    "fee_basis": "NET_OF_PROTOCOL_FEES",
+    "quote_base": "0.0005",
+    "quote_slope": "0.002",
+    "quote_reference_amount_0g": "1000",
+    "quote_rule": "PER_DIRECTION_BASE_PLUS_SLOPE_TIMES_EXACT_AMOUNT_OVER_REFERENCE",
+    "admission": "MODELLED_POINT_SUPPORTED_UNLESS_EXPLICITLY_REJECTED",
+    "risk_scenarios": "data/risk_scenarios.json",
+    "lp_configs": "data/lp_evaluation_config.json",
+    "exit_configs": "data/exit_evaluation_config.json",
+    "policy": "data/evaluation_policy.json",
+    "legacy_lp_proxy": "0.06358893302521518",
+    "as_of": "2026-10-09T14:30:00+00:00",
+    "as_of_basis": "FIXED_REPLAY_CLOCK_NOT_OBSERVATION",
+    "assumptions": [
+      "Arbitrary transparent modelled APYs and USD lifecycle costs; not market estimates",
+      "Per-direction quote curve evaluated at exact amount, not interpolated observed quotes",
+      "All other required costs explicitly structural zero for this synthetic experiment only",
+      "Protocol fees already embedded; no financial incentives or extra yield streams",
+      "Iterations 20-22 risk/exit/config inputs reused unchanged"
+    ]
+  },
+  "purpose": "Current-request modelled demo assumptions only; no benchmark scenarios or report artifacts loaded"
+}
