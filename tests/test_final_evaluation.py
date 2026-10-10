@@ -257,3 +257,84 @@ def test_common_rescore_matches_selected_profit_and_fixed_cost_once(benchmark):
         if q['method_id']==METHODS[3]:
             assert float(q['method_reported_profit'])==pytest.approx(float(q['expected_net_profit']),abs=1e-8)
             assert float(q['fixed_cost'])==pytest.approx(sum(float(x['fixed_cost_usd']) for x in q['common_economic_points']))
+
+
+@pytest.mark.parametrize('value,expected',[
+    ('1320.000000000001','1320'),('1315.000000000001','1315'),('506.999999999999','507'),
+    ('0.19999999999999996','0.2'),('43.395279634804','43.395279634804'),
+    ('0.120632485555','0.120632485555'),('0.213699654621','0.213699654621'),('-506.999999999999','-507'),
+    ('-1320.000000000001','-1320'),('0','0'),('-0.000000000001','0'),
+    ('1.234500000001','1.2345'),('12345.678901234567','12345.678901234567')])
+def test_presentation_precision(value,expected):
+    result=f.fmt(Decimal(value))
+    assert result==expected and 'e' not in result.lower()
+    assert f.fmt(Decimal(result))==result
+
+
+@pytest.mark.parametrize('value',['NaN','Infinity','-Infinity'])
+def test_presentation_precision_nonfinite_rejected(value):
+    with pytest.raises(ValueError):f.fmt(Decimal(value))
+
+
+def presentation_dust(value):
+    """General numeric invariant for the <=12-place display domain.
+
+    Full-precision source/config/model strings intentionally remain untouched.
+    No list of particular offending values is used by the invariant.
+    """
+    from decimal import InvalidOperation, localcontext
+    if not isinstance(value,str):return False
+    try:d=Decimal(value)
+    except InvalidOperation:return False
+    if not d.is_finite():raise AssertionError('nonfinite numeric artifact')
+    if d.as_tuple().exponent < -12:return False
+    with localcontext() as ctx:
+        ctx.prec=60
+        return any(0<abs(d-d.quantize(Decimal(1).scaleb(-n)))<=f.DISPLAY_SNAP_TOLERANCE for n in range(9))
+
+
+def numeric_leaves(value):
+    if isinstance(value,dict):
+        for v in value.values():yield from numeric_leaves(v)
+    elif isinstance(value,list):
+        for v in value:yield from numeric_leaves(v)
+    else:yield value
+
+
+def test_presentation_precision_all_artifacts_general_audit(benchmark):
+    import csv,io
+    for artifact in benchmark:
+        assert not any(presentation_dust(v) for v in numeric_leaves(artifact))
+    rows=list(csv.DictReader(io.StringIO(f.csv_bytes(benchmark[0]['rows']).decode())))
+    assert not any(presentation_dust(v) for v in numeric_leaves(rows))
+    for filename in ['final_evaluation_iteration23.json','final_evaluation_iteration23.csv','final_evaluation_iteration23_summary.json']:
+        text=(ROOT/'results'/filename).read_text()
+        for known in ['1320.000000000001','1315.000000000001','506.999999999999','0.19999999999999996']:
+            assert known not in text
+
+
+def test_presentation_correction_substantive_invariance(benchmark):
+    accepted='8e214fa0d5437da22696267dcb1bc929ef1dd4a9'
+    def previous(path):return json.loads(subprocess.check_output(['git','show',accepted+':'+path],cwd=ROOT))
+    old=previous('results/final_evaluation_iteration23.json');new=benchmark[0]
+    assert old['synthetic_config']==new['synthetic_config']
+    assert old['production_baseline']==new['production_baseline']
+    assert old['dependency_fingerprints']==new['dependency_fingerprints']
+    keys=['scenario_id','method_id','allocation_weights','idle_weight','binding_constraints','recommendation_state',
+          'profit_comparability','feasibility_state','final_policy_feasibility','supported_feature_flags','rejection_reasons']
+    for a,b in zip(old['rows'],new['rows'],strict=True):
+        assert {k:a[k] for k in keys}=={k:b[k] for k in keys}
+        assert b['allocation_weights'][r.ASCEND]=='0'
+        assert sum(Decimal(w) for w in b['allocation_weights'].values())+Decimal(b['idle_weight'])==1
+    old_summary=previous('results/final_evaluation_iteration23_summary.json')
+    summary=benchmark[1]
+    for key,value in old_summary.items():
+        if key not in ('disagreements','mean_comparable_profit_delta','median_comparable_profit_delta'):
+            assert summary[key]==value
+    for a,b in zip(old_summary['disagreements'],summary['disagreements'],strict=True):
+        assert {k:v for k,v in a.items() if k!='common_profit_delta'}=={k:v for k,v in b.items() if k!='common_profit_delta'}
+    frozen=['runtime_strategy_config.json','admission_evidence.csv','strategy_return_evidence.json',
+        'lp_quote_evidence.json','lifecycle_cost_evidence.json','lp_evaluation_config.json','evaluation_policy.json',
+        'risk_scenarios.json','exit_evaluation_config.json','strategies.csv','final_evaluation_config.json']
+    for name in frozen:
+        assert (ROOT/'data'/name).read_bytes()==subprocess.check_output(['git','show',accepted+':data/'+name],cwd=ROOT)

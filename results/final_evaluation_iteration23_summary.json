@@ -209,7 +209,7 @@
     },
     {
       "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
-      "common_profit_delta": "506.999999999999",
+      "common_profit_delta": "507",
       "diagnostic_contributors": [
         "FIXED_COST",
         "AMOUNT_SPECIFIC_QUOTE"

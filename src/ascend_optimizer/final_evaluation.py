@@ -30,8 +30,15 @@ TARGET_IDS = {*(f'DEADLINE_{regime}_{d}' for regime in ('STAKING','LP') for d in
     'NEGATIVE','MISSING_RETURN','MISSING_COST','QUOTE_MISMATCH','ADMISSION_FAILURE','ASCEND_ATTRACTIVE','TIE'}
 
 
+DISPLAY_QUANTUM = Decimal('0.000000000001')
+DISPLAY_SNAP_TOLERANCE = DISPLAY_QUANTUM
+
+
 def fmt(value):
-    """Presentation boundary only: 12 decimal places, no legacy float dust."""
+    """12-place half-even display; snap within one display unit to the
+    coarsest decimal grid (integer through 8 places). Exact input strings pass
+    through: model/config identities and precision are not presentation floats.
+    """
     if value is None or isinstance(value, (str, bool)):
         return value
     d = Decimal(str(value))
@@ -39,8 +46,13 @@ def fmt(value):
         raise ValueError('nonfinite benchmark output')
     with localcontext() as ctx:
         ctx.prec = 60
-        d = d.quantize(Decimal('0.000000000001'), rounding=ROUND_HALF_EVEN)
-    return format(d.normalize(), 'f') if d else '0'
+        d = d.quantize(DISPLAY_QUANTUM, rounding=ROUND_HALF_EVEN)
+        for places in range(9):
+            simpler = d.quantize(Decimal(1).scaleb(-places), rounding=ROUND_HALF_EVEN)
+            if abs(d - simpler) <= DISPLAY_SNAP_TOLERANCE:
+                d = simpler
+                break
+        return format(d.normalize(), 'f') if d else '0'
 
 
 def presentation(value):

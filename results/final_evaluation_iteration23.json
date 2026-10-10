@@ -16484,7 +16484,7 @@
         {
           "amount_0g": "6000.0",
           "fixed_cost_usd": "3",
-          "net_profit_usd": "837.000000000001",
+          "net_profit_usd": "837",
           "quote_ids": [],
           "quote_loss_usd": "0",
           "return_evidence_ids": [
@@ -16592,8 +16592,8 @@
       "evaluation_version": "FINAL_EVALUATION_V1",
       "evidence_mode": "SYNTHETIC_EVALUATION_ONLY",
       "execution_readiness": "NOT_ESTABLISHED",
-      "expected_gross_return": "1320.000000000001",
-      "expected_net_profit": "1315.000000000001",
+      "expected_gross_return": "1320",
+      "expected_net_profit": "1315",
       "expected_net_return": "0.1315",
       "feasibility_state": "PASS_METHOD_SUPPORTED_CONSTRAINTS",
       "final_policy_enforced": false,
@@ -16607,7 +16607,7 @@
       "method_id": "LEGACY_LINEAR_OPTIMIZER",
       "method_lifecycle_cost": "NOT_SUPPORTED_EXACT_ALLOCATION",
       "method_lp_quote_loss": "NOT_SUPPORTED_EXACT_ALLOCATION",
-      "method_reported_profit": "1317.400000000001",
+      "method_reported_profit": "1317.4",
       "net_apy": "0.1315",
       "posthoc_deadline_compatibility": "NOT_REQUESTED",
       "posthoc_policy_constraints": {
