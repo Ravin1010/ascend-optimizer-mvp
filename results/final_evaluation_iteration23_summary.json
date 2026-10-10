@@ -1,0 +1,411 @@
+{
+  "amount_abstains_other_allocates": 9,
+  "amount_candidate_exclusion_or_selected_binding_scenario_counts": {
+    "cash_deadline": 4,
+    "concentration": 31,
+    "lp_absolute_stress": 34,
+    "staking_stress": 13
+  },
+  "amount_gate_or_admission_evidence_block_counts": {
+    "admission_or_evidence": 12,
+    "gate": 49
+  },
+  "amount_invests_other_idles": 4,
+  "amount_vs_legacy_allocation_difference_count": 27,
+  "amount_vs_legacy_profit_comparison_count": 49,
+  "core_rows": 108,
+  "core_scenarios": 27,
+  "deadline_driven_strategy_exclusions": {
+    "GIMO_STAKE_0G": 4,
+    "NATIVE_STAKE_0G": 2
+  },
+  "difference_driver_counts": {
+    "MULTIPLE": 26,
+    "OBJECTIVE_DIFFERENCE": 1
+  },
+  "disagreements": [
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "2.589187588921",
+      "diagnostic_contributors": [
+        "FIXED_COST",
+        "AMOUNT_SPECIFIC_QUOTE",
+        "GRID_DISCRETIZATION"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "CORE_CONSERVATIVE_100_90"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "4.240525614859",
+      "diagnostic_contributors": [
+        "LP_ABSOLUTE_STRESS",
+        "FIXED_COST",
+        "AMOUNT_SPECIFIC_QUOTE",
+        "GRID_DISCRETIZATION"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "CORE_CONSERVATIVE_100_365"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "2.842475912953",
+      "diagnostic_contributors": [
+        "LP_ABSOLUTE_STRESS",
+        "FIXED_COST",
+        "AMOUNT_SPECIFIC_QUOTE",
+        "GRID_DISCRETIZATION"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "CORE_CONSERVATIVE_1000_30"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "12.064443247262",
+      "diagnostic_contributors": [
+        "LP_ABSOLUTE_STRESS",
+        "FIXED_COST",
+        "AMOUNT_SPECIFIC_QUOTE",
+        "GRID_DISCRETIZATION"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "CORE_CONSERVATIVE_1000_90"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "58.185378650885",
+      "diagnostic_contributors": [
+        "LP_ABSOLUTE_STRESS",
+        "FIXED_COST",
+        "AMOUNT_SPECIFIC_QUOTE",
+        "GRID_DISCRETIZATION"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "CORE_CONSERVATIVE_1000_365"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "59.08397956956",
+      "diagnostic_contributors": [
+        "FIXED_COST",
+        "AMOUNT_SPECIFIC_QUOTE"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "CORE_CONSERVATIVE_10000_30"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "251.271611000922",
+      "diagnostic_contributors": [
+        "FIXED_COST",
+        "AMOUNT_SPECIFIC_QUOTE"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "CORE_CONSERVATIVE_10000_90"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "1205",
+      "diagnostic_contributors": [
+        "FIXED_COST",
+        "AMOUNT_SPECIFIC_QUOTE"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "CORE_CONSERVATIVE_10000_365"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "2.506837142444",
+      "diagnostic_contributors": [
+        "FIXED_COST",
+        "AMOUNT_SPECIFIC_QUOTE"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "CORE_BALANCED_100_90"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "3.102216275011",
+      "diagnostic_contributors": [
+        "LP_ABSOLUTE_STRESS",
+        "FIXED_COST",
+        "AMOUNT_SPECIFIC_QUOTE",
+        "GRID_DISCRETIZATION"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "CORE_BALANCED_100_365"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "0.412223086959",
+      "diagnostic_contributors": [
+        "FIXED_COST",
+        "AMOUNT_SPECIFIC_QUOTE"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "CORE_BALANCED_1000_30"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "1.87604282795",
+      "diagnostic_contributors": [
+        "LP_ABSOLUTE_STRESS",
+        "FIXED_COST",
+        "AMOUNT_SPECIFIC_QUOTE",
+        "GRID_DISCRETIZATION"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "CORE_BALANCED_1000_90"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "-6.852889102608",
+      "diagnostic_contributors": [
+        "LP_ABSOLUTE_STRESS",
+        "FIXED_COST",
+        "AMOUNT_SPECIFIC_QUOTE",
+        "GRID_DISCRETIZATION"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "CORE_BALANCED_1000_365"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "45.194270404695",
+      "diagnostic_contributors": [
+        "FIXED_COST",
+        "AMOUNT_SPECIFIC_QUOTE"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "CORE_BALANCED_10000_90"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "506.999999999999",
+      "diagnostic_contributors": [
+        "FIXED_COST",
+        "AMOUNT_SPECIFIC_QUOTE"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "CORE_BALANCED_10000_365"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "3.101963279704",
+      "diagnostic_contributors": [
+        "FIXED_COST",
+        "AMOUNT_SPECIFIC_QUOTE"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "CORE_AGGRESSIVE_100_90"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "0.4216",
+      "diagnostic_contributors": [
+        "FIXED_COST",
+        "AMOUNT_SPECIFIC_QUOTE"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "CORE_AGGRESSIVE_100_365"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "0.834470910397",
+      "diagnostic_contributors": [
+        "FIXED_COST",
+        "AMOUNT_SPECIFIC_QUOTE"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "CORE_AGGRESSIVE_1000_30"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "36.198745358727",
+      "diagnostic_contributors": [
+        "FIXED_COST",
+        "AMOUNT_SPECIFIC_QUOTE"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "CORE_AGGRESSIVE_10000_90"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "-43.544932075116",
+      "diagnostic_contributors": [
+        "CASH_DEADLINE",
+        "FIXED_COST"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "DEADLINE_STAKING_1"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "-15.392734405928",
+      "diagnostic_contributors": [
+        "CASH_DEADLINE",
+        "FIXED_COST"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "DEADLINE_STAKING_8"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "-4.737632453048",
+      "diagnostic_contributors": [
+        "LP_ABSOLUTE_STRESS",
+        "CASH_DEADLINE",
+        "FIXED_COST",
+        "AMOUNT_SPECIFIC_QUOTE",
+        "GRID_DISCRETIZATION"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "DEADLINE_LP_1"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "-4.737632453048",
+      "diagnostic_contributors": [
+        "LP_ABSOLUTE_STRESS",
+        "FIXED_COST",
+        "AMOUNT_SPECIFIC_QUOTE",
+        "GRID_DISCRETIZATION"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "DEADLINE_LP_8"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "-4.737632453048",
+      "diagnostic_contributors": [
+        "LP_ABSOLUTE_STRESS",
+        "FIXED_COST",
+        "AMOUNT_SPECIFIC_QUOTE",
+        "GRID_DISCRETIZATION"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "DEADLINE_LP_15"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "-2.853815823035",
+      "diagnostic_contributors": [
+        "LP_ABSOLUTE_STRESS",
+        "FIXED_COST",
+        "AMOUNT_SPECIFIC_QUOTE",
+        "GRID_DISCRETIZATION"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "LP_PROGRESSION_CONSERVATIVE"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "13.3",
+      "diagnostic_contributors": [
+        "FIXED_COST",
+        "AMOUNT_SPECIFIC_QUOTE"
+      ],
+      "driver_detail": "SUPPORTED_DIAGNOSTIC_CONTRIBUTORS",
+      "primary_driver": "MULTIPLE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "QUOTE_CURVE"
+    },
+    {
+      "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
+      "common_profit_delta": "0",
+      "diagnostic_contributors": [
+        "OBJECTIVE_DIFFERENCE"
+      ],
+      "driver_detail": "SECONDARY_TIE_SELECTION_NOT_PROFIT_FORMULA",
+      "primary_driver": "OBJECTIVE_DIFFERENCE",
+      "profit_comparability": "DIRECT_COMMON_RESCORE",
+      "scenario_id": "TIE"
+    }
+  ],
+  "evaluation_version": "FINAL_EVALUATION_V1",
+  "fixed_cost_changes_decision_count": 1,
+  "label": "SYNTHETIC_EVALUATION_ONLY",
+  "limited_profit_rows": 4,
+  "mean_comparable_profit_delta": "43.395279634804",
+  "median_comparable_profit_delta": "0",
+  "method_counts": {
+    "EQUAL_WEIGHT_ELIGIBLE_BASELINE": {
+      "idle_rows": 4,
+      "recommendation_rows": 45,
+      "rows": 49
+    },
+    "HIGHEST_YIELD_BASELINE": {
+      "idle_rows": 4,
+      "recommendation_rows": 45,
+      "rows": 49
+    },
+    "LEGACY_LINEAR_OPTIMIZER": {
+      "idle_rows": 14,
+      "recommendation_rows": 35,
+      "rows": 49
+    },
+    "POLICY_AWARE_AMOUNT_OPTIMIZER": {
+      "idle_rows": 13,
+      "recommendation_rows": 36,
+      "rows": 49
+    }
+  },
+  "method_disagreement_count": 39,
+  "method_selection_profit_comparability": "LIMITED_LEGACY_REFERENCE_LINEARIZATION_VS_EXACT_COST_QUOTE_OBJECTIVE",
+  "normalized_rows": 196,
+  "quote_effect_changes_decision_count": 1,
+  "sensitivity_count_basis": "Explicit paired ablations only; other diagnostic associations are not causal counts",
+  "statistics_basis": "Descriptive deterministic counts over this synthetic matrix, not market frequencies",
+  "targeted_scenarios": 22,
+  "total_scenarios": 49
+}

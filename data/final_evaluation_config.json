@@ -1,0 +1,960 @@
+{
+  "version": "FINAL_EVALUATION_V1",
+  "scenario_version": "FINAL_EVALUATION_SCENARIOS_V1",
+  "label": "SYNTHETIC_EVALUATION_ONLY",
+  "scope": "DECISION_SLEEVE",
+  "whole_portfolio_compliance": "NOT_ASSESSED",
+  "ascend_gate": "CLOSED",
+  "methods": [
+    "HIGHEST_YIELD_BASELINE",
+    "EQUAL_WEIGHT_ELIGIBLE_BASELINE",
+    "LEGACY_LINEAR_OPTIMIZER",
+    "POLICY_AWARE_AMOUNT_OPTIMIZER"
+  ],
+  "capabilities": {
+    "HIGHEST_YIELD_BASELINE": {
+      "decision_sleeve": "SUPPORTED",
+      "strategy_gate": "SUPPORTED",
+      "concentration": "SUPPORTED",
+      "exact_amount_economics": "NOT_SUPPORTED",
+      "fixed_lifecycle_costs": "NOT_SUPPORTED",
+      "lp_quote_effects": "NOT_SUPPORTED",
+      "admission_evidence": "APPROXIMATED",
+      "range_aware_lp_stress": "NOT_SUPPORTED",
+      "legacy_lp_proxy": "NOT_SUPPORTED",
+      "staking_stress": "NOT_SUPPORTED",
+      "exit_time": "NOT_SUPPORTED",
+      "cash_deadline": "NOT_SUPPORTED",
+      "idle": "SUPPORTED",
+      "amount_specific_feasibility": "NOT_SUPPORTED",
+      "selected_point_revalidation": "NOT_SUPPORTED"
+    },
+    "EQUAL_WEIGHT_ELIGIBLE_BASELINE": {
+      "decision_sleeve": "SUPPORTED",
+      "strategy_gate": "SUPPORTED",
+      "concentration": "SUPPORTED",
+      "exact_amount_economics": "NOT_SUPPORTED",
+      "fixed_lifecycle_costs": "NOT_SUPPORTED",
+      "lp_quote_effects": "NOT_SUPPORTED",
+      "admission_evidence": "APPROXIMATED",
+      "range_aware_lp_stress": "NOT_SUPPORTED",
+      "legacy_lp_proxy": "NOT_SUPPORTED",
+      "staking_stress": "NOT_SUPPORTED",
+      "exit_time": "NOT_SUPPORTED",
+      "cash_deadline": "NOT_SUPPORTED",
+      "idle": "SUPPORTED",
+      "amount_specific_feasibility": "NOT_SUPPORTED",
+      "selected_point_revalidation": "NOT_SUPPORTED"
+    },
+    "LEGACY_LINEAR_OPTIMIZER": {
+      "decision_sleeve": "SUPPORTED",
+      "strategy_gate": "SUPPORTED",
+      "concentration": "SUPPORTED",
+      "exact_amount_economics": "NOT_SUPPORTED",
+      "fixed_lifecycle_costs": "APPROXIMATED",
+      "lp_quote_effects": "APPROXIMATED",
+      "admission_evidence": "APPROXIMATED",
+      "range_aware_lp_stress": "NOT_SUPPORTED",
+      "legacy_lp_proxy": "LEGACY_ONLY",
+      "staking_stress": "SUPPORTED",
+      "exit_time": "LEGACY_ONLY",
+      "cash_deadline": "NOT_SUPPORTED",
+      "idle": "SUPPORTED",
+      "amount_specific_feasibility": "NOT_SUPPORTED",
+      "selected_point_revalidation": "NOT_SUPPORTED"
+    },
+    "POLICY_AWARE_AMOUNT_OPTIMIZER": {
+      "decision_sleeve": "SUPPORTED",
+      "strategy_gate": "SUPPORTED",
+      "concentration": "SUPPORTED",
+      "exact_amount_economics": "SUPPORTED",
+      "fixed_lifecycle_costs": "SUPPORTED",
+      "lp_quote_effects": "SUPPORTED",
+      "admission_evidence": "SUPPORTED",
+      "range_aware_lp_stress": "SUPPORTED",
+      "legacy_lp_proxy": "NOT_SUPPORTED",
+      "staking_stress": "SUPPORTED",
+      "exit_time": "SUPPORTED",
+      "cash_deadline": "SUPPORTED",
+      "idle": "SUPPORTED",
+      "amount_specific_feasibility": "SUPPORTED",
+      "selected_point_revalidation": "SUPPORTED"
+    }
+  },
+  "package": {
+    "version": "SYNTHETIC_ECONOMIC_PACKAGE_V1",
+    "price_usd": "1",
+    "returns": {
+      "NATIVE_STAKE_0G": "0.12",
+      "GIMO_STAKE_0G": "0.14",
+      "JAINE_LP_0G_USDC": "0.24",
+      "OKU_LP_0G_USDC": "0.20",
+      "ASCEND_STAKE_A0G": "0.50"
+    },
+    "fixed_costs": {
+      "NATIVE_STAKE_0G": "2",
+      "GIMO_STAKE_0G": "3",
+      "JAINE_LP_0G_USDC": "5",
+      "OKU_LP_0G_USDC": "4",
+      "ASCEND_STAKE_A0G": "3"
+    },
+    "fee_basis": "NET_OF_PROTOCOL_FEES",
+    "quote_base": "0.0005",
+    "quote_slope": "0.002",
+    "quote_reference_amount_0g": "1000",
+    "quote_rule": "PER_DIRECTION_BASE_PLUS_SLOPE_TIMES_EXACT_AMOUNT_OVER_REFERENCE",
+    "admission": "MODELLED_POINT_SUPPORTED_UNLESS_EXPLICITLY_REJECTED",
+    "risk_scenarios": "data/risk_scenarios.json",
+    "lp_configs": "data/lp_evaluation_config.json",
+    "exit_configs": "data/exit_evaluation_config.json",
+    "policy": "data/evaluation_policy.json",
+    "legacy_lp_proxy": "0.06358893302521518",
+    "as_of": "2026-10-09T14:30:00+00:00",
+    "as_of_basis": "FIXED_REPLAY_CLOCK_NOT_OBSERVATION",
+    "assumptions": [
+      "Arbitrary transparent modelled APYs and USD lifecycle costs; not market estimates",
+      "Per-direction quote curve evaluated at exact amount, not interpolated observed quotes",
+      "All other required costs explicitly structural zero for this synthetic experiment only",
+      "Protocol fees already embedded; no financial incentives or extra yield streams",
+      "Iterations 20-22 risk/exit/config inputs reused unchanged"
+    ]
+  },
+  "scenarios": [
+    {
+      "scenario_id": "CORE_CONSERVATIVE_100_30",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Conservative",
+      "decision_amount_0g": "100",
+      "holding_horizon_days": "30",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_CONSERVATIVE_100_90",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Conservative",
+      "decision_amount_0g": "100",
+      "holding_horizon_days": "90",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_CONSERVATIVE_100_365",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Conservative",
+      "decision_amount_0g": "100",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_CONSERVATIVE_1000_30",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Conservative",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "30",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_CONSERVATIVE_1000_90",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Conservative",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "90",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_CONSERVATIVE_1000_365",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Conservative",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_CONSERVATIVE_10000_30",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Conservative",
+      "decision_amount_0g": "10000",
+      "holding_horizon_days": "30",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_CONSERVATIVE_10000_90",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Conservative",
+      "decision_amount_0g": "10000",
+      "holding_horizon_days": "90",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_CONSERVATIVE_10000_365",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Conservative",
+      "decision_amount_0g": "10000",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_BALANCED_100_30",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Balanced",
+      "decision_amount_0g": "100",
+      "holding_horizon_days": "30",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_BALANCED_100_90",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Balanced",
+      "decision_amount_0g": "100",
+      "holding_horizon_days": "90",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_BALANCED_100_365",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Balanced",
+      "decision_amount_0g": "100",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_BALANCED_1000_30",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Balanced",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "30",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_BALANCED_1000_90",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Balanced",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "90",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_BALANCED_1000_365",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Balanced",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_BALANCED_10000_30",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Balanced",
+      "decision_amount_0g": "10000",
+      "holding_horizon_days": "30",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_BALANCED_10000_90",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Balanced",
+      "decision_amount_0g": "10000",
+      "holding_horizon_days": "90",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_BALANCED_10000_365",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Balanced",
+      "decision_amount_0g": "10000",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_AGGRESSIVE_100_30",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Aggressive",
+      "decision_amount_0g": "100",
+      "holding_horizon_days": "30",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_AGGRESSIVE_100_90",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Aggressive",
+      "decision_amount_0g": "100",
+      "holding_horizon_days": "90",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_AGGRESSIVE_100_365",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Aggressive",
+      "decision_amount_0g": "100",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_AGGRESSIVE_1000_30",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Aggressive",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "30",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_AGGRESSIVE_1000_90",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Aggressive",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "90",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_AGGRESSIVE_1000_365",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Aggressive",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_AGGRESSIVE_10000_30",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Aggressive",
+      "decision_amount_0g": "10000",
+      "holding_horizon_days": "30",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_AGGRESSIVE_10000_90",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Aggressive",
+      "decision_amount_0g": "10000",
+      "holding_horizon_days": "90",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "CORE_AGGRESSIVE_10000_365",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "CORE",
+      "purpose": "Core notional/profile/horizon comparison",
+      "modified_assumptions": {},
+      "profile": "Aggressive",
+      "decision_amount_0g": "10000",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Supported constraints and amount economics can change allocations"
+    },
+    {
+      "scenario_id": "DEADLINE_STAKING_1",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "TARGETED",
+      "purpose": "Representative exit deadline sensitivity",
+      "modified_assumptions": {
+        "returns": {
+          "NATIVE_STAKE_0G": "0.22",
+          "GIMO_STAKE_0G": "0.20",
+          "JAINE_LP_0G_USDC": "0.01",
+          "OKU_LP_0G_USDC": "0.01"
+        }
+      },
+      "profile": "Balanced",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "90",
+      "cash_deadline_days": "1",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Only supported deadline feasibility excludes slow exits"
+    },
+    {
+      "scenario_id": "DEADLINE_STAKING_8",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "TARGETED",
+      "purpose": "Representative exit deadline sensitivity",
+      "modified_assumptions": {
+        "returns": {
+          "NATIVE_STAKE_0G": "0.22",
+          "GIMO_STAKE_0G": "0.20",
+          "JAINE_LP_0G_USDC": "0.01",
+          "OKU_LP_0G_USDC": "0.01"
+        }
+      },
+      "profile": "Balanced",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "90",
+      "cash_deadline_days": "8",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Only supported deadline feasibility excludes slow exits"
+    },
+    {
+      "scenario_id": "DEADLINE_STAKING_15",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "TARGETED",
+      "purpose": "Representative exit deadline sensitivity",
+      "modified_assumptions": {
+        "returns": {
+          "NATIVE_STAKE_0G": "0.22",
+          "GIMO_STAKE_0G": "0.20",
+          "JAINE_LP_0G_USDC": "0.01",
+          "OKU_LP_0G_USDC": "0.01"
+        }
+      },
+      "profile": "Balanced",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "90",
+      "cash_deadline_days": "15",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Only supported deadline feasibility excludes slow exits"
+    },
+    {
+      "scenario_id": "DEADLINE_LP_1",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "TARGETED",
+      "purpose": "Representative exit deadline sensitivity",
+      "modified_assumptions": {
+        "returns": {
+          "NATIVE_STAKE_0G": "0.01",
+          "GIMO_STAKE_0G": "0.01",
+          "JAINE_LP_0G_USDC": "0.30",
+          "OKU_LP_0G_USDC": "0.25"
+        }
+      },
+      "profile": "Balanced",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "90",
+      "cash_deadline_days": "1",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Only supported deadline feasibility excludes slow exits"
+    },
+    {
+      "scenario_id": "DEADLINE_LP_8",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "TARGETED",
+      "purpose": "Representative exit deadline sensitivity",
+      "modified_assumptions": {
+        "returns": {
+          "NATIVE_STAKE_0G": "0.01",
+          "GIMO_STAKE_0G": "0.01",
+          "JAINE_LP_0G_USDC": "0.30",
+          "OKU_LP_0G_USDC": "0.25"
+        }
+      },
+      "profile": "Balanced",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "90",
+      "cash_deadline_days": "8",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Only supported deadline feasibility excludes slow exits"
+    },
+    {
+      "scenario_id": "DEADLINE_LP_15",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "TARGETED",
+      "purpose": "Representative exit deadline sensitivity",
+      "modified_assumptions": {
+        "returns": {
+          "NATIVE_STAKE_0G": "0.01",
+          "GIMO_STAKE_0G": "0.01",
+          "JAINE_LP_0G_USDC": "0.30",
+          "OKU_LP_0G_USDC": "0.25"
+        }
+      },
+      "profile": "Balanced",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "90",
+      "cash_deadline_days": "15",
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Only supported deadline feasibility excludes slow exits"
+    },
+    {
+      "scenario_id": "FIXED_100",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "TARGETED",
+      "purpose": "Fixed lifecycle cost and notional sensitivity",
+      "modified_assumptions": {
+        "returns": {
+          "NATIVE_STAKE_0G": "0.20",
+          "GIMO_STAKE_0G": "-0.05",
+          "JAINE_LP_0G_USDC": "-0.05",
+          "OKU_LP_0G_USDC": "-0.05",
+          "ASCEND_STAKE_A0G": "-0.05"
+        },
+        "fixed_costs": {
+          "NATIVE_STAKE_0G": "25"
+        }
+      },
+      "profile": "Balanced",
+      "decision_amount_0g": "100",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "A fixed charge may make small candidates unattractive"
+    },
+    {
+      "scenario_id": "FIXED_1000",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "TARGETED",
+      "purpose": "Fixed lifecycle cost and notional sensitivity",
+      "modified_assumptions": {
+        "returns": {
+          "NATIVE_STAKE_0G": "0.20",
+          "GIMO_STAKE_0G": "-0.05",
+          "JAINE_LP_0G_USDC": "-0.05",
+          "OKU_LP_0G_USDC": "-0.05",
+          "ASCEND_STAKE_A0G": "-0.05"
+        },
+        "fixed_costs": {
+          "NATIVE_STAKE_0G": "25"
+        }
+      },
+      "profile": "Balanced",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "A fixed charge may make small candidates unattractive"
+    },
+    {
+      "scenario_id": "FIXED_10000",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "TARGETED",
+      "purpose": "Fixed lifecycle cost and notional sensitivity",
+      "modified_assumptions": {
+        "returns": {
+          "NATIVE_STAKE_0G": "0.20",
+          "GIMO_STAKE_0G": "-0.05",
+          "JAINE_LP_0G_USDC": "-0.05",
+          "OKU_LP_0G_USDC": "-0.05",
+          "ASCEND_STAKE_A0G": "-0.05"
+        },
+        "fixed_costs": {
+          "NATIVE_STAKE_0G": "25"
+        }
+      },
+      "profile": "Balanced",
+      "decision_amount_0g": "10000",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "A fixed charge may make small candidates unattractive"
+    },
+    {
+      "scenario_id": "FIXED_ZERO_CONTROL",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "TARGETED",
+      "purpose": "Paired fixed cost ablation",
+      "modified_assumptions": {
+        "returns": {
+          "NATIVE_STAKE_0G": "0.20",
+          "GIMO_STAKE_0G": "-0.05",
+          "JAINE_LP_0G_USDC": "-0.05",
+          "OKU_LP_0G_USDC": "-0.05",
+          "ASCEND_STAKE_A0G": "-0.05"
+        },
+        "fixed_costs": {
+          "NATIVE_STAKE_0G": "0"
+        }
+      },
+      "profile": "Balanced",
+      "decision_amount_0g": "100",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Removing the synthetic fixed charge may restore investment"
+    },
+    {
+      "scenario_id": "LP_PROGRESSION_CONSERVATIVE",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "TARGETED",
+      "purpose": "LP absolute-stress profile progression",
+      "modified_assumptions": {
+        "returns": {
+          "NATIVE_STAKE_0G": "-0.05",
+          "GIMO_STAKE_0G": "-0.05",
+          "JAINE_LP_0G_USDC": "0.20",
+          "OKU_LP_0G_USDC": "-0.05",
+          "ASCEND_STAKE_A0G": "-0.05"
+        }
+      },
+      "profile": "Conservative",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Increasing separate absolute-loss limits permits more LP weight"
+    },
+    {
+      "scenario_id": "LP_PROGRESSION_BALANCED",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "TARGETED",
+      "purpose": "LP absolute-stress profile progression",
+      "modified_assumptions": {
+        "returns": {
+          "NATIVE_STAKE_0G": "-0.05",
+          "GIMO_STAKE_0G": "-0.05",
+          "JAINE_LP_0G_USDC": "0.20",
+          "OKU_LP_0G_USDC": "-0.05",
+          "ASCEND_STAKE_A0G": "-0.05"
+        }
+      },
+      "profile": "Balanced",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Increasing separate absolute-loss limits permits more LP weight"
+    },
+    {
+      "scenario_id": "LP_PROGRESSION_AGGRESSIVE",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "TARGETED",
+      "purpose": "LP absolute-stress profile progression",
+      "modified_assumptions": {
+        "returns": {
+          "NATIVE_STAKE_0G": "-0.05",
+          "GIMO_STAKE_0G": "-0.05",
+          "JAINE_LP_0G_USDC": "0.20",
+          "OKU_LP_0G_USDC": "-0.05",
+          "ASCEND_STAKE_A0G": "-0.05"
+        }
+      },
+      "profile": "Aggressive",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Increasing separate absolute-loss limits permits more LP weight"
+    },
+    {
+      "scenario_id": "QUOTE_CURVE",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "TARGETED",
+      "purpose": "Amount-specific quote sensitivity",
+      "modified_assumptions": {
+        "returns": {
+          "NATIVE_STAKE_0G": "-0.05",
+          "GIMO_STAKE_0G": "-0.05",
+          "JAINE_LP_0G_USDC": "0.20",
+          "OKU_LP_0G_USDC": "-0.05",
+          "ASCEND_STAKE_A0G": "-0.05"
+        },
+        "quote_slope": "0.08"
+      },
+      "profile": "Balanced",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Large LP candidates can be less attractive than smaller candidates"
+    },
+    {
+      "scenario_id": "QUOTE_CONSTANT_CONTROL",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "TARGETED",
+      "purpose": "Paired quote curve ablation",
+      "modified_assumptions": {
+        "returns": {
+          "NATIVE_STAKE_0G": "-0.05",
+          "GIMO_STAKE_0G": "-0.05",
+          "JAINE_LP_0G_USDC": "0.20",
+          "OKU_LP_0G_USDC": "-0.05",
+          "ASCEND_STAKE_A0G": "-0.05"
+        },
+        "quote_slope": "0"
+      },
+      "profile": "Balanced",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Constant quotes remove the modelled amount penalty"
+    },
+    {
+      "scenario_id": "NEGATIVE",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "TARGETED",
+      "purpose": "All negative economics / legitimate idle",
+      "modified_assumptions": {
+        "returns": {
+          "NATIVE_STAKE_0G": "-0.05",
+          "GIMO_STAKE_0G": "-0.05",
+          "JAINE_LP_0G_USDC": "-0.05",
+          "OKU_LP_0G_USDC": "-0.05",
+          "ASCEND_STAKE_A0G": "-0.05"
+        }
+      },
+      "profile": "Balanced",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Explicit eligibility, gate and deterministic method rules determine outcomes"
+    },
+    {
+      "scenario_id": "MISSING_RETURN",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "TARGETED",
+      "purpose": "Missing return evidence",
+      "modified_assumptions": {
+        "missing_returns": [
+          "NATIVE_STAKE_0G",
+          "GIMO_STAKE_0G",
+          "JAINE_LP_0G_USDC",
+          "OKU_LP_0G_USDC",
+          "ASCEND_STAKE_A0G"
+        ]
+      },
+      "profile": "Balanced",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Explicit eligibility, gate and deterministic method rules determine outcomes"
+    },
+    {
+      "scenario_id": "MISSING_COST",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "TARGETED",
+      "purpose": "Missing lifecycle costs",
+      "modified_assumptions": {
+        "missing_costs": [
+          "JAINE_LP_0G_USDC"
+        ],
+        "returns": {
+          "NATIVE_STAKE_0G": "-0.05",
+          "GIMO_STAKE_0G": "-0.05",
+          "JAINE_LP_0G_USDC": "0.20",
+          "OKU_LP_0G_USDC": "-0.05",
+          "ASCEND_STAKE_A0G": "-0.05"
+        }
+      },
+      "profile": "Balanced",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Explicit eligibility, gate and deterministic method rules determine outcomes"
+    },
+    {
+      "scenario_id": "QUOTE_MISMATCH",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "TARGETED",
+      "purpose": "Exact quote amount mismatch",
+      "modified_assumptions": {
+        "quote_mismatch": [
+          "JAINE_LP_0G_USDC"
+        ],
+        "returns": {
+          "NATIVE_STAKE_0G": "-0.05",
+          "GIMO_STAKE_0G": "-0.05",
+          "JAINE_LP_0G_USDC": "0.20",
+          "OKU_LP_0G_USDC": "-0.05",
+          "ASCEND_STAKE_A0G": "-0.05"
+        }
+      },
+      "profile": "Balanced",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Explicit eligibility, gate and deterministic method rules determine outcomes"
+    },
+    {
+      "scenario_id": "ADMISSION_FAILURE",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "TARGETED",
+      "purpose": "Technical admission failure",
+      "modified_assumptions": {
+        "admission_rejected": [
+          "NATIVE_STAKE_0G",
+          "GIMO_STAKE_0G",
+          "JAINE_LP_0G_USDC",
+          "OKU_LP_0G_USDC",
+          "ASCEND_STAKE_A0G"
+        ]
+      },
+      "profile": "Balanced",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Explicit eligibility, gate and deterministic method rules determine outcomes"
+    },
+    {
+      "scenario_id": "ASCEND_ATTRACTIVE",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "TARGETED",
+      "purpose": "Ascend closed despite attractive economics",
+      "modified_assumptions": {
+        "returns": {
+          "NATIVE_STAKE_0G": "-0.05",
+          "GIMO_STAKE_0G": "-0.05",
+          "JAINE_LP_0G_USDC": "-0.05",
+          "OKU_LP_0G_USDC": "-0.05",
+          "ASCEND_STAKE_A0G": "2"
+        }
+      },
+      "profile": "Balanced",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Explicit eligibility, gate and deterministic method rules determine outcomes"
+    },
+    {
+      "scenario_id": "TIE",
+      "version": "FINAL_EVALUATION_SCENARIOS_V1",
+      "kind": "TARGETED",
+      "purpose": "Equal apparent profits / deterministic ties",
+      "modified_assumptions": {
+        "returns": {
+          "NATIVE_STAKE_0G": "0.10",
+          "GIMO_STAKE_0G": "0.10",
+          "JAINE_LP_0G_USDC": "0.10",
+          "OKU_LP_0G_USDC": "0.10",
+          "ASCEND_STAKE_A0G": "0.10"
+        },
+        "fixed_costs": {
+          "NATIVE_STAKE_0G": "0",
+          "GIMO_STAKE_0G": "0",
+          "JAINE_LP_0G_USDC": "0",
+          "OKU_LP_0G_USDC": "0",
+          "ASCEND_STAKE_A0G": "0"
+        },
+        "quote_base": "0",
+        "quote_slope": "0"
+      },
+      "profile": "Balanced",
+      "decision_amount_0g": "1000",
+      "holding_horizon_days": "365",
+      "cash_deadline_days": null,
+      "label": "SYNTHETIC_EVALUATION_ONLY",
+      "expected_behavioral_hypothesis": "Explicit eligibility, gate and deterministic method rules determine outcomes"
+    }
+  ]
+}
