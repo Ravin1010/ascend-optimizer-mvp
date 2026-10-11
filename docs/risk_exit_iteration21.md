@@ -1,5 +1,7 @@
 # Iteration 21: deterministic stress and time-to-cash
 
+Historical freeze-point record. For the final policy/schema and current status, see [Iteration 26 current state](current_state_iteration26.md); the later policy-aware path supersedes the deferred migration described here.
+
 Iteration 21 uses deterministic modelled stress and exit assumptions for evaluation. It does not estimate event probabilities, prove live liquidity, or establish public execution readiness. The final evaluation harness has not been started.
 
 ## Strategy risk matrix
@@ -23,7 +25,7 @@ Each allocation is 1,000 modelled USD-equivalent. LP values use the frozen Itera
 | JAINE_LP_0G_USDC | LP_WORST_ABSOLUTE | 1000 | Direct range path / unresolved | 162.518804 | 16.251880% | ASSESSED_MODELLED |
 | OKU_LP_0G_USDC | LP_WORST_ABSOLUTE | 1000 | Direct range path / unresolved | 120.632486 | 12.063249% | ASSESSED_MODELLED |
 | ASCEND_STAKE_A0G | ASCEND_ECONOMIC_HAIRCUT | 1000 | 0.05 | 50.000000 | 5.000000% | PARTIALLY_ASSESSED |
-| ASCEND_STAKE_A0G | ASCEND_DEPENDENCIES_UNRESOLVED | 1000 | Direct range path / unresolved | UNRESOLVED | UNRESOLVED | UNRESOLVED |
+| ASCEND_STAKE_A0G | ASCEND_DEPENDENCIES_UNRESOLVED | 1000 | Embedded backing/restaking dependency severity unresolved | UNRESOLVED | UNRESOLVED | UNRESOLVED |
 
 Both LP worst cases occur at LP_SHOCKS_V1:DOWN_20. Their total loss includes rebalancing and underlying market exposure; no IL or market loss is added again. All four shock results are preserved in diagnostics.
 
