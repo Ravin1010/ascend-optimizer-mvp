@@ -106,10 +106,14 @@ def test_fixed_cost_and_notional_sensitivity(benchmark):
     assert benchmark[1]['fixed_cost_changes_decision_count']==1
 
 
-def test_lp_quote_amount_and_pair_changes(benchmark):
+def test_lp_quote_amount_and_pair_economics(benchmark):
     a=row(benchmark,'QUOTE_CURVE');b=row(benchmark,'QUOTE_CONSTANT_CONTROL')
-    assert Decimal(a['allocation_weights'][r.JAINE])<Decimal(b['allocation_weights'][r.JAINE])
-    assert benchmark[1]['quote_effect_changes_decision_count']==1
+    assert a['allocation_weights']==b['allocation_weights'] and a['idle_weight']==b['idle_weight']
+    assert a['allocation_weights'][r.JAINE]=='0.6'
+    assert Decimal(a['lp_quote_execution_loss'])>Decimal(b['lp_quote_execution_loss'])
+    assert Decimal(a['expected_net_profit'])<Decimal(b['expected_net_profit'])
+    assert 'PROFILE_SLIPPAGE_LIMIT' not in str(a['rejection_reasons'])+str(b['rejection_reasons'])
+    assert benchmark[1]['quote_effect_changes_decision_count']==0
     q=f.load_config();s=next(s for s in q['scenarios'] if s['scenario_id']=='QUOTE_CURVE');inputs=SyntheticInputs(q,s)
     small=inputs.point(r.JAINE,'100');large=inputs.point(r.JAINE,'200')
     assert small.entry_slippage_rate<large.entry_slippage_rate
@@ -313,10 +317,13 @@ def test_presentation_precision_all_artifacts_general_audit(benchmark):
             assert known not in text
 
 
-def test_presentation_correction_substantive_invariance(benchmark):
+def test_presentation_correction_substantive_invariance():
     accepted='8e214fa0d5437da22696267dcb1bc929ef1dd4a9'
     def previous(path):return json.loads(subprocess.check_output(['git','show',accepted+':'+path],cwd=ROOT))
-    old=previous('results/final_evaluation_iteration23.json');new=benchmark[0]
+    old=previous('results/final_evaluation_iteration23.json')
+    corrected='7abfa1a347f35985052bee617e1bd82165f471f0'
+    def historical(path):return json.loads(subprocess.check_output(['git','show',corrected+':'+path],cwd=ROOT))
+    new=historical('results/final_evaluation_iteration23.json')
     assert old['synthetic_config']==new['synthetic_config']
     assert old['production_baseline']==new['production_baseline']
     assert old['dependency_fingerprints']==new['dependency_fingerprints']
@@ -327,7 +334,7 @@ def test_presentation_correction_substantive_invariance(benchmark):
         assert b['allocation_weights'][r.ASCEND]=='0'
         assert sum(Decimal(w) for w in b['allocation_weights'].values())+Decimal(b['idle_weight'])==1
     old_summary=previous('results/final_evaluation_iteration23_summary.json')
-    summary=benchmark[1]
+    summary=historical('results/final_evaluation_iteration23_summary.json')
     for key,value in old_summary.items():
         if key not in ('disagreements','mean_comparable_profit_delta','median_comparable_profit_delta'):
             assert summary[key]==value

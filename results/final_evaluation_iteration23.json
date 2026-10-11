@@ -6328,8 +6328,8 @@
       "decision_amount_0g": "10000",
       "diagnostics": {
         "candidate_policy_exclusions": {
-          "lp_absolute_stress": 22,
-          "staking_stress": 85
+          "lp_absolute_stress": 235,
+          "staking_stress": 147
         },
         "grid": [
           "0",
@@ -6344,13 +6344,9 @@
             "allocation_gate=CLOSED"
           ],
           "GIMO_STAKE_0G": [],
-          "JAINE_LP_0G_USDC": [
-            "PROFILE_SLIPPAGE_LIMIT"
-          ],
+          "JAINE_LP_0G_USDC": [],
           "NATIVE_STAKE_0G": [],
-          "OKU_LP_0G_USDC": [
-            "PROFILE_SLIPPAGE_LIMIT"
-          ]
+          "OKU_LP_0G_USDC": []
         },
         "policy_revalidation_calls": 1,
         "selected_policy": {
@@ -6536,7 +6532,7 @@
           "whole_portfolio_compliance": "NOT_ASSESSED"
         },
         "selected_revalidation": "PASSED",
-        "tested_combinations": 225
+        "tested_combinations": 625
       },
       "enforced_constraint_set": [
         "decision_sleeve",
@@ -6615,13 +6611,9 @@
           "allocation_gate=CLOSED"
         ],
         "GIMO_STAKE_0G": [],
-        "JAINE_LP_0G_USDC": [
-          "PROFILE_SLIPPAGE_LIMIT"
-        ],
+        "JAINE_LP_0G_USDC": [],
         "NATIVE_STAKE_0G": [],
-        "OKU_LP_0G_USDC": [
-          "PROFILE_SLIPPAGE_LIMIT"
-        ]
+        "OKU_LP_0G_USDC": []
       },
       "scenario_id": "CORE_CONSERVATIVE_10000_30",
       "scenario_version": "FINAL_EVALUATION_SCENARIOS_V1",
@@ -7299,8 +7291,8 @@
       "decision_amount_0g": "10000",
       "diagnostics": {
         "candidate_policy_exclusions": {
-          "lp_absolute_stress": 22,
-          "staking_stress": 85
+          "lp_absolute_stress": 235,
+          "staking_stress": 147
         },
         "grid": [
           "0",
@@ -7315,13 +7307,9 @@
             "allocation_gate=CLOSED"
           ],
           "GIMO_STAKE_0G": [],
-          "JAINE_LP_0G_USDC": [
-            "PROFILE_SLIPPAGE_LIMIT"
-          ],
+          "JAINE_LP_0G_USDC": [],
           "NATIVE_STAKE_0G": [],
-          "OKU_LP_0G_USDC": [
-            "PROFILE_SLIPPAGE_LIMIT"
-          ]
+          "OKU_LP_0G_USDC": []
         },
         "policy_revalidation_calls": 1,
         "selected_policy": {
@@ -7507,7 +7495,7 @@
           "whole_portfolio_compliance": "NOT_ASSESSED"
         },
         "selected_revalidation": "PASSED",
-        "tested_combinations": 225
+        "tested_combinations": 625
       },
       "enforced_constraint_set": [
         "decision_sleeve",
@@ -7586,13 +7574,9 @@
           "allocation_gate=CLOSED"
         ],
         "GIMO_STAKE_0G": [],
-        "JAINE_LP_0G_USDC": [
-          "PROFILE_SLIPPAGE_LIMIT"
-        ],
+        "JAINE_LP_0G_USDC": [],
         "NATIVE_STAKE_0G": [],
-        "OKU_LP_0G_USDC": [
-          "PROFILE_SLIPPAGE_LIMIT"
-        ]
+        "OKU_LP_0G_USDC": []
       },
       "scenario_id": "CORE_CONSERVATIVE_10000_90",
       "scenario_version": "FINAL_EVALUATION_SCENARIOS_V1",
@@ -8215,9 +8199,9 @@
       "allocation_weights": {
         "ASCEND_STAKE_A0G": "0",
         "GIMO_STAKE_0G": "0.4",
-        "JAINE_LP_0G_USDC": "0.2",
+        "JAINE_LP_0G_USDC": "0",
         "NATIVE_STAKE_0G": "0",
-        "OKU_LP_0G_USDC": "0.1"
+        "OKU_LP_0G_USDC": "0.4"
       },
       "binding_constraints": [
         "concentration",
@@ -8237,28 +8221,14 @@
           "strategy_id": "GIMO_STAKE_0G"
         },
         {
-          "amount_0g": "2000.0",
-          "fixed_cost_usd": "5",
-          "net_profit_usd": "457",
-          "quote_ids": [
-            "JAINE_LP_0G_USDCENTRY2000",
-            "JAINE_LP_0G_USDCEXIT2000"
-          ],
-          "quote_loss_usd": "18",
-          "return_evidence_ids": [
-            "JAINE_LP_0G_USDC-return"
-          ],
-          "strategy_id": "JAINE_LP_0G_USDC"
-        },
-        {
-          "amount_0g": "1000.0",
+          "amount_0g": "4000.0",
           "fixed_cost_usd": "4",
-          "net_profit_usd": "191",
+          "net_profit_usd": "728",
           "quote_ids": [
-            "OKU_LP_0G_USDCENTRY1000",
-            "OKU_LP_0G_USDCEXIT1000"
+            "OKU_LP_0G_USDCENTRY4000",
+            "OKU_LP_0G_USDCEXIT4000"
           ],
-          "quote_loss_usd": "5",
+          "quote_loss_usd": "68",
           "return_evidence_ids": [
             "OKU_LP_0G_USDC-return"
           ],
@@ -8270,8 +8240,8 @@
       "decision_amount_0g": "10000",
       "diagnostics": {
         "candidate_policy_exclusions": {
-          "lp_absolute_stress": 22,
-          "staking_stress": 85
+          "lp_absolute_stress": 235,
+          "staking_stress": 147
         },
         "grid": [
           "0",
@@ -8286,13 +8256,9 @@
             "allocation_gate=CLOSED"
           ],
           "GIMO_STAKE_0G": [],
-          "JAINE_LP_0G_USDC": [
-            "PROFILE_SLIPPAGE_LIMIT"
-          ],
+          "JAINE_LP_0G_USDC": [],
           "NATIVE_STAKE_0G": [],
-          "OKU_LP_0G_USDC": [
-            "PROFILE_SLIPPAGE_LIMIT"
-          ]
+          "OKU_LP_0G_USDC": []
         },
         "policy_revalidation_calls": 1,
         "selected_policy": {
@@ -8303,9 +8269,9 @@
           "candidate_weights": {
             "ASCEND_STAKE_A0G": "0.0",
             "GIMO_STAKE_0G": "0.4",
-            "JAINE_LP_0G_USDC": "0.2",
+            "JAINE_LP_0G_USDC": "0.0",
             "NATIVE_STAKE_0G": "0.0",
-            "OKU_LP_0G_USDC": "0.1"
+            "OKU_LP_0G_USDC": "0.4"
           },
           "cash_deadline_days": null,
           "constraints": {
@@ -8327,7 +8293,7 @@
             "lp_absolute_stress": {
               "limit": "0.05",
               "state": "PASS",
-              "value": "0.0445670094144044858042444451874806241798668900596586417394826"
+              "value": "0.0482529942219952981493657490438470105288941647321842542374760"
             },
             "required_risk": {
               "state": "PASS"
@@ -8350,8 +8316,8 @@
           },
           "holding_horizon_days": "365.0",
           "idle_time_to_cash_days": "0",
-          "idle_weight": "0.3",
-          "input_identity": "24cc21cae6eede30f9b2015889730949a231d4f3d7b5d435089d3e14a5d9a87a",
+          "idle_weight": "0.2",
+          "input_identity": "f479d7c8dea9700a57b86596e600647b59c81f975e2bb1fd3a8a56fb8a98ada4",
           "label": "SYNTHETIC_EVALUATION_ONLY",
           "overall": "PASS",
           "per_strategy_exit_compatibility": {
@@ -8368,7 +8334,7 @@
             "JAINE_LP_0G_USDC": {
               "state": "NOT_REQUESTED",
               "time_to_cash_days": "0.01",
-              "weight": "0.2"
+              "weight": "0.0"
             },
             "NATIVE_STAKE_0G": {
               "state": "NOT_REQUESTED",
@@ -8378,7 +8344,7 @@
             "OKU_LP_0G_USDC": {
               "state": "NOT_REQUESTED",
               "time_to_cash_days": "0.02",
-              "weight": "0.1"
+              "weight": "0.4"
             }
           },
           "policy_fingerprint": "c5e080f7f5414e8250d9f71cd0b05c61e98500193810dfb35de725f95e604179",
@@ -8392,7 +8358,7 @@
             "correlation": "UNRESOLVED_NOT_INFERRED",
             "decision_value": "10000.00",
             "evidence_class": "MODELLED",
-            "idle_weight": "0.3",
+            "idle_weight": "0.2",
             "joint_event_assumed": false,
             "label": "SYNTHETIC_EVALUATION_ONLY",
             "limitations": [
@@ -8400,7 +8366,7 @@
               "Only named quantified components covered; unresolved dependency risks remain",
               "Does not imply production admission or portfolio recommendation"
             ],
-            "lp_absolute_stress_loss": "0.0445670094144044858042444451874806241798668900596586417394826",
+            "lp_absolute_stress_loss": "0.0482529942219952981493657490438470105288941647321842542374760",
             "model_version": "RISK_STRESS_V1",
             "rows": [
               {
@@ -8426,26 +8392,26 @@
                 "weighted_contribution": "0.020"
               },
               {
-                "absolute_strategy_stress_loss": "325.037608589056612669030079265188715476433488766125781801136",
+                "absolute_strategy_stress_loss": "0",
                 "allocation_gate": "NOT_EVALUATED_BY_RISK_MODEL",
-                "risk_assessment_state": "ASSESSED_MODELLED",
+                "risk_assessment_state": "UNRESOLVED",
                 "risk_category": "LP_POSITION_VALUE",
-                "scenario_id": "RISK_SCENARIOS_V1:LP_WORST_ABSOLUTE",
+                "scenario_id": "UNRESOLVED",
                 "strategy_id": "JAINE_LP_0G_USDC",
-                "strategy_stress_loss_fraction": "0.162518804294528306334515039632594357738216744383062890900568",
-                "weight": "0.2",
-                "weighted_contribution": "0.0325037608589056612669030079265188715476433488766125781801136"
+                "strategy_stress_loss_fraction": null,
+                "weight": "0.0",
+                "weighted_contribution": "0"
               },
               {
-                "absolute_strategy_stress_loss": "120.632485554988245373414372609617526322235411830460635593690",
+                "absolute_strategy_stress_loss": "482.529942219952981493657490438470105288941647321842542374760",
                 "allocation_gate": "NOT_EVALUATED_BY_RISK_MODEL",
                 "risk_assessment_state": "ASSESSED_MODELLED",
                 "risk_category": "LP_POSITION_VALUE",
                 "scenario_id": "RISK_SCENARIOS_V1:LP_WORST_ABSOLUTE",
                 "strategy_id": "OKU_LP_0G_USDC",
                 "strategy_stress_loss_fraction": "0.120632485554988245373414372609617526322235411830460635593690",
-                "weight": "0.1",
-                "weighted_contribution": "0.0120632485554988245373414372609617526322235411830460635593690"
+                "weight": "0.4",
+                "weighted_contribution": "0.0482529942219952981493657490438470105288941647321842542374760"
               },
               {
                 "absolute_strategy_stress_loss": "0",
@@ -8461,16 +8427,16 @@
             ],
             "staking_stress_loss": "0.020",
             "state": "ASSESSED_MODELLED",
-            "total_decision_sleeve_stress_loss": "645.670094144044858042444451874806241798668900596586417394826",
-            "total_loss_fraction": "0.0645670094144044858042444451874806241798668900596586417394826",
+            "total_decision_sleeve_stress_loss": "682.529942219952981493657490438470105288941647321842542374760",
+            "total_loss_fraction": "0.0682529942219952981493657490438470105288941647321842542374760",
             "unresolved_positive_allocations": []
           },
           "risk_input_identities": {
             "ASCEND_STAKE_A0G": "f58baa535d0ec95128edb0697e692c5f3f23dbd5a0d1e067fdc8e2f4d6f46e1d",
             "GIMO_STAKE_0G": "55f1a959950ed7e971e689a84b40c02993554210cdc663fba21fe66d165af9c4",
-            "JAINE_LP_0G_USDC": "b3c512747c462eab584575ccb5a56dbd31bcf21e663b40dca03dac9be70043d7",
+            "JAINE_LP_0G_USDC": "525a5a9dfecdddf4f95ccfbb5f86229d53501754a570e25a7998622c741b0e60",
             "NATIVE_STAKE_0G": "a9a630ce648474f7096296c39f381643fff21777241c6cb54122c67c084c590c",
-            "OKU_LP_0G_USDC": "f822e26a716372e5474c2e1d244b45798792d1b87fa29f8f70e7cf18124c39d5"
+            "OKU_LP_0G_USDC": "0eb596aee0ffdf0c8e4dfb1b44dd001a8876bcdcb3cbc10047f8bc29ec0af34c"
           },
           "scope": "DECISION_SLEEVE",
           "source_identity": "7941fbdb8f4431325f8da2bd5efdb5f4aff4429adbf7363064fcf219454808ca",
@@ -8478,7 +8444,7 @@
           "whole_portfolio_compliance": "NOT_ASSESSED"
         },
         "selected_revalidation": "PASSED",
-        "tested_combinations": 225
+        "tested_combinations": 625
       },
       "enforced_constraint_set": [
         "decision_sleeve",
@@ -8499,23 +8465,23 @@
       "evaluation_version": "FINAL_EVALUATION_V1",
       "evidence_mode": "SYNTHETIC_EVALUATION_ONLY",
       "execution_readiness": "NOT_ESTABLISHED",
-      "expected_gross_return": "1240",
-      "expected_net_profit": "1205",
-      "expected_net_return": "0.1205",
+      "expected_gross_return": "1360",
+      "expected_net_profit": "1285",
+      "expected_net_return": "0.1285",
       "feasibility_state": "PASS_METHOD_SUPPORTED_CONSTRAINTS",
       "final_policy_enforced": true,
       "final_policy_feasibility": "PASS",
-      "fixed_cost": "12",
+      "fixed_cost": "7",
       "holding_horizon_days": "365",
-      "idle_weight": "0.3",
-      "lifecycle_cost": "12",
-      "lp_absolute_stress": "0.0445670094144044858042444451874806241798668900596586417394826",
-      "lp_quote_execution_loss": "23",
+      "idle_weight": "0.2",
+      "lifecycle_cost": "7",
+      "lp_absolute_stress": "0.0482529942219952981493657490438470105288941647321842542374760",
+      "lp_quote_execution_loss": "68",
       "method_id": "POLICY_AWARE_AMOUNT_OPTIMIZER",
-      "method_lifecycle_cost": "12",
-      "method_lp_quote_loss": "23",
-      "method_reported_profit": "1205",
-      "net_apy": "0.1205",
+      "method_lifecycle_cost": "7",
+      "method_lp_quote_loss": "68",
+      "method_reported_profit": "1285",
+      "net_apy": "0.1285",
       "posthoc_deadline_compatibility": "NOT_REQUESTED",
       "posthoc_policy_constraints": {
         "allocation_gate": {
@@ -8536,7 +8502,7 @@
         "lp_absolute_stress": {
           "limit": "0.05",
           "state": "PASS",
-          "value": "0.0445670094144044858042444451874806241798668900596586417394826"
+          "value": "0.0482529942219952981493657490438470105288941647321842542374760"
         },
         "required_risk": {
           "state": "PASS"
@@ -8557,13 +8523,9 @@
           "allocation_gate=CLOSED"
         ],
         "GIMO_STAKE_0G": [],
-        "JAINE_LP_0G_USDC": [
-          "PROFILE_SLIPPAGE_LIMIT"
-        ],
+        "JAINE_LP_0G_USDC": [],
         "NATIVE_STAKE_0G": [],
-        "OKU_LP_0G_USDC": [
-          "PROFILE_SLIPPAGE_LIMIT"
-        ]
+        "OKU_LP_0G_USDC": []
       },
       "scenario_id": "CORE_CONSERVATIVE_10000_365",
       "scenario_version": "FINAL_EVALUATION_SCENARIOS_V1",
@@ -8588,7 +8550,7 @@
         "staking_stress": "SUPPORTED",
         "strategy_gate": "SUPPORTED"
       },
-      "total_stress_budget": "0.0645670094144044858042444451874806241798668900596586417394826",
+      "total_stress_budget": "0.0682529942219952981493657490438470105288941647321842542374760",
       "valuation": {
         "evidence_class": "MODELLED",
         "observation_timestamp": null,
@@ -14814,7 +14776,7 @@
       "decision_amount_0g": "10000",
       "diagnostics": {
         "candidate_policy_exclusions": {
-          "lp_absolute_stress": 16
+          "lp_absolute_stress": 75
         },
         "grid": [
           "0",
@@ -14831,13 +14793,9 @@
             "allocation_gate=CLOSED"
           ],
           "GIMO_STAKE_0G": [],
-          "JAINE_LP_0G_USDC": [
-            "PROFILE_SLIPPAGE_LIMIT"
-          ],
+          "JAINE_LP_0G_USDC": [],
           "NATIVE_STAKE_0G": [],
-          "OKU_LP_0G_USDC": [
-            "PROFILE_SLIPPAGE_LIMIT"
-          ]
+          "OKU_LP_0G_USDC": []
         },
         "policy_revalidation_calls": 1,
         "selected_policy": {
@@ -15023,7 +14981,7 @@
           "whole_portfolio_compliance": "NOT_ASSESSED"
         },
         "selected_revalidation": "PASSED",
-        "tested_combinations": 1225
+        "tested_combinations": 2401
       },
       "enforced_constraint_set": [
         "decision_sleeve",
@@ -15102,13 +15060,9 @@
           "allocation_gate=CLOSED"
         ],
         "GIMO_STAKE_0G": [],
-        "JAINE_LP_0G_USDC": [
-          "PROFILE_SLIPPAGE_LIMIT"
-        ],
+        "JAINE_LP_0G_USDC": [],
         "NATIVE_STAKE_0G": [],
-        "OKU_LP_0G_USDC": [
-          "PROFILE_SLIPPAGE_LIMIT"
-        ]
+        "OKU_LP_0G_USDC": []
       },
       "scenario_id": "CORE_BALANCED_10000_30",
       "scenario_version": "FINAL_EVALUATION_SCENARIOS_V1",
@@ -15783,7 +15737,7 @@
       "decision_amount_0g": "10000",
       "diagnostics": {
         "candidate_policy_exclusions": {
-          "lp_absolute_stress": 16
+          "lp_absolute_stress": 75
         },
         "grid": [
           "0",
@@ -15800,13 +15754,9 @@
             "allocation_gate=CLOSED"
           ],
           "GIMO_STAKE_0G": [],
-          "JAINE_LP_0G_USDC": [
-            "PROFILE_SLIPPAGE_LIMIT"
-          ],
+          "JAINE_LP_0G_USDC": [],
           "NATIVE_STAKE_0G": [],
-          "OKU_LP_0G_USDC": [
-            "PROFILE_SLIPPAGE_LIMIT"
-          ]
+          "OKU_LP_0G_USDC": []
         },
         "policy_revalidation_calls": 1,
         "selected_policy": {
@@ -15989,7 +15939,7 @@
           "whole_portfolio_compliance": "NOT_ASSESSED"
         },
         "selected_revalidation": "PASSED",
-        "tested_combinations": 1225
+        "tested_combinations": 2401
       },
       "enforced_constraint_set": [
         "decision_sleeve",
@@ -16068,13 +16018,9 @@
           "allocation_gate=CLOSED"
         ],
         "GIMO_STAKE_0G": [],
-        "JAINE_LP_0G_USDC": [
-          "PROFILE_SLIPPAGE_LIMIT"
-        ],
+        "JAINE_LP_0G_USDC": [],
         "NATIVE_STAKE_0G": [],
-        "OKU_LP_0G_USDC": [
-          "PROFILE_SLIPPAGE_LIMIT"
-        ]
+        "OKU_LP_0G_USDC": []
       },
       "scenario_id": "CORE_BALANCED_10000_90",
       "scenario_version": "FINAL_EVALUATION_SCENARIOS_V1",
@@ -16697,11 +16643,13 @@
       "allocation_weights": {
         "ASCEND_STAKE_A0G": "0",
         "GIMO_STAKE_0G": "0.4",
-        "JAINE_LP_0G_USDC": "0.4",
+        "JAINE_LP_0G_USDC": "0.6",
         "NATIVE_STAKE_0G": "0",
-        "OKU_LP_0G_USDC": "0.2"
+        "OKU_LP_0G_USDC": "0"
       },
-      "binding_constraints": [],
+      "binding_constraints": [
+        "concentration"
+      ],
       "cash_deadline_days": null,
       "common_economic_points": [
         {
@@ -16716,32 +16664,18 @@
           "strategy_id": "GIMO_STAKE_0G"
         },
         {
-          "amount_0g": "4000.0",
+          "amount_0g": "6000.0",
           "fixed_cost_usd": "5",
-          "net_profit_usd": "887",
+          "net_profit_usd": "1285",
           "quote_ids": [
-            "JAINE_LP_0G_USDCENTRY4000",
-            "JAINE_LP_0G_USDCEXIT4000"
+            "JAINE_LP_0G_USDCENTRY6000",
+            "JAINE_LP_0G_USDCEXIT6000"
           ],
-          "quote_loss_usd": "68",
+          "quote_loss_usd": "150",
           "return_evidence_ids": [
             "JAINE_LP_0G_USDC-return"
           ],
           "strategy_id": "JAINE_LP_0G_USDC"
-        },
-        {
-          "amount_0g": "2000.0",
-          "fixed_cost_usd": "4",
-          "net_profit_usd": "378",
-          "quote_ids": [
-            "OKU_LP_0G_USDCENTRY2000",
-            "OKU_LP_0G_USDCEXIT2000"
-          ],
-          "quote_loss_usd": "18",
-          "return_evidence_ids": [
-            "OKU_LP_0G_USDC-return"
-          ],
-          "strategy_id": "OKU_LP_0G_USDC"
         }
       ],
       "common_rescore_errors": [],
@@ -16749,7 +16683,7 @@
       "decision_amount_0g": "10000",
       "diagnostics": {
         "candidate_policy_exclusions": {
-          "lp_absolute_stress": 16
+          "lp_absolute_stress": 75
         },
         "grid": [
           "0",
@@ -16766,23 +16700,21 @@
             "allocation_gate=CLOSED"
           ],
           "GIMO_STAKE_0G": [],
-          "JAINE_LP_0G_USDC": [
-            "PROFILE_SLIPPAGE_LIMIT"
-          ],
+          "JAINE_LP_0G_USDC": [],
           "NATIVE_STAKE_0G": [],
-          "OKU_LP_0G_USDC": [
-            "PROFILE_SLIPPAGE_LIMIT"
-          ]
+          "OKU_LP_0G_USDC": []
         },
         "policy_revalidation_calls": 1,
         "selected_policy": {
-          "binding_constraints": [],
+          "binding_constraints": [
+            "concentration"
+          ],
           "candidate_weights": {
             "ASCEND_STAKE_A0G": "0.0",
             "GIMO_STAKE_0G": "0.4",
-            "JAINE_LP_0G_USDC": "0.4",
+            "JAINE_LP_0G_USDC": "0.6",
             "NATIVE_STAKE_0G": "0.0",
-            "OKU_LP_0G_USDC": "0.2"
+            "OKU_LP_0G_USDC": "0.0"
           },
           "cash_deadline_days": null,
           "constraints": {
@@ -16799,12 +16731,12 @@
             "concentration": {
               "limit": "0.60",
               "state": "PASS",
-              "value": "0.4"
+              "value": "0.6"
             },
             "lp_absolute_stress": {
               "limit": "0.10",
               "state": "PASS",
-              "value": "0.0891340188288089716084888903749612483597337801193172834789652"
+              "value": "0.0975112825767169838007090237795566146429300466298377345403408"
             },
             "required_risk": {
               "state": "PASS"
@@ -16828,7 +16760,7 @@
           "holding_horizon_days": "365.0",
           "idle_time_to_cash_days": "0",
           "idle_weight": "0.0",
-          "input_identity": "42c8c998d0446c879b1068db813db5ddd983e3a8cead424e8f72b82e2460cfdb",
+          "input_identity": "35b4b1cbbb1911643b85e54d42ff682e2761297883c835830e48d3971ac4669c",
           "label": "SYNTHETIC_EVALUATION_ONLY",
           "overall": "PASS",
           "per_strategy_exit_compatibility": {
@@ -16845,7 +16777,7 @@
             "JAINE_LP_0G_USDC": {
               "state": "NOT_REQUESTED",
               "time_to_cash_days": "0.01",
-              "weight": "0.4"
+              "weight": "0.6"
             },
             "NATIVE_STAKE_0G": {
               "state": "NOT_REQUESTED",
@@ -16855,7 +16787,7 @@
             "OKU_LP_0G_USDC": {
               "state": "NOT_REQUESTED",
               "time_to_cash_days": "0.02",
-              "weight": "0.2"
+              "weight": "0.0"
             }
           },
           "policy_fingerprint": "c5e080f7f5414e8250d9f71cd0b05c61e98500193810dfb35de725f95e604179",
@@ -16877,7 +16809,7 @@
               "Only named quantified components covered; unresolved dependency risks remain",
               "Does not imply production admission or portfolio recommendation"
             ],
-            "lp_absolute_stress_loss": "0.0891340188288089716084888903749612483597337801193172834789652",
+            "lp_absolute_stress_loss": "0.0975112825767169838007090237795566146429300466298377345403408",
             "model_version": "RISK_STRESS_V1",
             "rows": [
               {
@@ -16903,26 +16835,26 @@
                 "weighted_contribution": "0.020"
               },
               {
-                "absolute_strategy_stress_loss": "650.075217178113225338060158530377430952866977532251563602272",
+                "absolute_strategy_stress_loss": "975.112825767169838007090237795566146429300466298377345403408",
                 "allocation_gate": "NOT_EVALUATED_BY_RISK_MODEL",
                 "risk_assessment_state": "ASSESSED_MODELLED",
                 "risk_category": "LP_POSITION_VALUE",
                 "scenario_id": "RISK_SCENARIOS_V1:LP_WORST_ABSOLUTE",
                 "strategy_id": "JAINE_LP_0G_USDC",
                 "strategy_stress_loss_fraction": "0.162518804294528306334515039632594357738216744383062890900568",
-                "weight": "0.4",
-                "weighted_contribution": "0.0650075217178113225338060158530377430952866977532251563602272"
+                "weight": "0.6",
+                "weighted_contribution": "0.0975112825767169838007090237795566146429300466298377345403408"
               },
               {
-                "absolute_strategy_stress_loss": "241.264971109976490746828745219235052644470823660921271187380",
+                "absolute_strategy_stress_loss": "0",
                 "allocation_gate": "NOT_EVALUATED_BY_RISK_MODEL",
-                "risk_assessment_state": "ASSESSED_MODELLED",
+                "risk_assessment_state": "UNRESOLVED",
                 "risk_category": "LP_POSITION_VALUE",
-                "scenario_id": "RISK_SCENARIOS_V1:LP_WORST_ABSOLUTE",
+                "scenario_id": "UNRESOLVED",
                 "strategy_id": "OKU_LP_0G_USDC",
-                "strategy_stress_loss_fraction": "0.120632485554988245373414372609617526322235411830460635593690",
-                "weight": "0.2",
-                "weighted_contribution": "0.0241264971109976490746828745219235052644470823660921271187380"
+                "strategy_stress_loss_fraction": null,
+                "weight": "0.0",
+                "weighted_contribution": "0"
               },
               {
                 "absolute_strategy_stress_loss": "0",
@@ -16938,16 +16870,16 @@
             ],
             "staking_stress_loss": "0.020",
             "state": "ASSESSED_MODELLED",
-            "total_decision_sleeve_stress_loss": "1091.34018828808971608488890374961248359733780119317283478965",
-            "total_loss_fraction": "0.109134018828808971608488890374961248359733780119317283478965",
+            "total_decision_sleeve_stress_loss": "1175.11282576716983800709023779556614642930046629837734540341",
+            "total_loss_fraction": "0.117511282576716983800709023779556614642930046629837734540341",
             "unresolved_positive_allocations": []
           },
           "risk_input_identities": {
             "ASCEND_STAKE_A0G": "f58baa535d0ec95128edb0697e692c5f3f23dbd5a0d1e067fdc8e2f4d6f46e1d",
             "GIMO_STAKE_0G": "55f1a959950ed7e971e689a84b40c02993554210cdc663fba21fe66d165af9c4",
-            "JAINE_LP_0G_USDC": "ebc98cfb0fb1860bd6d1e48d0f9a0c666c46a1fb4cb25f7b65925cb92b77d21c",
+            "JAINE_LP_0G_USDC": "9c1202320226a2f4f0a2294be1db7f7536375681d1c983f1e85690e4a823e269",
             "NATIVE_STAKE_0G": "a9a630ce648474f7096296c39f381643fff21777241c6cb54122c67c084c590c",
-            "OKU_LP_0G_USDC": "3daf712ea006fa6159e3b0122d7187fe803cd67a82edbe7dd3dea853edf3c2bf"
+            "OKU_LP_0G_USDC": "c36d06d322d830c089c7843487ebf63f3b16dda7787e3e9d47fb64e1d822ff61"
           },
           "scope": "DECISION_SLEEVE",
           "source_identity": "7941fbdb8f4431325f8da2bd5efdb5f4aff4429adbf7363064fcf219454808ca",
@@ -16955,7 +16887,7 @@
           "whole_portfolio_compliance": "NOT_ASSESSED"
         },
         "selected_revalidation": "PASSED",
-        "tested_combinations": 1225
+        "tested_combinations": 2401
       },
       "enforced_constraint_set": [
         "decision_sleeve",
@@ -16976,23 +16908,23 @@
       "evaluation_version": "FINAL_EVALUATION_V1",
       "evidence_mode": "SYNTHETIC_EVALUATION_ONLY",
       "execution_readiness": "NOT_ESTABLISHED",
-      "expected_gross_return": "1920",
-      "expected_net_profit": "1822",
-      "expected_net_return": "0.1822",
+      "expected_gross_return": "2000",
+      "expected_net_profit": "1842",
+      "expected_net_return": "0.1842",
       "feasibility_state": "PASS_METHOD_SUPPORTED_CONSTRAINTS",
       "final_policy_enforced": true,
       "final_policy_feasibility": "PASS",
-      "fixed_cost": "12",
+      "fixed_cost": "8",
       "holding_horizon_days": "365",
       "idle_weight": "0",
-      "lifecycle_cost": "12",
-      "lp_absolute_stress": "0.0891340188288089716084888903749612483597337801193172834789652",
-      "lp_quote_execution_loss": "86",
+      "lifecycle_cost": "8",
+      "lp_absolute_stress": "0.0975112825767169838007090237795566146429300466298377345403408",
+      "lp_quote_execution_loss": "150",
       "method_id": "POLICY_AWARE_AMOUNT_OPTIMIZER",
-      "method_lifecycle_cost": "12",
-      "method_lp_quote_loss": "86",
-      "method_reported_profit": "1822",
-      "net_apy": "0.1822",
+      "method_lifecycle_cost": "8",
+      "method_lp_quote_loss": "150",
+      "method_reported_profit": "1842",
+      "net_apy": "0.1842",
       "posthoc_deadline_compatibility": "NOT_REQUESTED",
       "posthoc_policy_constraints": {
         "allocation_gate": {
@@ -17008,12 +16940,12 @@
         "concentration": {
           "limit": "0.60",
           "state": "PASS",
-          "value": "0.4"
+          "value": "0.6"
         },
         "lp_absolute_stress": {
           "limit": "0.10",
           "state": "PASS",
-          "value": "0.0891340188288089716084888903749612483597337801193172834789652"
+          "value": "0.0975112825767169838007090237795566146429300466298377345403408"
         },
         "required_risk": {
           "state": "PASS"
@@ -17034,13 +16966,9 @@
           "allocation_gate=CLOSED"
         ],
         "GIMO_STAKE_0G": [],
-        "JAINE_LP_0G_USDC": [
-          "PROFILE_SLIPPAGE_LIMIT"
-        ],
+        "JAINE_LP_0G_USDC": [],
         "NATIVE_STAKE_0G": [],
-        "OKU_LP_0G_USDC": [
-          "PROFILE_SLIPPAGE_LIMIT"
-        ]
+        "OKU_LP_0G_USDC": []
       },
       "scenario_id": "CORE_BALANCED_10000_365",
       "scenario_version": "FINAL_EVALUATION_SCENARIOS_V1",
@@ -17065,7 +16993,7 @@
         "staking_stress": "SUPPORTED",
         "strategy_gate": "SUPPORTED"
       },
-      "total_stress_budget": "0.109134018828808971608488890374961248359733780119317283478965",
+      "total_stress_budget": "0.117511282576716983800709023779556614642930046629837734540341",
       "valuation": {
         "evidence_class": "MODELLED",
         "observation_timestamp": null,
@@ -33271,7 +33199,7 @@
       "decision_amount_0g": "10000",
       "diagnostics": {
         "candidate_policy_exclusions": {
-          "lp_absolute_stress": 16
+          "lp_absolute_stress": 75
         },
         "grid": [
           "0",
@@ -33288,13 +33216,9 @@
             "allocation_gate=CLOSED"
           ],
           "GIMO_STAKE_0G": [],
-          "JAINE_LP_0G_USDC": [
-            "PROFILE_SLIPPAGE_LIMIT"
-          ],
+          "JAINE_LP_0G_USDC": [],
           "NATIVE_STAKE_0G": [],
-          "OKU_LP_0G_USDC": [
-            "PROFILE_SLIPPAGE_LIMIT"
-          ]
+          "OKU_LP_0G_USDC": []
         },
         "policy_revalidation_calls": 1,
         "selected_policy": {
@@ -33479,7 +33403,7 @@
           "whole_portfolio_compliance": "NOT_ASSESSED"
         },
         "selected_revalidation": "PASSED",
-        "tested_combinations": 1225
+        "tested_combinations": 2401
       },
       "enforced_constraint_set": [
         "decision_sleeve",
@@ -33558,13 +33482,9 @@
           "allocation_gate=CLOSED"
         ],
         "GIMO_STAKE_0G": [],
-        "JAINE_LP_0G_USDC": [
-          "PROFILE_SLIPPAGE_LIMIT"
-        ],
+        "JAINE_LP_0G_USDC": [],
         "NATIVE_STAKE_0G": [],
-        "OKU_LP_0G_USDC": [
-          "PROFILE_SLIPPAGE_LIMIT"
-        ]
+        "OKU_LP_0G_USDC": []
       },
       "scenario_id": "FIXED_10000",
       "scenario_version": "FINAL_EVALUATION_SCENARIOS_V1",
@@ -37577,22 +37497,24 @@
       "allocation_weights": {
         "ASCEND_STAKE_A0G": "0",
         "GIMO_STAKE_0G": "0",
-        "JAINE_LP_0G_USDC": "0.1",
+        "JAINE_LP_0G_USDC": "0.6",
         "NATIVE_STAKE_0G": "0",
         "OKU_LP_0G_USDC": "0"
       },
-      "binding_constraints": [],
+      "binding_constraints": [
+        "concentration"
+      ],
       "cash_deadline_days": null,
       "common_economic_points": [
         {
-          "amount_0g": "100.0",
+          "amount_0g": "600.0",
           "fixed_cost_usd": "5",
-          "net_profit_usd": "13.3",
+          "net_profit_usd": "56.8",
           "quote_ids": [
-            "JAINE_LP_0G_USDCENTRY100",
-            "JAINE_LP_0G_USDCEXIT100"
+            "JAINE_LP_0G_USDCENTRY600",
+            "JAINE_LP_0G_USDCEXIT600"
           ],
-          "quote_loss_usd": "1.7",
+          "quote_loss_usd": "58.2",
           "return_evidence_ids": [
             "JAINE_LP_0G_USDC-return"
           ],
@@ -37603,7 +37525,9 @@
       "deadline_compatibility": "NOT_REQUESTED",
       "decision_amount_0g": "1000",
       "diagnostics": {
-        "candidate_policy_exclusions": {},
+        "candidate_policy_exclusions": {
+          "lp_absolute_stress": 75
+        },
         "grid": [
           "0",
           "0.1",
@@ -37619,21 +37543,19 @@
             "allocation_gate=CLOSED"
           ],
           "GIMO_STAKE_0G": [],
-          "JAINE_LP_0G_USDC": [
-            "PROFILE_SLIPPAGE_LIMIT"
-          ],
+          "JAINE_LP_0G_USDC": [],
           "NATIVE_STAKE_0G": [],
-          "OKU_LP_0G_USDC": [
-            "PROFILE_SLIPPAGE_LIMIT"
-          ]
+          "OKU_LP_0G_USDC": []
         },
         "policy_revalidation_calls": 1,
         "selected_policy": {
-          "binding_constraints": [],
+          "binding_constraints": [
+            "concentration"
+          ],
           "candidate_weights": {
             "ASCEND_STAKE_A0G": "0.0",
             "GIMO_STAKE_0G": "0.0",
-            "JAINE_LP_0G_USDC": "0.1",
+            "JAINE_LP_0G_USDC": "0.6",
             "NATIVE_STAKE_0G": "0.0",
             "OKU_LP_0G_USDC": "0.0"
           },
@@ -37652,12 +37574,12 @@
             "concentration": {
               "limit": "0.60",
               "state": "PASS",
-              "value": "0.1"
+              "value": "0.6"
             },
             "lp_absolute_stress": {
               "limit": "0.10",
               "state": "PASS",
-              "value": "0.0162518804294528306334515039632594357738216744383062890900568"
+              "value": "0.0975112825767169838007090237795566146429300466298377345403408"
             },
             "required_risk": {
               "state": "PASS"
@@ -37680,8 +37602,8 @@
           },
           "holding_horizon_days": "365.0",
           "idle_time_to_cash_days": "0",
-          "idle_weight": "0.9",
-          "input_identity": "571ae97d4fd6e74cae4b93400158c71298d9dc31971e1445740c711eebe04708",
+          "idle_weight": "0.4",
+          "input_identity": "2af024e3612a9bd0d7dd6b5c257705f02ba0ecf64af5a2e99cea3c12a359b602",
           "label": "SYNTHETIC_EVALUATION_ONLY",
           "overall": "PASS",
           "per_strategy_exit_compatibility": {
@@ -37698,7 +37620,7 @@
             "JAINE_LP_0G_USDC": {
               "state": "NOT_REQUESTED",
               "time_to_cash_days": "0.01",
-              "weight": "0.1"
+              "weight": "0.6"
             },
             "NATIVE_STAKE_0G": {
               "state": "NOT_REQUESTED",
@@ -37722,7 +37644,7 @@
             "correlation": "UNRESOLVED_NOT_INFERRED",
             "decision_value": "1000.00",
             "evidence_class": "MODELLED",
-            "idle_weight": "0.9",
+            "idle_weight": "0.4",
             "joint_event_assumed": false,
             "label": "SYNTHETIC_EVALUATION_ONLY",
             "limitations": [
@@ -37730,7 +37652,7 @@
               "Only named quantified components covered; unresolved dependency risks remain",
               "Does not imply production admission or portfolio recommendation"
             ],
-            "lp_absolute_stress_loss": "0.0162518804294528306334515039632594357738216744383062890900568",
+            "lp_absolute_stress_loss": "0.0975112825767169838007090237795566146429300466298377345403408",
             "model_version": "RISK_STRESS_V1",
             "rows": [
               {
@@ -37756,15 +37678,15 @@
                 "weighted_contribution": "0"
               },
               {
-                "absolute_strategy_stress_loss": "16.2518804294528306334515039632594357738216744383062890900568",
+                "absolute_strategy_stress_loss": "97.5112825767169838007090237795566146429300466298377345403408",
                 "allocation_gate": "NOT_EVALUATED_BY_RISK_MODEL",
                 "risk_assessment_state": "ASSESSED_MODELLED",
                 "risk_category": "LP_POSITION_VALUE",
                 "scenario_id": "RISK_SCENARIOS_V1:LP_WORST_ABSOLUTE",
                 "strategy_id": "JAINE_LP_0G_USDC",
                 "strategy_stress_loss_fraction": "0.162518804294528306334515039632594357738216744383062890900568",
-                "weight": "0.1",
-                "weighted_contribution": "0.0162518804294528306334515039632594357738216744383062890900568"
+                "weight": "0.6",
+                "weighted_contribution": "0.0975112825767169838007090237795566146429300466298377345403408"
               },
               {
                 "absolute_strategy_stress_loss": "0",
@@ -37791,14 +37713,14 @@
             ],
             "staking_stress_loss": "0",
             "state": "ASSESSED_MODELLED",
-            "total_decision_sleeve_stress_loss": "16.2518804294528306334515039632594357738216744383062890900568",
-            "total_loss_fraction": "0.0162518804294528306334515039632594357738216744383062890900568",
+            "total_decision_sleeve_stress_loss": "97.5112825767169838007090237795566146429300466298377345403408",
+            "total_loss_fraction": "0.0975112825767169838007090237795566146429300466298377345403408",
             "unresolved_positive_allocations": []
           },
           "risk_input_identities": {
             "ASCEND_STAKE_A0G": "f58baa535d0ec95128edb0697e692c5f3f23dbd5a0d1e067fdc8e2f4d6f46e1d",
             "GIMO_STAKE_0G": "3eb686c72c576dfbc4e9b636c618a0d84df2eec698acc54ea28b33baf0434957",
-            "JAINE_LP_0G_USDC": "10ae01bccda6248e23f9b9ea891e1ac732bf21e336e976d0745af5e1841a3c59",
+            "JAINE_LP_0G_USDC": "820a1d4e0b82299a9a137c7b7f6f30790878126108d5920bdc3c4a74f3d7a128",
             "NATIVE_STAKE_0G": "a9a630ce648474f7096296c39f381643fff21777241c6cb54122c67c084c590c",
             "OKU_LP_0G_USDC": "c36d06d322d830c089c7843487ebf63f3b16dda7787e3e9d47fb64e1d822ff61"
           },
@@ -37808,7 +37730,7 @@
           "whole_portfolio_compliance": "NOT_ASSESSED"
         },
         "selected_revalidation": "PASSED",
-        "tested_combinations": 196
+        "tested_combinations": 2401
       },
       "enforced_constraint_set": [
         "decision_sleeve",
@@ -37829,23 +37751,23 @@
       "evaluation_version": "FINAL_EVALUATION_V1",
       "evidence_mode": "SYNTHETIC_EVALUATION_ONLY",
       "execution_readiness": "NOT_ESTABLISHED",
-      "expected_gross_return": "20",
-      "expected_net_profit": "13.3",
-      "expected_net_return": "0.0133",
+      "expected_gross_return": "120",
+      "expected_net_profit": "56.8",
+      "expected_net_return": "0.0568",
       "feasibility_state": "PASS_METHOD_SUPPORTED_CONSTRAINTS",
       "final_policy_enforced": true,
       "final_policy_feasibility": "PASS",
       "fixed_cost": "5",
       "holding_horizon_days": "365",
-      "idle_weight": "0.9",
+      "idle_weight": "0.4",
       "lifecycle_cost": "5",
-      "lp_absolute_stress": "0.0162518804294528306334515039632594357738216744383062890900568",
-      "lp_quote_execution_loss": "1.7",
+      "lp_absolute_stress": "0.0975112825767169838007090237795566146429300466298377345403408",
+      "lp_quote_execution_loss": "58.2",
       "method_id": "POLICY_AWARE_AMOUNT_OPTIMIZER",
       "method_lifecycle_cost": "5",
-      "method_lp_quote_loss": "1.7",
-      "method_reported_profit": "13.3",
-      "net_apy": "0.0133",
+      "method_lp_quote_loss": "58.2",
+      "method_reported_profit": "56.8",
+      "net_apy": "0.0568",
       "posthoc_deadline_compatibility": "NOT_REQUESTED",
       "posthoc_policy_constraints": {
         "allocation_gate": {
@@ -37861,12 +37783,12 @@
         "concentration": {
           "limit": "0.60",
           "state": "PASS",
-          "value": "0.1"
+          "value": "0.6"
         },
         "lp_absolute_stress": {
           "limit": "0.10",
           "state": "PASS",
-          "value": "0.0162518804294528306334515039632594357738216744383062890900568"
+          "value": "0.0975112825767169838007090237795566146429300466298377345403408"
         },
         "required_risk": {
           "state": "PASS"
@@ -37887,13 +37809,9 @@
           "allocation_gate=CLOSED"
         ],
         "GIMO_STAKE_0G": [],
-        "JAINE_LP_0G_USDC": [
-          "PROFILE_SLIPPAGE_LIMIT"
-        ],
+        "JAINE_LP_0G_USDC": [],
         "NATIVE_STAKE_0G": [],
-        "OKU_LP_0G_USDC": [
-          "PROFILE_SLIPPAGE_LIMIT"
-        ]
+        "OKU_LP_0G_USDC": []
       },
       "scenario_id": "QUOTE_CURVE",
       "scenario_version": "FINAL_EVALUATION_SCENARIOS_V1",
@@ -37918,7 +37836,7 @@
         "staking_stress": "SUPPORTED",
         "strategy_gate": "SUPPORTED"
       },
-      "total_stress_budget": "0.0162518804294528306334515039632594357738216744383062890900568",
+      "total_stress_budget": "0.0975112825767169838007090237795566146429300466298377345403408",
       "valuation": {
         "evidence_class": "MODELLED",
         "observation_timestamp": null,

@@ -238,3 +238,44 @@ def test_invalid_top_level_inputs_rejected(kwargs):
 def test_committed_policy_replay_exact():
     from tools.evaluation_policy_preflight import replay
     assert json.loads((ROOT/'results/evaluation_policy_iteration22.json').read_text())==replay()
+
+
+@pytest.mark.parametrize('profile', ['Conservative', 'Balanced', 'Aggressive'])
+@pytest.mark.parametrize('sid', [r.JAINE, r.OKU])
+def test_final_quote_loss_is_economic_not_legacy_profile_ceiling(profile, sid):
+    from src.ascend_optimizer.final_evaluation_inputs import SyntheticInputs
+    from src.ascend_optimizer.amount_optimizer import evaluate_candidate
+    limit = Decimal(str(get_profile(profile).max_entry_exit_slippage))
+    scenario = dict(scenario_id='SLIPPAGE_CORRECTION_TEST', label=p.LABEL,
+        modified_assumptions={'quote_base':str(limit + Decimal('.001')), 'quote_slope':'0'},
+        decision_amount_0g='1000', holding_horizon_days='365', profile=profile, cash_deadline_days=None)
+    inputs = SyntheticInputs(json.loads((ROOT/'data/application_evaluation_config.json').read_text()), scenario)
+    snapshot = inputs.snapshots[inputs.snapshots.strategy_id == sid].iloc[-1]
+    args = dict(weight=.1, decision_amount=1000, price_usd=1, horizon_days=365,
+        profile=get_profile(profile), admission_fn=inputs.admission, economics_fn=inputs.economics,
+        economics_mode=p.LABEL, as_of=inputs.as_of)
+    final = evaluate_candidate(inputs.metadata[sid], snapshot, evaluation_policy_mode=p.LABEL, **args)
+    compatibility = evaluate_candidate(inputs.metadata[sid], snapshot, **args)
+    assert final.eligible and final.technical_admission == 'SUPPORTED'
+    assert not compatibility.eligible and 'PROFILE_SLIPPAGE_LIMIT' in compatibility.rejection_reasons
+    assert 'PROFILE_SLIPPAGE_LIMIT' not in final.rejection_reasons
+    assert final.net_profit_usd == compatibility.net_profit_usd == inputs.point(sid, '100').net_profit_usd
+    assert final.economics_evidence == compatibility.economics_evidence
+    assert final.economics_evidence['quote_cost_usd'] == pytest.approx(200 * float(limit + Decimal('.001')))
+    assert final.fixed_execution_cost_usd == float(inputs.package['fixed_costs'][sid])
+
+
+def test_above_legacy_ceiling_final_selection_still_revalidates_exact_quotes():
+    from src.ascend_optimizer.final_evaluation_inputs import SyntheticInputs
+    scenario = dict(scenario_id='SLIPPAGE_REVALIDATION_TEST', label=p.LABEL,
+        modified_assumptions={'quote_base':'.04', 'quote_slope':'0',
+            'missing_returns':[r.NATIVE, r.GIMO, r.OKU]}, decision_amount_0g='1000',
+        holding_horizon_days='365', profile='Aggressive', cash_deadline_days=None)
+    inputs = SyntheticInputs(json.loads((ROOT/'data/application_evaluation_config.json').read_text()), scenario)
+    result = run_amount_optimizer(inputs.strategies, inputs.snapshots, decision_amount=1000,
+        price_usd=1, horizon_days=365, profile='Aggressive', as_of=inputs.as_of,
+        admission_fn=inputs.admission, economics_fn=inputs.economics, economics_mode=p.LABEL,
+        evaluation_policy_mode=p.LABEL, evaluation_policy_fn=p.PolicyEvaluator())
+    assert [(c.strategy_id,c.weight) for c in result.selected] == [(r.JAINE,.8)]
+    assert result.revalidation == 'PASSED' and result.evaluation_policy['overall'] == 'PASS'
+    assert result.grid == candidate_grid(get_profile('Aggressive'))

@@ -7,7 +7,7 @@ SYNTHETIC_EVALUATION_ONLY
 | Comparable scenarios | 49 |
 | Allocation disagreements | 27 |
 | Same allocation | 22 |
-| Mean common-rescore delta USD | $43.40 |
+| Mean common-rescore delta USD | $46.32 |
 | Median common-rescore delta USD | $0.00 |
 | POSITIVE profit deltas | 19 |
 | NEGATIVE profit deltas | 7 |

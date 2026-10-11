@@ -16,7 +16,7 @@ FIXED_100 vs FIXED_ZERO_CONTROL is a controlled fixed-cost paired ablation at th
 
 ## 04_quote_curve — Controlled synthetic LP quote-curve sensitivity
 
-Controlled curve ablation with identical return, notional and policy. Exact candidate quote economics change Jaine exposure within the synthetic model.
+Controlled curve ablation with identical return, notional and policy. Selected Jaine exposure is identical at 60%; quote loss and common profit differ. This pair demonstrates controlled economic sensitivity, not allocation-selection sensitivity.
 
 ## 05_profiles — Synthetic LP profile progression
 

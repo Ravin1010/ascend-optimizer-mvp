@@ -11,8 +11,9 @@
     ]
   ],
   "deployment": "NOT_REQUIRED_NOT_PLANNED_NOT_PERFORMED",
+  "historical_result_head": "7abfa1a347f35985052bee617e1bd82165f471f0",
   "label": "SYNTHETIC_EVALUATION_ONLY",
-  "mean_profit_delta_usd": "43.395279634804",
+  "mean_profit_delta_usd": "46.323851063376",
   "median_profit_delta_usd": "0",
   "ordinary_contributors": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
   "profit_basis": "COMMON_POST_SELECTION_EXACT_ALLOCATION_RESCORE",
@@ -21,6 +22,8 @@
     "POSITIVE": 19,
     "ZERO": 23
   },
+  "quote_pair_allocation_sensitivity": false,
+  "result_baseline": "ITERATION28_F1_CORRECTED_FINAL_POLICY",
   "scenario_count": 49,
   "scope": "DECISION_SLEEVE",
   "version": "CAPSTONE_FINDINGS_V1",

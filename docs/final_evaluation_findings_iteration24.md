@@ -1,6 +1,6 @@
 # Capstone findings — CAPSTONE_FINDINGS_V1
 
-SYNTHETIC_EVALUATION_ONLY. Derived exclusively from accepted FINAL_EVALUATION_V1 artifacts at `7abfa1a347f35985052bee617e1bd82165f471f0`. This document freezes interpretation for later proposal work; the proposal itself is unchanged.
+SYNTHETIC_EVALUATION_ONLY. Derived exclusively from FINAL_EVALUATION_V1 artifacts incorporating the Iteration 28 F1 final-policy correction, based on parent `0b91eaf6195c04047a642ca813a07c4c04864085`. Earlier results are recoverable at `7abfa1a347f35985052bee617e1bd82165f471f0`. Scenario inputs and comparison methods are unchanged. This document supplies the reconciled proposal interpretation.
 
 ## 1. Evaluation scope
 
@@ -14,7 +14,7 @@ The policy-aware amount-aware optimizer produced a different allocation from the
 
 **Fixed-cost controlled paired ablation:** FIXED_100 versus FIXED_ZERO_CONTROL holds notional, return, horizon and policy constant while removing the fixed lifecycle charge. The frozen final-method allocation changes from idle to positive Native exposure. Charging fixed costs once at the actual candidate amount can make small allocations uneconomic. FIXED_1000 and FIXED_10000 provide additional notional sensitivity context. This is causal sensitivity within the synthetic model only.
 
-**Quote-curve controlled paired ablation:** QUOTE_CURVE versus QUOTE_CONSTANT_CONTROL holds return, notional and policy constant while removing the amount slope of the synthetic LP quote curve. The chosen Jaine amount changes. Exact candidate quote assumptions can change selected LP allocation within this model. This is the second supported paired causal sensitivity; neither pair establishes an observed market effect.
+**Quote-curve controlled paired ablation:** QUOTE_CURVE versus QUOTE_CONSTANT_CONTROL holds return, notional and policy constant while removing the amount slope of the synthetic LP quote curve. Both cases select Jaine 60% and idle 40%. The curve changes assessed quote loss and profit at the identical selected allocation; it does not demonstrate allocation-selection sensitivity. The corrected quote allocation-sensitivity count is zero. This remains a controlled economic sensitivity within the synthetic model; neither pair establishes an observed market effect.
 
 ## 4. Profile and risk feasibility
 
@@ -34,7 +34,7 @@ The unchanged legacy optimizer is a simpler/reference approximation, not charact
 
 ## 8. Profit comparison
 
-Under the common exact-allocation rescore used solely for comparison, the defined matrix has a positive mean amount-aware-minus-legacy profit delta ($43.40), while the median is zero ($0.00). Across 49 comparable cases, 19 deltas are positive, 7 negative and 23 zero. Not all disagreements improve profit. Common post-selection rescore is not the legacy optimizer's own objective; selection-objective comparability is LIMITED. 4 simple-baseline rows lack qualified common economics and are separately LIMITED. No percentage-return superiority, forecast accuracy or production-performance claim follows. TIE has equal common profit and different secondary selection behavior.
+Under the common exact-allocation rescore used solely for comparison, the defined matrix has a positive mean amount-aware-minus-legacy profit delta ($46.32), while the median is zero ($0.00). Across 49 comparable cases, 19 deltas are positive, 7 negative and 23 zero. Not all disagreements improve profit. Common post-selection rescore is not the legacy optimizer's own objective; selection-objective comparability is LIMITED. 4 simple-baseline rows lack qualified common economics and are separately LIMITED. No percentage-return superiority, forecast accuracy or production-performance claim follows. TIE has equal common profit and different secondary selection behavior.
 
 ## 9. Causal sensitivity versus diagnostic association
 
@@ -63,4 +63,4 @@ The capstone contributes an evidence-qualified, amount-aware decision-sleeve opt
 
 Run `python tools/generate_final_results.py` and `python tools/generate_final_results.py --check`. The generator verifies pinned source SHA-256 hashes and counts without invoking an optimizer. The manifest lists sources, outputs, figure data, captions and this document's hash. CSVs retain accepted numerical precision; Markdown/figure labels round percentages to one decimal and currency to cents. Matplotlib Agg / DejaVu Sans PNGs have fixed metadata and no timestamp. Exact figure bytes require the renderer/font versions fingerprinted in the manifest; check mode fails on drift. Install the optional pinned renderer with `python -m pip install -r requirements-results.txt` when needed.
 
-Iteration 24 presents and interprets the frozen Iteration 23 deterministic synthetic evaluation. Its figures and findings describe behavior within the defined experiment matrix and do not constitute empirical market probabilities, forecasts, live execution results or proof of production performance.
+The current result package presents and interprets the Iteration 28-corrected Iteration 23 deterministic synthetic evaluation. Historical Iteration 24 outputs remain in Git history. Its figures and findings describe behavior within the defined experiment matrix and do not constitute empirical market probabilities, forecasts, live execution results or proof of production performance.

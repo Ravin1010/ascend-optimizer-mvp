@@ -5,7 +5,7 @@ SYNTHETIC_EVALUATION_ONLY
 | Feature | Evidence kind | Source cases / diagnostic | Interpretation |
 | --- | --- | --- | --- |
 | Fixed cost | CONTROLLED_PAIRED_SENSITIVITY | FIXED_100 vs FIXED_ZERO_CONTROL | Within-model cost ablation changes the selected decision |
-| Quote curve | CONTROLLED_PAIRED_SENSITIVITY | QUOTE_CURVE vs QUOTE_CONSTANT_CONTROL | Within-model curve ablation changes the selected LP amount |
+| Quote curve | CONTROLLED_PAIRED_SENSITIVITY | QUOTE_CURVE vs QUOTE_CONSTANT_CONTROL | Within-model curve ablation changes assessed quote loss/profit; selected weights are identical |
 | LP absolute stress | DIAGNOSTIC_ASSOCIATION_ONLY | Ordinary disagreement / candidate diagnostics | Not an isolated causal effect |
 | Concentration | DIAGNOSTIC_ASSOCIATION_ONLY | Ordinary disagreement / candidate diagnostics | Not an isolated causal effect |
 | Staking stress | DIAGNOSTIC_ASSOCIATION_ONLY | Ordinary disagreement / candidate diagnostics | Not an isolated causal effect |

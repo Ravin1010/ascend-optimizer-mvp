@@ -32,7 +32,7 @@ def test_pinned_sources_version_and_matrix(sources):
 
 @pytest.mark.parametrize('key,value',[('evaluation_version','V2'),('total_scenarios',48),('normalized_rows',195),
     ('core_scenarios',26),('core_rows',104),('targeted_scenarios',21),('amount_vs_legacy_allocation_difference_count',26),
-    ('method_disagreement_count',38),('fixed_cost_changes_decision_count',0),('quote_effect_changes_decision_count',0),
+    ('method_disagreement_count',38),('fixed_cost_changes_decision_count',0),('quote_effect_changes_decision_count',1),
     ('difference_driver_counts',{'MULTIPLE':27}),('amount_candidate_exclusion_or_selected_binding_scenario_counts',{})])
 def test_invalid_frozen_summary_fails_closed(sources,key,value):
     raw,s,c=deepcopy(sources);s[key]=value
@@ -73,7 +73,7 @@ def test_table_summary_outcomes_and_diagnostics(sources):
     raw,s,c=sources;t=f.table_specs(raw,s,c)
     assert len(t)==7
     assert [r[1:3] for r in t['03_outcomes']['rows']]==[[45,4],[45,4],[35,14],[36,13]]
-    assert [r[1] for r in t['06_constraint_diagnostics']['rows']]==[34,31,13,4]
+    assert [r[1] for r in t['06_constraint_diagnostics']['rows']]==[35,33,13,4]
     assert 'not empirical' in t['03_outcomes']['note']
     assert 'not empirical frequencies' in t['06_constraint_diagnostics']['note']
 
@@ -104,6 +104,7 @@ def test_paired_vs_association_table(sources):
     assert [r[1] for r in t['rows'][:2]]==['CONTROLLED_PAIRED_SENSITIVITY']*2
     assert all(r[1]=='DIAGNOSTIC_ASSOCIATION_ONLY' for r in t['rows'][2:])
     assert 'FIXED_100 vs FIXED_ZERO_CONTROL' in str(t) and 'QUOTE_CURVE vs QUOTE_CONSTANT_CONTROL' in str(t)
+    assert 'selected weights are identical' in t['rows'][1][3]
 
 
 @pytest.mark.parametrize('id',[f'{n:02d}_{name}' for n,name in enumerate(('outcomes','allocations','fixed_cost','quote_curve','profiles','deadlines','profit_deltas','constraints'),1)])
@@ -154,6 +155,8 @@ def test_findings_required_qualifications(sources):
     assert 'FIXED_100 versus FIXED_ZERO_CONTROL' in text and 'QUOTE_CURVE versus QUOTE_CONSTANT_CONTROL' in text
     assert 'diagnostic association, not isolated causal effects' in text
     assert 'median is zero' in text and '7 negative' in text
+    assert 'does not demonstrate allocation-selection sensitivity' in text
+    assert machine['quote_pair_allocation_sensitivity'] is False
     assert 'first-class optimizer outcome' in text and 'Not all disagreements improve profit' in text
     assert machine['profit_delta_sign_counts']=={'POSITIVE':19,'NEGATIVE':7,'ZERO':23}
     assert 'always better' not in text and 'guaranteed withdrawal times' in text and 'not guaranteed' in text
@@ -177,7 +180,9 @@ def test_manifest_and_exact_committed_outputs(outputs):
 
 
 def test_frozen_source_and_canonical_evidence_unchanged(sources):
-    paths=list(f.SOURCE_HASHES)+['data/'+name for name in ('runtime_strategy_config.json','admission_evidence.csv',
+    # Result/contract bytes are pinned by read_sources; canonical evidence is
+    # still exhaustively compared with the accepted historical parent.
+    paths=['data/final_evaluation_config.json']+['data/'+name for name in ('runtime_strategy_config.json','admission_evidence.csv',
         'strategy_return_evidence.json','lp_quote_evidence.json','lifecycle_cost_evidence.json','lp_evaluation_config.json',
         'evaluation_policy.json','risk_scenarios.json','exit_evaluation_config.json','strategies.csv')]
     for path in paths:

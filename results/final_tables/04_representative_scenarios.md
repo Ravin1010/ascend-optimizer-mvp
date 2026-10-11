@@ -19,7 +19,7 @@ SYNTHETIC_EVALUATION_ONLY
 | QUOTE_CURVE | Highest Yield | Jaine 60.0% | 40.0% | $56.80 | 9.8% | NOT_SUPPORTED | Final policy not enforced |
 | QUOTE_CURVE | Equal Weight | Jaine 60.0% | 40.0% | $56.80 | 9.8% | NOT_SUPPORTED | Final policy not enforced |
 | QUOTE_CURVE | Legacy Linear | None (idle) | 100.0% | $0.00 | 0.0% | NOT_SUPPORTED | Idle selected; exclusions below are diagnostics, not isolated causes; Final policy not enforced; JAINE_LP_0G_USDC:slippage_exceeds_profile_limit; OKU_LP_0G_USDC:slippage_exceeds_profile_limit |
-| QUOTE_CURVE | Policy-Aware Amount | Jaine 10.0% | 90.0% | $13.30 | 1.6% | NOT_REQUESTED | No selected boundary |
+| QUOTE_CURVE | Policy-Aware Amount | Jaine 60.0% | 40.0% | $56.80 | 9.8% | NOT_REQUESTED | concentration; Candidate exclusion: lp_absolute_stress |
 | QUOTE_CONSTANT_CONTROL | Highest Yield | Jaine 60.0% | 40.0% | $114.40 | 9.8% | NOT_SUPPORTED | Final policy not enforced |
 | QUOTE_CONSTANT_CONTROL | Equal Weight | Jaine 60.0% | 40.0% | $114.40 | 9.8% | NOT_SUPPORTED | Final policy not enforced |
 | QUOTE_CONSTANT_CONTROL | Legacy Linear | Jaine 60.0% | 40.0% | $114.40 | 9.8% | NOT_SUPPORTED | Final policy not enforced |

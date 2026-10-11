@@ -4,8 +4,8 @@ SYNTHETIC_EVALUATION_ONLY
 
 | Constraint | Scenario count |
 | --- | --- |
-| LP absolute stress | 34 |
-| Concentration | 31 |
+| LP absolute stress | 35 |
+| Concentration | 33 |
 | Staking stress | 13 |
 | Cash deadline | 4 |
 

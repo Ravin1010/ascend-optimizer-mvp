@@ -114,7 +114,7 @@ def test_frozen_data_results_application_and_frontend_unchanged():
              'src/ascend_optimizer/amount_optimizer.py','src/ascend_optimizer/optimizer.py',
              'src/ascend_optimizer/economics_evidence.py','src/ascend_optimizer/risk_stress.py',
              'src/ascend_optimizer/exit_liquidity.py','src/ascend_optimizer/evaluation_policy.py']
-    assert not subprocess.check_output(['git','diff',BASE,'--',*paths],cwd=ROOT)
+    assert not subprocess.check_output(['git','diff',BASE,'4bbe78dc621036e9f6b692af386f458c7b9311f3','--',*paths],cwd=ROOT)
 
 
 @pytest.mark.parametrize('profile,deadline', [('Conservative',None),('Balanced',8),('Aggressive',15)])

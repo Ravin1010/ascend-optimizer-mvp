@@ -8,6 +8,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 DRAFT = ROOT/'docs/proposal_reconciliation_iteration27.md'
 BASE = '4bbe78dc621036e9f6b692af386f458c7b9311f3'
+FREEZE = '2c9071a1d58da0afb977fa011933c7ef205ea92d'
 TEXT = DRAFT.read_text()
 MATRIX = TEXT.split('## Reconciliation matrix')[1].split('## Proposal source and audit boundaries')[0]
 ROWS = [line.split('|')[1:-1] for line in MATRIX.splitlines()
@@ -76,12 +77,13 @@ def test_frozen_artifact_map_paths_and_selection():
 
 def test_documentation_only_change_and_all_frozen_files_exact():
     allowed={'docs/proposal_reconciliation_iteration27.md','tests/test_proposal_reconciliation.py'}
-    changed=subprocess.check_output(['git','diff',BASE,'--name-only'],cwd=ROOT).decode().splitlines()
-    untracked=subprocess.check_output(['git','ls-files','--others','--exclude-standard'],cwd=ROOT).decode().splitlines()
-    assert set(changed+untracked)<=allowed
-    # Compare every tracked frozen file, not just result hashes or a few examples.
+    # Audit the accepted Iteration 26 -> 27 commit boundary, not later approved
+    # work or local build output. Preserve the exhaustive historical byte check.
+    changed=subprocess.check_output(['git','diff',BASE,FREEZE,'--name-only'],cwd=ROOT).decode().splitlines()
+    assert set(changed)==allowed
     paths=subprocess.check_output(['git','ls-tree','-r','--name-only',BASE],cwd=ROOT).decode().splitlines()
     for path in paths:
         if path in allowed: continue
         expected=subprocess.check_output(['git','show',BASE+':'+path],cwd=ROOT)
-        assert (ROOT/path).read_bytes()==expected,path
+        actual=subprocess.check_output(['git','show',FREEZE+':'+path],cwd=ROOT)
+        assert actual==expected,path

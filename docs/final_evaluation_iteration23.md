@@ -1,6 +1,6 @@
 # Iteration 23 — final evaluation harness
 
-The four-method contract is frozen in `data/final_evaluation_config.json` and `data/final_evaluation_contract.md`. The dedicated harness invokes the actual legacy linear solver and actual Iteration 22 policy-aware amount solver. Transparent simple baselines live separately. No production, optimizer, API, profile, policy, LP config or canonical evidence file was modified.
+The four-method contract is frozen in `data/final_evaluation_config.json` and `data/final_evaluation_contract.md`. The dedicated harness invokes the actual legacy linear solver and actual Iteration 22 policy-aware amount solver. Transparent simple baselines live separately. The current results incorporate the approved Iteration 28 F1 removal of legacy fixed profile slippage ceilings from final-policy candidates. Exact quote economics remain; comparison methods, scenario inputs, API, profiles, policy, LP config and canonical evidence are unchanged. Earlier results remain recoverable at accepted head 7abfa1a347f35985052bee617e1bd82165f471f0.
 
 ## Matrix and results
 
@@ -20,9 +20,9 @@ The four-method contract is frozen in `data/final_evaluation_config.json` and `d
 | MULTIPLE | 26 | Multiple supported diagnostic contributors; not isolated causal attribution |
 | OBJECTIVE_DIFFERENCE | 1 | Equal primary profit, different secondary tie selection |
 
-Common exact-allocation rescoring permits 49 amount-versus-legacy profit deltas. Mean is **$43.395279634804**, median **$0** in this defined matrix. This rescoring is separate from each method's selection objective. Legacy selection-profit comparisons remain `LIMITED`; **4 simple-baseline rows** have unavailable common economics and are also `LIMITED`. No missing cost/quote is substituted by zero, and no improvement percentage is reported.
+Common exact-allocation rescoring permits 49 amount-versus-legacy profit deltas. Mean is **$46.323851063376**, median **$0** in this defined matrix. This rescoring is separate from each method's selection objective. Legacy selection-profit comparisons remain `LIMITED`; **4 simple-baseline rows** have unavailable common economics and are also `LIMITED`. No missing cost/quote is substituted by zero, and no improvement percentage is reported.
 
-Amount-method candidate exclusions or selected-binding diagnostics occur in 34 scenarios for LP absolute stress, 31 for concentration, 13 for staking stress and 4 for cash deadline. These are distinct scenario counts over explored candidates/selected boundaries, not assertions that every selected constraint equals its limit. Gate exclusions appear in all 49 scenarios; admission/evidence exclusions in 12. Deadline diagnostics exclude potential modelled Native exits in 2 cases and Gimo exits in 4. The amount method idles while another invests in 9 cases, and invests while another idles in 4.
+Amount-method candidate exclusions or selected-binding diagnostics occur in 35 scenarios for LP absolute stress, 33 for concentration, 13 for staking stress and 4 for cash deadline. These are distinct scenario counts over explored candidates/selected boundaries, not assertions that every selected constraint equals its limit. Gate exclusions appear in all 49 scenarios; admission/evidence exclusions in 4. Deadline diagnostics exclude potential modelled Native exits in 2 cases and Gimo exits in 4. The amount method idles while another invests in 9 cases, and invests while another idles in 4.
 
 ## Representative reproducible behavior
 
@@ -32,7 +32,7 @@ Amount-method candidate exclusions or selected-binding diagnostics occur in 34 s
 | FIXED_1000 / FIXED_10000, same economics | Native 60%, idle 40% | Actual allocated amount changes cost viability |
 | FIXED_ZERO_CONTROL at 100 0G | Native 60% | Explicit paired fixed-cost sensitivity |
 | LP_PROGRESSION: same Jaine-only attractive return | Conservative 30%, Balanced 60%, Aggressive 80% | Separate LP absolute-loss namespace and concentration/grid |
-| QUOTE_CURVE vs QUOTE_CONSTANT_CONTROL | Jaine 10% vs 60% | Exact-amount synthetic quote curve changes selection |
+| QUOTE_CURVE vs QUOTE_CONSTANT_CONTROL | Jaine 60% in both cases | Exact-amount quote loss/profit differs at identical allocation; quote allocation sensitivity is zero |
 | DEADLINE_STAKING_1 | 100% idle | Both async staking exits fail the one-day deadline |
 | DEADLINE_STAKING_8 | Native 60%, idle 40% | Native 7.1 modelled days fits; Gimo 10.1 does not |
 | DEADLINE_STAKING_15 | Native 60%, Gimo 40% | Both modelled exit delays fit |

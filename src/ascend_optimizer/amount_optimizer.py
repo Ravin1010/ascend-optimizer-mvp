@@ -229,7 +229,9 @@ def evaluate_candidate(strategy: pd.Series, snapshot: pd.Series | None, *, weigh
         elif value < 0 or (field != "exit_time_days" and value > 1):
             reasons.append("INVALID_" + field)
     c = replace(c, **values)
-    if all(values[f] is not None for f in ("entry_slippage_rate", "exit_slippage_rate")):
+    # Final policy uses qualified exact-amount quote loss in economics, not
+    # legacy profile slippage ceilings. Compatibility candidates retain them.
+    if evaluation_policy_mode is None and all(values[f] is not None for f in ("entry_slippage_rate", "exit_slippage_rate")):
         if max(values["entry_slippage_rate"], values["exit_slippage_rate"]) > profile.max_entry_exit_slippage:
             reasons.append("PROFILE_SLIPPAGE_LIMIT")
     if evaluation_policy_mode is None and values["exit_time_days"] is not None and values["exit_time_days"] > profile.max_exit_time_days:

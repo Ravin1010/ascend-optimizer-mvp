@@ -18,13 +18,15 @@ ROOT = Path(__file__).resolve().parents[2]
 VERSION = 'FINAL_RESULTS_V1'
 FINDINGS_VERSION = 'CAPSTONE_FINDINGS_V1'
 LABEL = 'SYNTHETIC_EVALUATION_ONLY'
-SOURCE_HEAD = '7abfa1a347f35985052bee617e1bd82165f471f0'
+SOURCE_HEAD = '0b91eaf6195c04047a642ca813a07c4c04864085'
+HISTORICAL_RESULT_HEAD = '7abfa1a347f35985052bee617e1bd82165f471f0'
+RESULT_BASELINE = 'ITERATION28_F1_CORRECTED_FINAL_POLICY'
 SOURCE_HASHES = {
-    'results/final_evaluation_iteration23.json':'746d2e77b19c5f701e6171902b4902f414c6ad4098691fdb493abd1ab60c08ee',
-    'results/final_evaluation_iteration23.csv':'cee106705b5622766c0080a64d8318e83c83ca7b36a3dc8a6c0618b6a6f9f75d',
-    'results/final_evaluation_iteration23_summary.json':'215f2d17a1af41ffc112395333c8a298110771532c389b3c06b22be420523da0',
+    'results/final_evaluation_iteration23.json':'227cb81120590d092214f1a0b24d8d7e7865f6648e1e7385892281c5377fd2d6',
+    'results/final_evaluation_iteration23.csv':'bbcd2206142a482c13d2d91453db4e741f931cd762b68dd25222479290d1caf9',
+    'results/final_evaluation_iteration23_summary.json':'e5c519c526078406c457a20c6baf1a16f1ffcdd6e3b0ceb45f165e897b468ca9',
     'data/final_evaluation_config.json':'8c66ed55132aa271e422d660b1684f36d25b592256e771c14c4cd6af0e9ec941',
-    'data/final_evaluation_contract.md':'54127489a6b03b58aa9bbfbed91786c8d8ea217e17e7a9c2af4caba78d1cdb8c',
+    'data/final_evaluation_contract.md':'43e4c97e61deb0dfe91c54dec7dceb5a67cf0078d80747e5415f7727360e2602',
 }
 METHOD_LABELS = dict(zip(METHODS, ('Highest Yield','Equal Weight','Legacy Linear','Policy-Aware Amount')))
 ASSET_LABELS = dict(zip(STRATEGIES, ('Native','Gimo','Jaine','Oku','Ascend')))
@@ -75,11 +77,11 @@ def validate(raw,summary,config):
     require(sum(s['kind']=='TARGETED' for s in scenarios)==22,'Targeted matrix')
     expected={'total_scenarios':49,'normalized_rows':196,'core_scenarios':27,'core_rows':108,'targeted_scenarios':22,
               'amount_vs_legacy_allocation_difference_count':27,'method_disagreement_count':39,
-              'fixed_cost_changes_decision_count':1,'quote_effect_changes_decision_count':1}
+              'fixed_cost_changes_decision_count':1,'quote_effect_changes_decision_count':0}
     require(all(summary[k]==v for k,v in expected.items()),'Frozen summary counts')
     require(summary['difference_driver_counts']=={'MULTIPLE':26,'OBJECTIVE_DIFFERENCE':1},'Driver counts')
     require(summary['amount_candidate_exclusion_or_selected_binding_scenario_counts']==
-            {'lp_absolute_stress':34,'concentration':31,'staking_stress':13,'cash_deadline':4},'Diagnostic counts')
+            {'lp_absolute_stress':35,'concentration':33,'staking_stress':13,'cash_deadline':4},'Diagnostic counts')
     for m,(rec,idle) in zip(METHODS,((45,4),(45,4),(35,14),(36,13))):
         subset=[r for r in rows if r['method_id']==m]
         require(summary['method_counts'][m]=={'rows':49,'recommendation_rows':rec,'idle_rows':idle},'Method summary counts')
@@ -167,7 +169,7 @@ def table_specs(raw,summary,config):
         [[label,summary['amount_candidate_exclusion_or_selected_binding_scenario_counts'][key]] for key,label in DIAGNOSTIC_NAMES.items()],DIAGNOSTIC_NOTE)
     add('07_causality','Paired sensitivity versus diagnostic association',['Feature','Evidence kind','Source cases / diagnostic','Interpretation'],
         [['Fixed cost','CONTROLLED_PAIRED_SENSITIVITY','FIXED_100 vs FIXED_ZERO_CONTROL','Within-model cost ablation changes the selected decision'],
-         ['Quote curve','CONTROLLED_PAIRED_SENSITIVITY','QUOTE_CURVE vs QUOTE_CONSTANT_CONTROL','Within-model curve ablation changes the selected LP amount']]+
+         ['Quote curve','CONTROLLED_PAIRED_SENSITIVITY','QUOTE_CURVE vs QUOTE_CONSTANT_CONTROL','Within-model curve ablation changes assessed quote loss/profit; selected weights are identical']]+
         [[feature,'DIAGNOSTIC_ASSOCIATION_ONLY','Ordinary disagreement / candidate diagnostics','Not an isolated causal effect'] for feature in
          ('LP absolute stress','Concentration','Staking stress','Cash deadline','Grid discretization','Multi-factor disagreements','Fixed cost outside the paired ablation','Quote effects outside the paired ablation')],
         'Only controlled paired ablations support isolated causal sensitivity within this synthetic model. Ordinary contributor annotations are associated diagnostics.')
@@ -203,7 +205,7 @@ def figure_specs(raw,summary,config):
         ('03_fixed_cost','Controlled synthetic fixed-cost sensitivity',('FIXED_100','FIXED_ZERO_CONTROL','FIXED_1000','FIXED_10000'),
          'FIXED_100 vs FIXED_ZERO_CONTROL is a controlled fixed-cost paired ablation at the same notional. Larger-notional cases are contextual sensitivities, not the paired ablation.'),
         ('04_quote_curve','Controlled synthetic LP quote-curve sensitivity',('QUOTE_CURVE','QUOTE_CONSTANT_CONTROL'),
-         'Controlled curve ablation with identical return, notional and policy. Exact candidate quote economics change Jaine exposure within the synthetic model.'),
+         'Controlled curve ablation with identical return, notional and policy. Selected Jaine exposure is identical at 60%; quote loss and common profit differ. This pair demonstrates controlled economic sensitivity, not allocation-selection sensitivity.'),
         ('05_profiles','Synthetic LP profile progression',('LP_PROGRESSION_CONSERVATIVE','LP_PROGRESSION_BALANCED','LP_PROGRESSION_AGGRESSIVE'),
          'Profile-specific concentration, LP absolute-stress policy and discrete grid jointly constrain the selected Jaine exposure. This is not an isolated LP-risk causal estimate.'),
         ('06_deadlines','Cash-deadline effect under modelled exit timing',('DEADLINE_STAKING_1','DEADLINE_STAKING_8','DEADLINE_STAKING_15'),
@@ -280,11 +282,13 @@ def findings(raw,summary,config):
         'profit_delta_sign_counts':dict(signs),'profit_basis':'COMMON_POST_SELECTION_EXACT_ALLOCATION_RESCORE',
         'mean_profit_delta_usd':summary['mean_comparable_profit_delta'],'median_profit_delta_usd':summary['median_comparable_profit_delta'],
         'controlled_pairs':[['FIXED_100','FIXED_ZERO_CONTROL'],['QUOTE_CURVE','QUOTE_CONSTANT_CONTROL']],
+        'result_baseline':RESULT_BASELINE,'historical_result_head':HISTORICAL_RESULT_HEAD,
+        'quote_pair_allocation_sensitivity':False,
         'ordinary_contributors':'DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT','deployment':'NOT_REQUIRED_NOT_PLANNED_NOT_PERFORMED'}
     q=summary
     document=f'''# Capstone findings — {FINDINGS_VERSION}
 
-{LABEL}. Derived exclusively from accepted {config['version']} artifacts at `{SOURCE_HEAD}`. This document freezes interpretation for later proposal work; the proposal itself is unchanged.
+{LABEL}. Derived exclusively from {config['version']} artifacts incorporating the Iteration 28 F1 final-policy correction, based on parent `{SOURCE_HEAD}`. Earlier results are recoverable at `{HISTORICAL_RESULT_HEAD}`. Scenario inputs and comparison methods are unchanged. This document supplies the reconciled proposal interpretation.
 
 ## 1. Evaluation scope
 
@@ -298,7 +302,7 @@ The policy-aware amount-aware optimizer produced a different allocation from the
 
 **Fixed-cost controlled paired ablation:** FIXED_100 versus FIXED_ZERO_CONTROL holds notional, return, horizon and policy constant while removing the fixed lifecycle charge. The frozen final-method allocation changes from idle to positive Native exposure. Charging fixed costs once at the actual candidate amount can make small allocations uneconomic. FIXED_1000 and FIXED_10000 provide additional notional sensitivity context. This is causal sensitivity within the synthetic model only.
 
-**Quote-curve controlled paired ablation:** QUOTE_CURVE versus QUOTE_CONSTANT_CONTROL holds return, notional and policy constant while removing the amount slope of the synthetic LP quote curve. The chosen Jaine amount changes. Exact candidate quote assumptions can change selected LP allocation within this model. This is the second supported paired causal sensitivity; neither pair establishes an observed market effect.
+**Quote-curve controlled paired ablation:** QUOTE_CURVE versus QUOTE_CONSTANT_CONTROL holds return, notional and policy constant while removing the amount slope of the synthetic LP quote curve. Both cases select Jaine 60% and idle 40%. The curve changes assessed quote loss and profit at the identical selected allocation; it does not demonstrate allocation-selection sensitivity. The corrected quote allocation-sensitivity count is zero. This remains a controlled economic sensitivity within the synthetic model; neither pair establishes an observed market effect.
 
 ## 4. Profile and risk feasibility
 
@@ -347,7 +351,7 @@ The capstone contributes an evidence-qualified, amount-aware decision-sleeve opt
 
 Run `python tools/generate_final_results.py` and `python tools/generate_final_results.py --check`. The generator verifies pinned source SHA-256 hashes and counts without invoking an optimizer. The manifest lists sources, outputs, figure data, captions and this document's hash. CSVs retain accepted numerical precision; Markdown/figure labels round percentages to one decimal and currency to cents. Matplotlib Agg / DejaVu Sans PNGs have fixed metadata and no timestamp. Exact figure bytes require the renderer/font versions fingerprinted in the manifest; check mode fails on drift. Install the optional pinned renderer with `python -m pip install -r requirements-results.txt` when needed.
 
-Iteration 24 presents and interprets the frozen Iteration 23 deterministic synthetic evaluation. Its figures and findings describe behavior within the defined experiment matrix and do not constitute empirical market probabilities, forecasts, live execution results or proof of production performance.
+The current result package presents and interprets the Iteration 28-corrected Iteration 23 deterministic synthetic evaluation. Historical Iteration 24 outputs remain in Git history. Its figures and findings describe behavior within the defined experiment matrix and do not constitute empirical market probabilities, forecasts, live execution results or proof of production performance.
 '''
     return machine,document.encode()
 
@@ -370,7 +374,7 @@ def generate(root=ROOT):
     import matplotlib
     from matplotlib import font_manager,ft2font
     font=Path(font_manager.findfont('DejaVu Sans'))
-    manifest={'generator_version':VERSION,'findings_version':FINDINGS_VERSION,'label':LABEL,'source_head':SOURCE_HEAD,
+    manifest={'generator_version':VERSION,'findings_version':FINDINGS_VERSION,'label':LABEL,'source_head':SOURCE_HEAD,'result_baseline':RESULT_BASELINE,'historical_result_head':HISTORICAL_RESULT_HEAD,
         'source_sha256':SOURCE_HASHES,'table_files':[p for p in outputs if p.startswith('results/final_tables/')],
         'figure_files':[p for p in outputs if p.endswith('.png')],'figure_data_files':[p for p in outputs if p.endswith('_data.csv')],
         'findings_document':'docs/final_evaluation_findings_iteration24.md',

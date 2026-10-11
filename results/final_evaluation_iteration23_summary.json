@@ -2,12 +2,12 @@
   "amount_abstains_other_allocates": 9,
   "amount_candidate_exclusion_or_selected_binding_scenario_counts": {
     "cash_deadline": 4,
-    "concentration": 31,
-    "lp_absolute_stress": 34,
+    "concentration": 33,
+    "lp_absolute_stress": 35,
     "staking_stress": 13
   },
   "amount_gate_or_admission_evidence_block_counts": {
-    "admission_or_evidence": 12,
+    "admission_or_evidence": 4,
     "gate": 49
   },
   "amount_invests_other_idles": 4,
@@ -119,7 +119,7 @@
     },
     {
       "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
-      "common_profit_delta": "1205",
+      "common_profit_delta": "1285",
       "diagnostic_contributors": [
         "FIXED_COST",
         "AMOUNT_SPECIFIC_QUOTE"
@@ -209,7 +209,7 @@
     },
     {
       "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
-      "common_profit_delta": "507",
+      "common_profit_delta": "527",
       "diagnostic_contributors": [
         "FIXED_COST",
         "AMOUNT_SPECIFIC_QUOTE"
@@ -350,7 +350,7 @@
     },
     {
       "attribution_basis": "DIAGNOSTIC_ASSOCIATION_NOT_ISOLATED_CAUSAL_EFFECT",
-      "common_profit_delta": "13.3",
+      "common_profit_delta": "56.8",
       "diagnostic_contributors": [
         "FIXED_COST",
         "AMOUNT_SPECIFIC_QUOTE"
@@ -376,7 +376,7 @@
   "fixed_cost_changes_decision_count": 1,
   "label": "SYNTHETIC_EVALUATION_ONLY",
   "limited_profit_rows": 4,
-  "mean_comparable_profit_delta": "43.395279634804",
+  "mean_comparable_profit_delta": "46.323851063376",
   "median_comparable_profit_delta": "0",
   "method_counts": {
     "EQUAL_WEIGHT_ELIGIBLE_BASELINE": {
@@ -403,7 +403,7 @@
   "method_disagreement_count": 39,
   "method_selection_profit_comparability": "LIMITED_LEGACY_REFERENCE_LINEARIZATION_VS_EXACT_COST_QUOTE_OBJECTIVE",
   "normalized_rows": 196,
-  "quote_effect_changes_decision_count": 1,
+  "quote_effect_changes_decision_count": 0,
   "sensitivity_count_basis": "Explicit paired ablations only; other diagnostic associations are not causal counts",
   "statistics_basis": "Descriptive deterministic counts over this synthetic matrix, not market frequencies",
   "targeted_scenarios": 22,
