@@ -9,7 +9,7 @@ const executionFingerprint=()=>hash(["controlled-executor.js","controlled-plan.j
 const same = (a,b) => String(a || "").toLowerCase() === String(b || "").toLowerCase();
 const json = value => JSON.parse(JSON.stringify(value,(_,v)=>typeof v === "bigint" ? v.toString():v));
 function publicExecution(options) {
-  // Separate external authorization/readiness path; always ends at a pre-signer barrier.
+  // Separate exact-commit authorization/readiness path; read-only mode never loads keys.
   return require("./release-review").publicExecution(options);
 }
 async function artifactsFor(hre, plan) {
@@ -129,10 +129,13 @@ async function validateResume({provider,bundle,review,sourceCommit,journal,actor
   await verifyState(provider,bundle,state,journal.receipts.map(r=>r.step),actor,review.config);
   return state;
 }
-// Shared state machine. Public entry is unconditionally sealed above.
-async function engine({provider,signer,actor,bundle,review,sourceCommit,store,maxSteps=33,expectedChain,mode}) {
+// One shared state machine for local rehearsal and exactly approved Galileo execution.
+async function engine({provider,signer,actor,bundle,review,sourceCommit,store,maxSteps=33,expectedChain,mode,beforeStep=async()=>{},expectedNonce,approvedFeeCeilingWei}) {
+  await beforeStep();
   const initial=await context(provider,expectedChain,actor,await signer.getAddress());
+  if(expectedNonce!==undefined&&initial.nonce!==expectedNonce)stop("approved execution nonce mismatch");
   const price=await feeQuote(provider);
+  if(approvedFeeCeilingWei!==undefined&&ceilBps(price,review.config.feeMultiplierBps)>BigInt(approvedFeeCeilingWei))stop("approved starting fee ceiling exceeded");
   let journal=store.load(); let state;
   if(journal) state=await validateResume({provider,bundle,review,sourceCommit,journal,actor,expectedChain,mode});
   else {
@@ -145,6 +148,7 @@ async function engine({provider,signer,actor,bundle,review,sourceCommit,store,ma
   }
   try {
     while(journal.receipts.length < Math.min(maxSteps,33)) {
+      await beforeStep();
       // Rebuild and hash immediately before every step: injected graph mutations fail closed.
       if(hash({config:review.config,plan:review.plan}) !== review.fingerprint || hash(bundle)!==journal.artifactHash || executionFingerprint()!==journal.toolingHash) stop("configuration/branch/artifact drift");
       const index=journal.receipts.length, step=review.transactionSteps[index], nonce=journal.startNonce+index;
@@ -156,7 +160,8 @@ async function engine({provider,signer,actor,bundle,review,sourceCommit,store,ma
       const request={...built.tx,chainId:expectedChain,gasLimit:guarded.gasLimit,gasPrice:guarded.gasPrice};
       const requestHash=hash(json(request));
       journal.pendingIntent={step:step.name,nonce,requestHash}; store.save(journal);
-      const tx=await signer.sendTransaction(request); // Public entry sealed; tests use only generated local accounts.
+      await beforeStep(); // Recheck exact approved HEAD immediately before signing.
+      const tx=await signer.sendTransaction(request);
       journal.pendingIntent.transactionHash=tx.hash; store.save(journal);
       const receipt=await tx.wait(1);
       if(!receipt || receipt.status !== 1) stop("failed receipt");
@@ -183,7 +188,7 @@ async function engine({provider,signer,actor,bundle,review,sourceCommit,store,ma
   }
 }
 async function runLocal({hre,config,sourceCommit,store,maxSteps}) {
-  // All checks precede signer creation. There is no public-network execution adapter.
+  // Local generated accounts only; no public execution through this entry.
   if(hre.network.name !== "hardhat" || Number(BigInt(await hre.ethers.provider.send("eth_chainId",[]))) !== 31337) stop("local executor requires in-process Hardhat 31337");
   await hre.ethers.provider.send("hardhat_metadata",[]);
   const review=controlledPlan(config);
@@ -191,6 +196,19 @@ async function runLocal({hre,config,sourceCommit,store,maxSteps}) {
   const [signer]=await hre.ethers.getSigners();
   return engine({provider:hre.ethers.provider,signer,actor:await signer.getAddress(),bundle,review,sourceCommit,store,maxSteps,expectedChain:31337,mode:"LOCAL_ONLY"});
 }
+async function runGalileo({provider,signer,bundle,sourceCommit,store,permission}) {
+  const {assertPermission,permissionPolicy}=require("./release-boundary");
+  const policy=permissionPolicy(permission);
+  if(sourceCommit!==permission.source)stop("execution source differs from approved permission");
+  const beforeStep=async()=>{
+    assertPermission(permission);
+    const quote=await feeQuote(provider);
+    if(quote>BigInt(policy.maxFeeQuoteWei)||ceilBps(quote,20000)>BigInt(policy.feeCeilingWei))stop("approved external fee quote/ceiling exceeded");
+  };
+  await beforeStep();
+  return engine({provider,signer,actor:controlledPlan().config.deployer,bundle,review:controlledPlan(),sourceCommit,store,expectedChain:16602,mode:"GALILEO",beforeStep,expectedNonce:policy.expectedNonce,approvedFeeCeilingWei:policy.feeCeilingWei});
+}
+
 async function publicPreview(provider,config) {
   const review=controlledPlan(config);
   const c=await context(provider,16602,review.config.deployer,review.config.user);
@@ -199,4 +217,4 @@ async function publicPreview(provider,config) {
   budgetGuard({balance:c.balance,initialBalance:c.balance,reserve,spent:0n,remaining:ceilBps(remaining,12000)});
   return json({mode:"PUBLIC_READ_ONLY",broadcastReady:false,transactionsSubmitted:0,block:{number:c.block.number,hash:c.block.hash,timestamp:c.block.timestamp},balanceWei:c.balance,feeQuoteWei:quote,feeCeilingWei:ceiling,reserveWei:reserve,projectedRequirementWei:ceilBps(remaining,12000)+reserve,initialEnvelopeWei:remaining,materialGrowthBps:2000,planHash:review.fingerprint,counts:review.plan.counts});
 }
-module.exports={runLocal,publicExecution,publicPreview,artifactsFor,context,feeQuote,remainingEnvelope,budgetGuard,guardTransaction,validateResume,transactionRequest};
+module.exports={runGalileo,runLocal,publicExecution,publicPreview,artifactsFor,context,feeQuote,remainingEnvelope,budgetGuard,guardTransaction,validateResume,transactionRequest};

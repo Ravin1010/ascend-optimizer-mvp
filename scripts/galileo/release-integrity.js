@@ -5,7 +5,7 @@ const {controlledPlan,stop}=require("./controlled-plan");
 const {hash}=require("./plan");
 const ROOT=path.resolve(__dirname,"../..");
 const SOURCE_FILES=["hardhat.config.js","hardhat.galileo.config.js","package.json","package-lock.json",...[
-  "controlled-executor.js","controlled-plan.js","controlled-state.js","controlled-preview.js","plan.js","preflight.js","evidence-store.js","reviewed-execution.json","release-policy.js","release-integrity.js","release-review.js","release-boundary.js","release-run.js"
+  "controlled-executor.js","controlled-plan.js","controlled-state.js","controlled-preview.js","plan.js","preflight.js","evidence-store.js","reviewed-execution.json","release-policy.js","release-integrity.js","release-review.js","release-boundary.js","release-run.js","execution-provider.js","release-journal.js"
 ].map(f=>"scripts/galileo/"+f)];
 function sourceState() {
   const git=(...args)=>execFileSync("git",args,{cwd:ROOT,encoding:"utf8",stdio:["ignore","pipe","pipe"]}).trim();

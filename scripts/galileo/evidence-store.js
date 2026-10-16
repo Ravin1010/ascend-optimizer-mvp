@@ -13,8 +13,11 @@ function evidenceStore(file, resume = false) {
       load: () => resume ? JSON.parse(fs.readFileSync(file, "utf8")) : null,
       save(value) {
         const tmp = file + ".tmp";
-        fs.writeFileSync(tmp, JSON.stringify(value, (_,v)=>typeof v === "bigint" ? v.toString() : v, 2) + "\n", {flag:"wx",mode:0o600});
-        fs.renameSync(tmp, file);
+        const pending=fs.openSync(tmp,"wx",0o600);
+        try {fs.writeFileSync(pending,JSON.stringify(value,(_,v)=>typeof v === "bigint"?v.toString():v,2)+"\n");fs.fsyncSync(pending);} finally {fs.closeSync(pending);}
+        fs.renameSync(tmp,file);
+        const directory=fs.openSync(path.dirname(file),"r");
+        try {fs.fsyncSync(directory);} finally {fs.closeSync(directory);}
       },
       close() { fs.closeSync(fd); fs.unlinkSync(lock); }
     };

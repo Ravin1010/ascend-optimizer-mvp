@@ -7,10 +7,10 @@ const {identity}=require("../scripts/galileo/release-integrity");
 const {hash}=require("../scripts/galileo/plan");
 const actor="0x3e094d9068b48850f09Fc7cc70A7E24E5ed0442a";
 const source="c2a48978e5d7baa1806a75fc0444a71bf8875afd",tooling="a".repeat(64),artifacts="b".repeat(64);
-const env=()=>({GALILEO_ALLOW_BROADCAST:"YES",get GALILEO_PRIVATE_KEY(){throw Error("SECRET MUST NEVER BE READ");}});
+const env=()=>({GALILEO_ALLOW_BROADCAST:"YES",GALILEO_USER_APPROVED_SOURCE:source,get GALILEO_PRIVATE_KEY(){throw Error("SECRET MUST NEVER BE READ");}});
 function fixture(){
  const now=Math.floor(Date.now()/1000);
- const values={"expected-chain":"16602","expected-deployer":actor,"expected-plan":REVIEWED_PLAN,"expected-source":source,"expected-tooling":tooling,"expected-artifacts":artifacts,"expected-nonce":"0","max-fee-quote-wei":"4000000007","review-expires-at":String(now+600)};
+ const values={"expected-chain":"16602","expected-deployer":actor,"expected-plan":REVIEWED_PLAN,"expected-source":source,"approved-source":source,"expected-tooling":tooling,"expected-artifacts":artifacts,"expected-nonce":"0","max-fee-quote-wei":"4000000007","review-expires-at":String(now+600)};
  const args=["--broadcast",...Object.entries(values).flatMap(([k,v])=>["--"+k,v])];
  const authorization=authorize(args,env());
  const state={source,tooling,branch:"feature/galileo-deployment-tooling",clean:true,lineage:true};
@@ -31,7 +31,7 @@ describe("External Galileo release authorization — final barrier retained",fun
  for(const acknowledgement of [undefined,"NO","yes",""])it(`rejects absent/wrong external acknowledgement ${String(acknowledgement)}`,()=>{const f=fixture();expect(()=>authorize(f.args,{GALILEO_ALLOW_BROADCAST:acknowledgement,get GALILEO_PRIVATE_KEY(){throw Error("secret");}})).to.throw("external broadcast acknowledgement");});
  it("rejects internally fabricated/missing authorization fields",()=>{const f=fixture();expect(()=>authorize(["--broadcast"],env())).to.throw("missing expected");expect(()=>authorize([...f.args,"--broadcast"],env())).to.throw("--broadcast");});
  for(const [key,value,message]of [["expected-chain","16661","chain"],["expected-deployer","0x0000000000000000000000000000000000000001","deployer"],["expected-plan","0".repeat(64),"plan fingerprint"]])it(`rejects wrong ${key}`,()=>{const f=fixture();expect(()=>authorize(changed(f,key,value),env())).to.throw(message);});
- for(const key of ["expected-source","expected-tooling"])it(`rejects mismatched ${key}`,async()=>{const f=fixture();f.authorization=authorize(changed(f,key,key==="expected-source"?"1".repeat(40):"1".repeat(64)),env());await rejects(()=>readinessChecks(f),"source/tooling fingerprint mismatch");});
+ for(const key of ["expected-source","expected-tooling"])it(`rejects mismatched ${key}`,async()=>{const f=fixture();let args=changed(f,key,key==="expected-source"?"1".repeat(40):"1".repeat(64));if(key==="expected-source"){args[args.indexOf("--approved-source")+1]="1".repeat(40);}f.authorization=authorize(args,key==="expected-source"?{GALILEO_ALLOW_BROADCAST:"YES",GALILEO_USER_APPROVED_SOURCE:"1".repeat(40)}:env());await rejects(()=>readinessChecks(f),key==="expected-source"?"approved source":"source/tooling fingerprint mismatch");});
  it("rejects wrong artifact fingerprint",async()=>{const f=fixture();f.integrity.artifactHash="0".repeat(64);await rejects(()=>readinessChecks(f),"artifact fingerprint");});
  for(const key of ["clean","lineage"])it(`rejects unsafe repository ${key}`,async()=>{const f=fixture();f.integrity.state[key]=false;await rejects(()=>readinessChecks(f),"source state");});
  it("rejects wrong actual chain before estimates",async()=>{const f=fixture();f.provider.send=async()=>"0x1";f.provider.estimateGas=()=>{throw Error("must not estimate");};await rejects(()=>readinessChecks(f),"wrong chain");});
@@ -57,3 +57,5 @@ describe("External Galileo release authorization — final barrier retained",fun
  it("key/signer-like options are rejected without evaluating their getters",()=>{const f=fixture();let touched=false;expect(()=>publicExecution({args:f.args,env:env(),provider:f.provider,get signer(){touched=true;throw Error("secret");}})).to.throw("unsupported");expect(touched).to.equal(false);});
  it("artifact/source inspection reproduces the exact plan and compiler bundle",()=>{const i=identity();expect(i.planHash).to.equal(REVIEWED_PLAN);expect(i.artifactHash).to.equal(hash(i.bundle));expect(i.state.tooling).to.match(/^[a-f0-9]{64}$/);});
 });
+// Reusable read-only fixture; no real network or signing credential.
+module.exports={fixture,env,source,actor};
