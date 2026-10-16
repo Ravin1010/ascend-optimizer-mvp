@@ -112,7 +112,7 @@ The exercise identifies further deployment-engineering work; it does not establi
 - Validate RPC/provider capabilities in advance, including recovery queries.
 - Use sufficiently long but bounded authorization windows, with confirmation latency budgeted.
 - Retain sanitized failure phases and timestamps across operational boundaries.
-- Design idempotent, prefix-aware deployment processes and preserve intent before signing.
+- Design prefix-aware deployment and recovery processes that safely tolerate repeated checks without blindly repeating confirmed transactions.
 - Reconcile ambiguous transactions before any retry; do not infer safety from a missing hash.
 - Verify runtime and state after every critical transaction.
 - Maintain reserve floors and cumulative gas/value budgets.
