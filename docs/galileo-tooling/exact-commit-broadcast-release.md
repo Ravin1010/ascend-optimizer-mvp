@@ -69,10 +69,18 @@ remain mandatory. No condition is supplied internally on the operator's behalf.
    calls without that token. Only then may the single `env.GALILEO_PRIVATE_KEY`
    getter run. No environment enumeration or environment-file reading is used.
 5. The loader accepts only a 0x-prefixed 32-byte hex key. It creates an ethers Wallet
-   only at this boundary and sanitizes constructor/credential errors. Verify the
+   only at this boundary and sanitizes constructor/credential errors. The one-use
+   token is consumed before reading the credential. In a `finally` block, the local
+   temporary is cleared and `GALILEO_PRIVATE_KEY` is deleted from the actual execution
+   environment, on success and failure. Deletion failure or any remaining own/inherited
+   property stops execution. Verify the
    derived address equals the reviewed deployer before granting a submission permit.
    There is no mnemonic/seed support. The key never enters hashes, logs, journal,
    calldata, exception details or serialized readiness data.
+   Before permission is granted, verify credential absence, rerun source integrity
+   and exact approval checks, and verify the signer address. Every subsequent
+   permission check also rejects a reintroduced credential. Operator/source approval
+   metadata remains available; the signer does not reread the credential.
 6. Arm the controlled HTTP provider with the verified permission and invoke
    `runGalileo()`, which calls the existing shared engine with chain 16602 and mode
    GALILEO. There is no separate allocation engine. Per-step approval checks reject
@@ -179,7 +187,7 @@ Validation results:
 | Check | Result |
 |---|---|
 | Isolated compile/build-specification checks | Passed |
-| Complete Galileo tooling suite | **133 passed**, 0 failed |
+| Complete Galileo tooling suite | **148 passed**, 0 failed (133 previous + 15 credential-isolation tests) |
 | Existing Hardhat contract suite | **72 passed**, 0 failed |
 | Relevant Python application/result/asset regressions | **109 passed**, 0 failed |
 | Local shared-engine rehearsal | **33 successful steps**, only four allocations, Ascend inactive/zero, idle 6 × 10^12 wei |
@@ -197,3 +205,38 @@ tooling and artifact fingerprints from `--inspect`, verify the clean committed
 read-only review, and publish the tooling branch. Do not make another commit after
 reporting the candidate. Main, canonical project state and frozen results remain
 unchanged. This iteration itself authorizes **zero Galileo transactions**.
+
+
+## Credential-isolation correction (parent e960fca858822dd9f30c3bfc2b04630c32dc6f92)
+
+`subprocess-env.js` supplies a fresh explicit allowlist (`PATH`, `SystemRoot`,
+`WINDIR`, `PATHEXT`, `LANG`, `LC_ALL`, `TZ`). It never enumerates the parent
+environment and never reads the signing credential. No approval or signing
+variables, Git environment overrides, preload variables or proxy settings are
+passed to Git. Approval variables remain intact in the parent execution environment.
+The helper itself is pinned by the release tooling fingerprint.
+
+Complete child-process audit of `scripts/galileo/`:
+
+| File | Child operations | Explicit environment |
+|---|---|---|
+| `release-integrity.js` | Git HEAD, branch, status, lineage (four calls per source check, including repeated execution checks) | `sanitizedChildEnv()` |
+| `run.js` | Legacy preflight Git HEAD and status | `sanitizedChildEnv()` |
+| `controlled-local.js` | Local rehearsal Git HEAD | `sanitizedChildEnv()` |
+
+There are no other `exec`, `execFile`, `spawn` or `fork` call sites in the Galileo
+JavaScript tooling. No contract, reviewed graph, amount, registration, authorization,
+transport, receipt or resume semantics are changed by this correction.
+
+`CredentialIsolation.test.js` uses synthetic fixtures and injected factories only:
+a single getter read; removal on success, malformed/missing input, throwing getter
+and constructor failure; failure on undeletable/inherited credentials; no permission
+for an uncleared or mismatched signer; repeated source/approval checks; reintroduction
+rejection; parent approval preservation; continued fake-signer usability; no credential
+in engine evidence. A fake Git process rejects any credential-bearing child environment,
+and an actual harmless local Node child verifies absence. Existing exact-release tests
+use credential-free environments for injected signers; early-read traps remain.
+
+No real credential is accessed, no public signer is instantiated and no Galileo
+transaction is signed or submitted during correction validation. The final committed
+candidate is reviewed with `--review-only`; this does not authorize future execution.

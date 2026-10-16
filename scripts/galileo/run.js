@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 "use strict";
+const {sanitizedChildEnv}=require("./subprocess-env");
 const fs = require("node:fs");
 const path = require("node:path");
 const { execFileSync } = require("node:child_process");
@@ -18,8 +19,8 @@ async function main() {
   const option = (name, fallback) => args.includes(name) ? args[args.indexOf(name) + 1] : fallback;
   const root = path.resolve(__dirname, "../..");
   const config = JSON.parse(fs.readFileSync(option("--config", path.join(__dirname, "mock-plan.json")), "utf8"));
-  const source = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim();
-  const dirty = execFileSync("git", ["status", "--porcelain", "--untracked-files=no"], { cwd: root, encoding: "utf8" }).trim();
+  const source = execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, env:sanitizedChildEnv(),encoding: "utf8" }).trim();
+  const dirty = execFileSync("git", ["status", "--porcelain", "--untracked-files=no"], { cwd: root, env:sanitizedChildEnv(),encoding: "utf8" }).trim();
   const url = process.env.GALILEO_RPC_URL || "https://evmrpc-testnet.0g.ai";
   const parsed = new URL(url);
   if (parsed.protocol !== "https:" || parsed.username || parsed.password || parsed.search) throw new Error("STOP: use an HTTPS read-only RPC without embedded credentials");

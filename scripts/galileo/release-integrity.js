@@ -1,14 +1,15 @@
 "use strict";
+const {sanitizedChildEnv}=require("./subprocess-env");
 const fs=require("node:fs"),path=require("node:path");
 const {execFileSync}=require("node:child_process");
 const {controlledPlan,stop}=require("./controlled-plan");
 const {hash}=require("./plan");
 const ROOT=path.resolve(__dirname,"../..");
 const SOURCE_FILES=["hardhat.config.js","hardhat.galileo.config.js","package.json","package-lock.json",...[
-  "controlled-executor.js","controlled-plan.js","controlled-state.js","controlled-preview.js","plan.js","preflight.js","evidence-store.js","reviewed-execution.json","release-policy.js","release-integrity.js","release-review.js","release-boundary.js","release-run.js","execution-provider.js","release-journal.js"
+  "controlled-executor.js","controlled-plan.js","controlled-state.js","controlled-preview.js","plan.js","preflight.js","evidence-store.js","reviewed-execution.json","release-policy.js","release-integrity.js","release-review.js","release-boundary.js","release-run.js","execution-provider.js","release-journal.js","subprocess-env.js"
 ].map(f=>"scripts/galileo/"+f)];
 function sourceState() {
-  const git=(...args)=>execFileSync("git",args,{cwd:ROOT,encoding:"utf8",stdio:["ignore","pipe","pipe"]}).trim();
+  const git=(...args)=>execFileSync("git",args,{cwd:ROOT,env:sanitizedChildEnv(),encoding:"utf8",stdio:["ignore","pipe","pipe"]}).trim();
   const source=git("rev-parse","HEAD"),branch=git("branch","--show-current");
   const clean=!git("status","--porcelain");
   let lineage=true;try{git("merge-base","--is-ancestor","c2a48978e5d7baa1806a75fc0444a71bf8875afd","HEAD");}catch{lineage=false;}

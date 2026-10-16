@@ -1,4 +1,5 @@
 "use strict";
+const {sanitizedChildEnv}=require("./subprocess-env");
 const hre=require("hardhat");
 const path=require("node:path");
 const {execFileSync}=require("node:child_process");
@@ -10,7 +11,7 @@ async function main() {
   const file=path.resolve("galileo-local/controlled-local.json");
   const store=evidenceStore(file);
   try {
-    const sourceCommit=execFileSync("git",["rev-parse","HEAD"],{encoding:"utf8"}).trim();
+    const sourceCommit=execFileSync("git",["rev-parse","HEAD"],{env:sanitizedChildEnv(),encoding:"utf8"}).trim();
     const {journal,state}=await runLocal({hre,sourceCommit,store});
     console.log(JSON.stringify({mode:journal.mode,localTransactions:journal.receipts.length,publicTransactionsSubmitted:0,ascendActive:false,expectedIdleWei:"6000000000000",cumulativeSpendWei:journal.cumulativeSpendWei,localVault:state.vault,evidence:file},null,2));
   } finally {store.close();}

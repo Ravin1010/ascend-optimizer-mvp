@@ -5,10 +5,19 @@ const FINAL_BARRIER="STOP: public transaction submission requires separate user 
 // Kept for review-only callers; never grants an execution permission.
 function finalUserApprovalBarrier(readiness){const e=new Error(FINAL_BARRIER);e.code="SEPARATE_USER_APPROVAL_REQUIRED";e.readiness={...readiness,signerAccessed:false,transactionsSubmitted:0};throw e;}
 const permissions=new WeakMap(),credentialPermissions=new WeakMap();
+function assertCredentialAbsent(env) {
+  try{if("GALILEO_PRIVATE_KEY" in env)throw Error();}
+  catch{throw Error("STOP: signing credential isolation failed");}
+}
+function clearCredential(env) {
+  try{if(!Reflect.deleteProperty(env,"GALILEO_PRIVATE_KEY"))throw Error();assertCredentialAbsent(env);}
+  catch{throw Error("STOP: signing credential cleanup failed");}
+}
 function loadPrivateKeySigner(env,provider,access,makeWallet=(key,p)=>new Wallet(key,p)) {
   const authorizeKey=credentialPermissions.get(access);
   if(!authorizeKey)throw Error("STOP: credential access requires completed readiness/approval");
   authorizeKey();
+  credentialPermissions.delete(access);
   // This is the sole credential getter. Production calls it only after all gates.
   let key;
   try {
@@ -16,19 +25,21 @@ function loadPrivateKeySigner(env,provider,access,makeWallet=(key,p)=>new Wallet
     if(typeof key!=="string"||!/^0x[0-9a-fA-F]{64}$/.test(key))throw Error();
     return makeWallet(key,provider);
   }catch{throw Error("STOP: signing credential missing or invalid");}
-  finally{key=undefined;}
+  finally{key=undefined;clearCredential(env);}
 }
 async function futureSignerBoundary(readiness,loader,authorization,env,recheckSource) {
   if(!authorization)finalUserApprovalBarrier(readiness);
   if(readiness.status!=="PRE_SIGNING_CHECKS_PASSED"||readiness.chainId!==16602||readiness.planHash!==REVIEWED_PLAN||readiness.source!==authorization["approved-source"])throw Error("STOP: completed exact-source readiness required");
+  let consumed=false;
   const assertCurrent=()=>{
+    if(consumed)assertCredentialAbsent(env);
     assertExactApproval(authorization,env,recheckSource());
     if(BigInt(authorization["review-expires-at"])<=BigInt(Math.floor(Date.now()/1000))+5n)throw Error("STOP: approval review expired");
   };
   assertCurrent();
   let signer;
   const access=Object.freeze({});credentialPermissions.set(access,assertCurrent);
-  try{signer=await loader(access);if((await signer.getAddress()).toLowerCase()!==readiness.deployer.toLowerCase())throw Error("mismatch");}
+  try{signer=await loader(access);assertCredentialAbsent(env);consumed=true;if((await signer.getAddress()).toLowerCase()!==readiness.deployer.toLowerCase())throw Error("mismatch");}
   catch{throw Error("STOP: signing credential unavailable/invalid or signer/deployer mismatch");}
   finally{credentialPermissions.delete(access);}
   assertCurrent();
