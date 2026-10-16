@@ -130,14 +130,14 @@ async function validateResume({provider,bundle,review,sourceCommit,journal,actor
   return state;
 }
 // One shared state machine for local rehearsal and exactly approved Galileo execution.
-async function engine({provider,signer,actor,bundle,review,sourceCommit,store,maxSteps=33,expectedChain,mode,beforeStep=async()=>{},expectedNonce,approvedFeeCeilingWei}) {
+async function engine({provider,signer,actor,bundle,review,sourceCommit,store,maxSteps=33,expectedChain,mode,beforeStep=async()=>{},expectedNonce,approvedFeeCeilingWei,validateExisting=validateResume}) {
   await beforeStep();
   const initial=await context(provider,expectedChain,actor,await signer.getAddress());
   if(expectedNonce!==undefined&&initial.nonce!==expectedNonce)stop("approved execution nonce mismatch");
   const price=await feeQuote(provider);
   if(approvedFeeCeilingWei!==undefined&&ceilBps(price,review.config.feeMultiplierBps)>BigInt(approvedFeeCeilingWei))stop("approved starting fee ceiling exceeded");
   let journal=store.load(); let state;
-  if(journal) state=await validateResume({provider,bundle,review,sourceCommit,journal,actor,expectedChain,mode});
+  if(journal) state=await validateExisting({provider,bundle,review,sourceCommit,journal,actor,expectedChain,mode});
   else {
     const reserve=ceilBps(initial.balance,review.config.reserveBps);
     journal={version:"GALILEO_RECEIPTS_V1",mode,chainId:expectedChain,targetChainId:16602,sourceCommit,toolingHash:executionFingerprint(),planHash:review.fingerprint,artifactHash:hash(bundle),actor,publicDeployer:review.config.deployer,startNonce:initial.nonce,initialBalanceWei:initial.balance.toString(),reserveWei:reserve.toString(),feeCeilingWei:ceilBps(price,review.config.feeMultiplierBps).toString(),cumulativeSpendWei:"0",receipts:[],pendingIntent:null,limitations:review.config.limitations};
@@ -217,4 +217,4 @@ async function publicPreview(provider,config) {
   budgetGuard({balance:c.balance,initialBalance:c.balance,reserve,spent:0n,remaining:ceilBps(remaining,12000)});
   return json({mode:"PUBLIC_READ_ONLY",broadcastReady:false,transactionsSubmitted:0,block:{number:c.block.number,hash:c.block.hash,timestamp:c.block.timestamp},balanceWei:c.balance,feeQuoteWei:quote,feeCeilingWei:ceiling,reserveWei:reserve,projectedRequirementWei:ceilBps(remaining,12000)+reserve,initialEnvelopeWei:remaining,materialGrowthBps:2000,planHash:review.fingerprint,counts:review.plan.counts});
 }
-module.exports={runGalileo,runLocal,publicExecution,publicPreview,artifactsFor,context,feeQuote,remainingEnvelope,budgetGuard,guardTransaction,validateResume,transactionRequest};
+module.exports={runGalileo,runLocal,publicExecution,publicPreview,artifactsFor,context,feeQuote,remainingEnvelope,budgetGuard,guardTransaction,validateResume,transactionRequest,engine,executionFingerprint};

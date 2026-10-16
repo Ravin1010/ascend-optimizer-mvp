@@ -27,13 +27,13 @@ function loadPrivateKeySigner(env,provider,access,makeWallet=(key,p)=>new Wallet
   }catch{throw Error("STOP: signing credential missing or invalid");}
   finally{key=undefined;clearCredential(env);}
 }
-async function futureSignerBoundary(readiness,loader,authorization,env,recheckSource) {
+async function signerBoundary(readiness,loader,authorization,env,recheckSource,checkApproval) {
   if(!authorization)finalUserApprovalBarrier(readiness);
   if(readiness.status!=="PRE_SIGNING_CHECKS_PASSED"||readiness.chainId!==16602||readiness.planHash!==REVIEWED_PLAN||readiness.source!==authorization["approved-source"])throw Error("STOP: completed exact-source readiness required");
   let consumed=false;
   const assertCurrent=()=>{
     if(consumed)assertCredentialAbsent(env);
-    assertExactApproval(authorization,env,recheckSource());
+    checkApproval(authorization,env,recheckSource());
     if(BigInt(authorization["review-expires-at"])<=BigInt(Math.floor(Date.now()/1000))+5n)throw Error("STOP: approval review expired");
   };
   assertCurrent();
@@ -47,6 +47,12 @@ async function futureSignerBoundary(readiness,loader,authorization,env,recheckSo
   permissions.set(permission,{assertCurrent,policy:Object.freeze({expectedNonce:Number(authorization["expected-nonce"]),maxFeeQuoteWei:authorization["max-fee-quote-wei"],feeCeilingWei:readiness.feeCeilingWei})});
   return {signer,permission};
 }
+function futureSignerBoundary(readiness,loader,authorization,env,recheckSource) {
+  return signerBoundary(readiness,loader,authorization,env,recheckSource,assertExactApproval);
+}
+function recoverySignerBoundary(readiness,loader,authorization,env,recheckSource) {
+  return signerBoundary(readiness,loader,authorization,env,recheckSource,require("./recovery-policy").assertRecoveryApproval);
+}
 function assertPermission(permission){const entry=permissions.get(permission);if(!entry)throw Error("STOP: missing exact-commit execution permission");entry.assertCurrent();}
 function permissionPolicy(permission){assertPermission(permission);return permissions.get(permission).policy;}
-module.exports={FINAL_BARRIER,finalUserApprovalBarrier,futureSignerBoundary,loadPrivateKeySigner,assertPermission,permissionPolicy};
+module.exports={FINAL_BARRIER,finalUserApprovalBarrier,futureSignerBoundary,loadPrivateKeySigner,assertPermission,permissionPolicy,recoverySignerBoundary};
