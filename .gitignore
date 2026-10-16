@@ -149,6 +149,16 @@ activemq-data/
 
 # Environments
 .env
+.env.*
+!.env.example
+*.pem
+*.key
+node_modules/
+artifacts-contracts/
+cache-contracts/
+artifacts-galileo/
+cache-galileo/
+galileo-local/
 .envrc
 .venv
 env/

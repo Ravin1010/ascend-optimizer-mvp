@@ -1,0 +1,7 @@
+{
+  "native": { "branch": "MOCK" },
+  "ascend": { "branch": "MOCK" },
+  "funding0g": "0.001",
+  "allocation0g": "0.0001",
+  "maxGasBudget0g": "0.1"
+}

@@ -1,0 +1,20 @@
+{
+  "sourceCommit": "d4fdf20bfe24ddf8c46c470a7c7bfc463d88a653",
+  "chainId": 16602,
+  "observedBlock": {
+    "number": "60373147",
+    "hash": "0x3b89bac5db898eb3dcff34b5ad432fa3311cd08f4b69f46afbb60c4c90d861d4",
+    "timestamp": "1792116973"
+  },
+  "mode": "PREFLIGHT",
+  "checks": [
+    {
+      "label": "ASCEND_CANDIDATE_DIAGNOSTICS_ONLY",
+      "state": "FAIL",
+      "stage": "function currentEpoch() view returns(uint256)",
+      "errorCode": "CALL_EXCEPTION"
+    }
+  ],
+  "transactions": [],
+  "limitation": "Supplemental read-only candidate check failed; no approval or availability promotion. See audit for follow-up."
+}
