@@ -3,18 +3,14 @@ const { Contract, ContractFactory, Interface, keccak256, getCreateAddress, ZeroA
 const { resolve, hash } = require("./plan");
 const { controlledPlan, ceilBps, stop } = require("./controlled-plan");
 const { verifyState, runtimeMatches } = require("./controlled-state");
-const { broadcastGuard } = require("./preflight");
 const fs=require("node:fs");
 const path=require("node:path");
 const executionFingerprint=()=>hash(["controlled-executor.js","controlled-plan.js","controlled-state.js","plan.js","reviewed-execution.json"].map(f=>fs.readFileSync(path.join(__dirname,f),"utf8")));
 const same = (a,b) => String(a || "").toLowerCase() === String(b || "").toLowerCase();
 const json = value => JSON.parse(JSON.stringify(value,(_,v)=>typeof v === "bigint" ? v.toString():v));
 function publicExecution(options) {
-  // Deliberately no provider, signer factory or environment access before this gate.
-  broadcastGuard(["--broadcast"], {GALILEO_ALLOW_BROADCAST:"YES"});
-  // Unreachable in this release. Any future gate change requires separate review.
-  const review=controlledPlan(options.config);
-  return engine({...options,review,actor:review.config.deployer,expectedChain:16602,mode:"GALILEO"});
+  // Separate external authorization/readiness path; always ends at a pre-signer barrier.
+  return require("./release-review").publicExecution(options);
 }
 async function artifactsFor(hre, plan) {
   const names = [...new Set(plan.steps.filter(s=>s.kind === "DEPLOY").map(s=>s.contract).concat("MockGimoSt0G"))];
