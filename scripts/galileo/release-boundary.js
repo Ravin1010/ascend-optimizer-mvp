@@ -53,6 +53,9 @@ function futureSignerBoundary(readiness,loader,authorization,env,recheckSource) 
 function recoverySignerBoundary(readiness,loader,authorization,env,recheckSource) {
   return signerBoundary(readiness,loader,authorization,env,recheckSource,require("./recovery-policy").assertRecoveryApproval);
 }
+function stage2SignerBoundary(readiness,loader,authorization,env,recheckSource) {
+  return signerBoundary(readiness,loader,authorization,env,recheckSource,require("./recovery2-policy").assertStage2Approval);
+}
 function assertPermission(permission){const entry=permissions.get(permission);if(!entry)throw Error("STOP: missing exact-commit execution permission");entry.assertCurrent();}
 function permissionPolicy(permission){assertPermission(permission);return permissions.get(permission).policy;}
-module.exports={FINAL_BARRIER,finalUserApprovalBarrier,futureSignerBoundary,loadPrivateKeySigner,assertPermission,permissionPolicy,recoverySignerBoundary};
+module.exports={FINAL_BARRIER,finalUserApprovalBarrier,futureSignerBoundary,loadPrivateKeySigner,assertPermission,permissionPolicy,recoverySignerBoundary,stage2SignerBoundary};
