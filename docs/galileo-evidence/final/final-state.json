@@ -1,0 +1,553 @@
+{
+  "managerOwner": "0x3e094d9068b48850f09Fc7cc70A7E24E5ed0442a",
+  "vaultOwner": "0x3e094d9068b48850f09Fc7cc70A7E24E5ed0442a",
+  "strategyManagerAddress": "0x4D7C7286936325eE8b47DF7550Ce8475A7B358E7",
+  "strategyCount": "5",
+  "strategies": [
+    {
+      "name": "Native",
+      "id": "0xdd823c4f748efc81bfa8fde64de25e4c4ccb3bafbeeaf78cbfee363137fee226",
+      "configuration": {
+        "adapter": "0x13490b87030b31C5cD7D31408e59407B96e0a0Ec",
+        "inputAsset": "0x0000000000000000000000000000000000000000",
+        "depositCap": "1000000000000000",
+        "maxAllocationBps": "5000",
+        "asynchronous": true,
+        "active": true
+      },
+      "active": true,
+      "adapter": "0x13490b87030b31C5cD7D31408e59407B96e0a0Ec",
+      "shares": "1000000000000",
+      "allocationInputWei": "1000000000000"
+    },
+    {
+      "name": "Gimo",
+      "id": "0x72993f19870f72ed4117469aec468bc3ff513b50b2b80983f971548aaae711c7",
+      "configuration": {
+        "adapter": "0xB854a605367AA275A8DD30809B6AE269d6b8AA03",
+        "inputAsset": "0x0000000000000000000000000000000000000000",
+        "depositCap": "1000000000000000",
+        "maxAllocationBps": "5000",
+        "asynchronous": true,
+        "active": true
+      },
+      "active": true,
+      "adapter": "0xB854a605367AA275A8DD30809B6AE269d6b8AA03",
+      "shares": "1000000000000",
+      "allocationInputWei": "1000000000000"
+    },
+    {
+      "name": "Jaine",
+      "id": "0x7253660b95ad310cd99cddeb410dba54f329248643ff62464764bf29f243568d",
+      "configuration": {
+        "adapter": "0x78109Bc2f07Dd9B88a81681f27EcbD9168221478",
+        "inputAsset": "0x0000000000000000000000000000000000000000",
+        "depositCap": "1000000000000000",
+        "maxAllocationBps": "5000",
+        "asynchronous": false,
+        "active": true
+      },
+      "active": true,
+      "adapter": "0x78109Bc2f07Dd9B88a81681f27EcbD9168221478",
+      "shares": "500000000000",
+      "allocationInputWei": "1000000000000"
+    },
+    {
+      "name": "Oku",
+      "id": "0x435528855366049c96f31ad385432e470b90701e193eddc97b5cae054e7e66e8",
+      "configuration": {
+        "adapter": "0x55f0185f28b9B42A84Ad1E8e2Bb7DbB8a1cD92a7",
+        "inputAsset": "0x0000000000000000000000000000000000000000",
+        "depositCap": "1000000000000000",
+        "maxAllocationBps": "5000",
+        "asynchronous": false,
+        "active": true
+      },
+      "active": true,
+      "adapter": "0x55f0185f28b9B42A84Ad1E8e2Bb7DbB8a1cD92a7",
+      "shares": "500000000000",
+      "allocationInputWei": "1000000000000"
+    },
+    {
+      "name": "Ascend",
+      "id": "0x18934deaa0f9804dd9bbb2b35b1b71760e24f8275506882a246e3e22dd668e1b",
+      "configuration": {
+        "adapter": "0x25339Ef4E45D9982B7c51631a5C48542210f90Ea",
+        "inputAsset": "0x0000000000000000000000000000000000000000",
+        "depositCap": "1000000000000000",
+        "maxAllocationBps": "5000",
+        "asynchronous": true,
+        "active": false
+      },
+      "active": false,
+      "adapter": "0x25339Ef4E45D9982B7c51631a5C48542210f90Ea",
+      "shares": "0",
+      "allocationInputWei": "0"
+    }
+  ],
+  "validatorDelegated": "1000000000000",
+  "vaultIdleWei": "6000000000000",
+  "deploymentFinalWalletBalanceWei": "1926797359679412880",
+  "deploymentFinalPendingNonce": 33,
+  "deploymentFinalMinedNonce": 33,
+  "cumulativeSpendWei": "183118640320440120",
+  "reserveWei": "421983199999970600",
+  "reserveSatisfied": true,
+  "chainId": 16602,
+  "actor": "0x3e094d9068b48850f09Fc7cc70A7E24E5ed0442a",
+  "verificationBlock": {
+    "number": 60458046,
+    "hash": "0x34106b155f6e13c7b2ef398062a4d96ff628a7749549aa900382fd39346ce333",
+    "timestamp": 1792158090
+  },
+  "readbacks": [
+    {
+      "label": "manager.owner",
+      "value": "0x3e094d9068b48850f09Fc7cc70A7E24E5ed0442a"
+    },
+    {
+      "label": "manager.strategyCount",
+      "value": "5"
+    },
+    {
+      "label": "strategyIdAt:0",
+      "value": "0xdd823c4f748efc81bfa8fde64de25e4c4ccb3bafbeeaf78cbfee363137fee226"
+    },
+    {
+      "label": "registration:0:adapter",
+      "value": "0x13490b87030b31C5cD7D31408e59407B96e0a0Ec"
+    },
+    {
+      "label": "registration:0:inputAsset",
+      "value": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "label": "registration:0:depositCap",
+      "value": "1000000000000000"
+    },
+    {
+      "label": "registration:0:maxAllocationBps",
+      "value": "5000"
+    },
+    {
+      "label": "registration:0:asynchronous",
+      "value": true
+    },
+    {
+      "label": "registration:0:active",
+      "value": true
+    },
+    {
+      "label": "strategyIdAt:1",
+      "value": "0x72993f19870f72ed4117469aec468bc3ff513b50b2b80983f971548aaae711c7"
+    },
+    {
+      "label": "registration:1:adapter",
+      "value": "0xB854a605367AA275A8DD30809B6AE269d6b8AA03"
+    },
+    {
+      "label": "registration:1:inputAsset",
+      "value": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "label": "registration:1:depositCap",
+      "value": "1000000000000000"
+    },
+    {
+      "label": "registration:1:maxAllocationBps",
+      "value": "5000"
+    },
+    {
+      "label": "registration:1:asynchronous",
+      "value": true
+    },
+    {
+      "label": "registration:1:active",
+      "value": true
+    },
+    {
+      "label": "strategyIdAt:2",
+      "value": "0x7253660b95ad310cd99cddeb410dba54f329248643ff62464764bf29f243568d"
+    },
+    {
+      "label": "registration:2:adapter",
+      "value": "0x78109Bc2f07Dd9B88a81681f27EcbD9168221478"
+    },
+    {
+      "label": "registration:2:inputAsset",
+      "value": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "label": "registration:2:depositCap",
+      "value": "1000000000000000"
+    },
+    {
+      "label": "registration:2:maxAllocationBps",
+      "value": "5000"
+    },
+    {
+      "label": "registration:2:asynchronous",
+      "value": false
+    },
+    {
+      "label": "registration:2:active",
+      "value": true
+    },
+    {
+      "label": "strategyIdAt:3",
+      "value": "0x435528855366049c96f31ad385432e470b90701e193eddc97b5cae054e7e66e8"
+    },
+    {
+      "label": "registration:3:adapter",
+      "value": "0x55f0185f28b9B42A84Ad1E8e2Bb7DbB8a1cD92a7"
+    },
+    {
+      "label": "registration:3:inputAsset",
+      "value": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "label": "registration:3:depositCap",
+      "value": "1000000000000000"
+    },
+    {
+      "label": "registration:3:maxAllocationBps",
+      "value": "5000"
+    },
+    {
+      "label": "registration:3:asynchronous",
+      "value": false
+    },
+    {
+      "label": "registration:3:active",
+      "value": true
+    },
+    {
+      "label": "strategyIdAt:4",
+      "value": "0x18934deaa0f9804dd9bbb2b35b1b71760e24f8275506882a246e3e22dd668e1b"
+    },
+    {
+      "label": "registration:4:adapter",
+      "value": "0x25339Ef4E45D9982B7c51631a5C48542210f90Ea"
+    },
+    {
+      "label": "registration:4:inputAsset",
+      "value": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "label": "registration:4:depositCap",
+      "value": "1000000000000000"
+    },
+    {
+      "label": "registration:4:maxAllocationBps",
+      "value": "5000"
+    },
+    {
+      "label": "registration:4:asynchronous",
+      "value": true
+    },
+    {
+      "label": "registration:4:active",
+      "value": false
+    },
+    {
+      "label": "Ascend inactive",
+      "value": false
+    },
+    {
+      "label": "vault.owner",
+      "value": "0x3e094d9068b48850f09Fc7cc70A7E24E5ed0442a"
+    },
+    {
+      "label": "vault.strategyManager",
+      "value": "0x4D7C7286936325eE8b47DF7550Ce8475A7B358E7"
+    },
+    {
+      "label": "vault.rewardAccounting",
+      "value": "0x0000000000000000000000000000000000000000"
+    },
+    {
+      "label": "vault.paused",
+      "value": false
+    },
+    {
+      "label": "vault.idleBalanceOf",
+      "value": "6000000000000"
+    },
+    {
+      "label": "vault.strategySharesOf",
+      "value": "1000000000000"
+    },
+    {
+      "label": "vault.strategySharesOf",
+      "value": "1000000000000"
+    },
+    {
+      "label": "vault.strategySharesOf",
+      "value": "500000000000"
+    },
+    {
+      "label": "vault.strategySharesOf",
+      "value": "500000000000"
+    },
+    {
+      "label": "vault.strategySharesOf",
+      "value": "0"
+    },
+    {
+      "label": "nativeAdapter.owner",
+      "value": "0x3e094d9068b48850f09Fc7cc70A7E24E5ed0442a"
+    },
+    {
+      "label": "nativeAdapter.vault",
+      "value": "0x9e00E6C4a3222CD016C95679f6FB5C965dC16523"
+    },
+    {
+      "label": "nativeAdapter.validator",
+      "value": "0x5c703372908ba956CFa2C4464fDfd05DDa4365B9"
+    },
+    {
+      "label": "validator.withdrawalFeeInGwei",
+      "value": "1"
+    },
+    {
+      "label": "validator.totalDelegated",
+      "value": "1000000000000"
+    },
+    {
+      "label": "gimoPool.st0g",
+      "value": "0x44b7B1358EE53FD3CfC98b63941Cb097Bb2Ecb93"
+    },
+    {
+      "label": "gimoToken.minter",
+      "value": "0x164d402F95D95C034e87EfC376e6e9262118EC89"
+    },
+    {
+      "label": "gimoToken.getRate",
+      "value": "1000000000000000000"
+    },
+    {
+      "label": "gimoAdapter.vault",
+      "value": "0x9e00E6C4a3222CD016C95679f6FB5C965dC16523"
+    },
+    {
+      "label": "gimoAdapter.stakePool",
+      "value": "0x164d402F95D95C034e87EfC376e6e9262118EC89"
+    },
+    {
+      "label": "gimoAdapter.st0g",
+      "value": "0x44b7B1358EE53FD3CfC98b63941Cb097Bb2Ecb93"
+    },
+    {
+      "label": "gimoAdapter.referral",
+      "value": "ascend-galileo-validation"
+    },
+    {
+      "label": "factory.pool",
+      "value": "0x53817535BB23cBAd43E7eA2a2e937affD4490fB9"
+    },
+    {
+      "label": "pool.factory",
+      "value": "0x71A9986E3c84ca102CBA0db4B5f12c18fdCA0dD1"
+    },
+    {
+      "label": "pool.token0",
+      "value": "0xe61AED57469976de6f3B859abaB1e85761bA83e6"
+    },
+    {
+      "label": "pool.token1",
+      "value": "0x62Cb32546C1c843912434F238717bCf81e63c8e7"
+    },
+    {
+      "label": "pool.fee",
+      "value": "3000"
+    },
+    {
+      "label": "pool.tickSpacing",
+      "value": "60"
+    },
+    {
+      "label": "npm.factory",
+      "value": "0x71A9986E3c84ca102CBA0db4B5f12c18fdCA0dD1"
+    },
+    {
+      "label": "v1.factory",
+      "value": "0x71A9986E3c84ca102CBA0db4B5f12c18fdCA0dD1"
+    },
+    {
+      "label": "r02.factory",
+      "value": "0x71A9986E3c84ca102CBA0db4B5f12c18fdCA0dD1"
+    },
+    {
+      "label": "usdce.balanceOf",
+      "value": "500000000000"
+    },
+    {
+      "label": "usdce.balanceOf",
+      "value": "500000000000"
+    },
+    {
+      "label": "jaineAdapter.vault",
+      "value": "0x9e00E6C4a3222CD016C95679f6FB5C965dC16523"
+    },
+    {
+      "label": "jaineAdapter.factory",
+      "value": "0x71A9986E3c84ca102CBA0db4B5f12c18fdCA0dD1"
+    },
+    {
+      "label": "jaineAdapter.router",
+      "value": "0xee7Bab10B3c3991d407571bC585946e24a71dFd0"
+    },
+    {
+      "label": "jaineAdapter.positionManager",
+      "value": "0x06acBb567dFee667af36a5d3E7aa82417e7Ff532"
+    },
+    {
+      "label": "jaineAdapter.pool",
+      "value": "0x53817535BB23cBAd43E7eA2a2e937affD4490fB9"
+    },
+    {
+      "label": "jaineAdapter.w0g",
+      "value": "0xe61AED57469976de6f3B859abaB1e85761bA83e6"
+    },
+    {
+      "label": "jaineAdapter.usdce",
+      "value": "0x62Cb32546C1c843912434F238717bCf81e63c8e7"
+    },
+    {
+      "label": "jaineAdapter.feeTier",
+      "value": "3000"
+    },
+    {
+      "label": "jaineAdapter.tickLower",
+      "value": "-600"
+    },
+    {
+      "label": "jaineAdapter.tickUpper",
+      "value": "600"
+    },
+    {
+      "label": "jaineAdapter.sqrtLowerX96",
+      "value": "39614081257132168796771975168"
+    },
+    {
+      "label": "jaineAdapter.sqrtUpperX96",
+      "value": "158456325028528675187087900672"
+    },
+    {
+      "label": "jaineAdapter.targetUsdcBps",
+      "value": "5000"
+    },
+    {
+      "label": "jaineAdapter.routerMode",
+      "value": "0"
+    },
+    {
+      "label": "jaineAdapter.tokenId",
+      "value": "1"
+    },
+    {
+      "label": "jaineAdapter.totalStrategyShares",
+      "value": "500000000000"
+    },
+    {
+      "label": "okuAdapter.vault",
+      "value": "0x9e00E6C4a3222CD016C95679f6FB5C965dC16523"
+    },
+    {
+      "label": "okuAdapter.factory",
+      "value": "0x71A9986E3c84ca102CBA0db4B5f12c18fdCA0dD1"
+    },
+    {
+      "label": "okuAdapter.router",
+      "value": "0x9103816e5C0cCaec81b3156339D97392aBd24672"
+    },
+    {
+      "label": "okuAdapter.positionManager",
+      "value": "0x06acBb567dFee667af36a5d3E7aa82417e7Ff532"
+    },
+    {
+      "label": "okuAdapter.pool",
+      "value": "0x53817535BB23cBAd43E7eA2a2e937affD4490fB9"
+    },
+    {
+      "label": "okuAdapter.w0g",
+      "value": "0xe61AED57469976de6f3B859abaB1e85761bA83e6"
+    },
+    {
+      "label": "okuAdapter.usdce",
+      "value": "0x62Cb32546C1c843912434F238717bCf81e63c8e7"
+    },
+    {
+      "label": "okuAdapter.feeTier",
+      "value": "3000"
+    },
+    {
+      "label": "okuAdapter.tickLower",
+      "value": "-600"
+    },
+    {
+      "label": "okuAdapter.tickUpper",
+      "value": "600"
+    },
+    {
+      "label": "okuAdapter.sqrtLowerX96",
+      "value": "39614081257132168796771975168"
+    },
+    {
+      "label": "okuAdapter.sqrtUpperX96",
+      "value": "158456325028528675187087900672"
+    },
+    {
+      "label": "okuAdapter.targetUsdcBps",
+      "value": "5000"
+    },
+    {
+      "label": "okuAdapter.routerMode",
+      "value": "1"
+    },
+    {
+      "label": "okuAdapter.tokenId",
+      "value": "2"
+    },
+    {
+      "label": "okuAdapter.totalStrategyShares",
+      "value": "500000000000"
+    },
+    {
+      "label": "sourceCore.asset",
+      "value": "0xeB2E2e2E6862C4D5eB99031D1b1B50B3Ba9Bacfb"
+    },
+    {
+      "label": "sourceCore.withdrawalQueue",
+      "value": "0x1b1035A8528bb8CF581d97EC7576eD551993f9ab"
+    },
+    {
+      "label": "sourceCore.rate",
+      "value": "1000000000000000000"
+    },
+    {
+      "label": "queue.asset",
+      "value": "0xeB2E2e2E6862C4D5eB99031D1b1B50B3Ba9Bacfb"
+    },
+    {
+      "label": "queue.sourceCore",
+      "value": "0x08B1A935fecd2D172FCB383239cC48F8Bcccf70d"
+    },
+    {
+      "label": "ascendAdapter.vault",
+      "value": "0x9e00E6C4a3222CD016C95679f6FB5C965dC16523"
+    },
+    {
+      "label": "ascendAdapter.sourceCore",
+      "value": "0x08B1A935fecd2D172FCB383239cC48F8Bcccf70d"
+    },
+    {
+      "label": "ascendAdapter.w0g",
+      "value": "0xeB2E2e2E6862C4D5eB99031D1b1B50B3Ba9Bacfb"
+    },
+    {
+      "label": "ascendAdapter.withdrawalQueue",
+      "value": "0x1b1035A8528bb8CF581d97EC7576eD551993f9ab"
+    }
+  ]
+}

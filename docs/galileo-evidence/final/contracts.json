@@ -1,0 +1,226 @@
+{
+  "plannedDeploymentCount": 19,
+  "plannedDeployments": [
+    {
+      "stepNumber": 1,
+      "logicalName": "manager",
+      "artifactType": "StrategyManager",
+      "address": "0x4D7C7286936325eE8b47DF7550Ce8475A7B358E7",
+      "deploymentTxHash": "0xd37c40eb878166bdf865bc50da50ab10e4a4bb21fa0de904471ca3d7ce5c8b7d",
+      "nonce": 0,
+      "blockNumber": 60430705,
+      "runtimeCodeHash": "0xf9ea436eddc6f444770c051d3828b29ffcc6db24bb09aee60f2d1d754829b6ec",
+      "canonical": true
+    },
+    {
+      "stepNumber": 2,
+      "logicalName": "vault",
+      "artifactType": "AscendVault",
+      "address": "0x9e00E6C4a3222CD016C95679f6FB5C965dC16523",
+      "deploymentTxHash": "0x26327250108a8bc1186cb7b86bb2f920c00dedcfb233b24d8eb3a99b3addda67",
+      "nonce": 1,
+      "blockNumber": 60430738,
+      "runtimeCodeHash": "0x7abeea7910f8f034b2e1c2186d7dad46f8a557530ec52fc3234e30b69b4b11a2",
+      "canonical": true
+    },
+    {
+      "stepNumber": 3,
+      "logicalName": "validator",
+      "artifactType": "Mock0GValidator",
+      "address": "0x5c703372908ba956CFa2C4464fDfd05DDa4365B9",
+      "deploymentTxHash": "0x8ed6c19cbc830cb0b80bf427065a16626313270a5a46bad0cf480629f552d481",
+      "nonce": 2,
+      "blockNumber": 60430766,
+      "runtimeCodeHash": "0x5bd9331449f29c57f177343e94a70ec6d1f91f2c616270a957681153f61422d8",
+      "canonical": true
+    },
+    {
+      "stepNumber": 4,
+      "logicalName": "nativeAdapter",
+      "artifactType": "Native0GStakingAdapter",
+      "address": "0x13490b87030b31C5cD7D31408e59407B96e0a0Ec",
+      "deploymentTxHash": "0x53fb507c2131b69fe59faa26886612374f5acb082ff509ed203dcc02e576b041",
+      "nonce": 3,
+      "blockNumber": 60439599,
+      "runtimeCodeHash": "0x7817d9c4f46cf94662db8ca864655a4fe7e928351c76ecf277ddee4b2710a37f",
+      "canonical": true
+    },
+    {
+      "stepNumber": 5,
+      "logicalName": "gimoPool",
+      "artifactType": "MockGimoStakePool",
+      "address": "0x164d402F95D95C034e87EfC376e6e9262118EC89",
+      "deploymentTxHash": "0x5d905657ba833781c6c47854b68ccc35c2866bd389ff791933c39015a60a757d",
+      "nonce": 4,
+      "blockNumber": 60439633,
+      "runtimeCodeHash": "0x84130b6ad4f246f7fcec80cf97c7fd3e9cf0f6471cfb62056e1e0c3ab8559faa",
+      "canonical": true
+    },
+    {
+      "stepNumber": 6,
+      "logicalName": "gimoAdapter",
+      "artifactType": "GimoAdapter",
+      "address": "0xB854a605367AA275A8DD30809B6AE269d6b8AA03",
+      "deploymentTxHash": "0xdd5ae21983bce8413d7c023abfd16a8cec0d6893b531c66604da78b6c36ba4e9",
+      "nonce": 5,
+      "blockNumber": 60439674,
+      "runtimeCodeHash": "0x4dcef786a5f42f808653d86201d71b73a7fe0b216662b3ac404c49bea981f09c",
+      "canonical": true
+    },
+    {
+      "stepNumber": 7,
+      "logicalName": "w0g",
+      "artifactType": "MockW0G",
+      "address": "0xe61AED57469976de6f3B859abaB1e85761bA83e6",
+      "deploymentTxHash": "0xfe32f3110ec44009d0b52e37160ace7285ffb4ca9ffccdfadcb8151e9b5d52c1",
+      "nonce": 6,
+      "blockNumber": 60439714,
+      "runtimeCodeHash": "0x654883a2c99c179a74a869c5f55d2927398d895b10b5be74d26d8416f9348285",
+      "canonical": true
+    },
+    {
+      "stepNumber": 8,
+      "logicalName": "usdce",
+      "artifactType": "MockUSDCe",
+      "address": "0x62Cb32546C1c843912434F238717bCf81e63c8e7",
+      "deploymentTxHash": "0x668578fc36d6f81ca56950cfcd80421121b277b199e8d9f9fc3abc61ac2ff7aa",
+      "nonce": 7,
+      "blockNumber": 60439762,
+      "runtimeCodeHash": "0x19424ee99abb04685f90b22154b73e318a1e879ac127e4559ecef21b8ad33eeb",
+      "canonical": true
+    },
+    {
+      "stepNumber": 9,
+      "logicalName": "factory",
+      "artifactType": "MockV3Factory",
+      "address": "0x71A9986E3c84ca102CBA0db4B5f12c18fdCA0dD1",
+      "deploymentTxHash": "0x6683c0cdf13e71e4dffbef0200d59fc113bd787c6ab93c6c0cc4a0f17d8aca8b",
+      "nonce": 8,
+      "blockNumber": 60439812,
+      "runtimeCodeHash": "0xa57e7f9f0433d458839eeabbe00bdd509b914a19c42c25162bdb64b37736845a",
+      "canonical": true
+    },
+    {
+      "stepNumber": 10,
+      "logicalName": "pool",
+      "artifactType": "MockV3Pool",
+      "address": "0x53817535BB23cBAd43E7eA2a2e937affD4490fB9",
+      "deploymentTxHash": "0xf829c5bf996362a44b238d1441e6f5e22958fc32e9020f05d10bb13bee038690",
+      "nonce": 9,
+      "blockNumber": 60439858,
+      "runtimeCodeHash": "0x034142593b970897d69aa279019a9bae749cfbc4228962f11b7e4a74d04d9c3d",
+      "canonical": true
+    },
+    {
+      "stepNumber": 12,
+      "logicalName": "npm",
+      "artifactType": "MockV3PositionManager",
+      "address": "0x06acBb567dFee667af36a5d3E7aa82417e7Ff532",
+      "deploymentTxHash": "0xec2e8fbb2b5445ce51031b7124e2532d9652759651f4ca4837c25dbbe61feece",
+      "nonce": 11,
+      "blockNumber": 60439954,
+      "runtimeCodeHash": "0x4ef2ec23bce3558ee9ec7c5db2ca58d193d60ecdcf61c38dcd7d32780708be75",
+      "canonical": true
+    },
+    {
+      "stepNumber": 13,
+      "logicalName": "v1",
+      "artifactType": "MockV3RouterV1",
+      "address": "0xee7Bab10B3c3991d407571bC585946e24a71dFd0",
+      "deploymentTxHash": "0x0ee612de6c349b58d8c2d97dbbe88a7d127b38f4afc5772dc824a89f8ed3f0db",
+      "nonce": 12,
+      "blockNumber": 60439997,
+      "runtimeCodeHash": "0xc98a3943ae4c49313f69a8c4ffe12893abde58281b55b82af034201cbff3d6f8",
+      "canonical": true
+    },
+    {
+      "stepNumber": 14,
+      "logicalName": "r02",
+      "artifactType": "MockV3Router02",
+      "address": "0x9103816e5C0cCaec81b3156339D97392aBd24672",
+      "deploymentTxHash": "0xe23867e5e68cb4cac5855a448ba8c6ca775b33b9df4b9a955ccaf4dfb347ddd3",
+      "nonce": 13,
+      "blockNumber": 60440057,
+      "runtimeCodeHash": "0x875307946f8af89000ff3b3d00f783b18c10be3208494c1407d364275cceb16b",
+      "canonical": true
+    },
+    {
+      "stepNumber": 17,
+      "logicalName": "jaineAdapter",
+      "artifactType": "V3LiquidityAdapter",
+      "address": "0x78109Bc2f07Dd9B88a81681f27EcbD9168221478",
+      "deploymentTxHash": "0x04d3a007630597a2ed7d9c80dc67acae0e1bdca479e3821db22a27158e12d5b4",
+      "nonce": 16,
+      "blockNumber": 60440203,
+      "runtimeCodeHash": "0x0acae0ab505a15f1addc4378b3e73b862ece5473b617e245bde4474e598566e2",
+      "canonical": true
+    },
+    {
+      "stepNumber": 18,
+      "logicalName": "okuAdapter",
+      "artifactType": "V3LiquidityAdapter",
+      "address": "0x55f0185f28b9B42A84Ad1E8e2Bb7DbB8a1cD92a7",
+      "deploymentTxHash": "0x1057882b1659bf70fad3b2c56d787aff478b8d6ed79a66dd221cdc10eecb2a2b",
+      "nonce": 17,
+      "blockNumber": 60440257,
+      "runtimeCodeHash": "0xb0f89a9e29328e906ce42ea156e58d0538f7fa707de745380bd096e51ce1a65f",
+      "canonical": true
+    },
+    {
+      "stepNumber": 19,
+      "logicalName": "ascendW0g",
+      "artifactType": "MockAscendW0G",
+      "address": "0xeB2E2e2E6862C4D5eB99031D1b1B50B3Ba9Bacfb",
+      "deploymentTxHash": "0x20119d48a7ae20df39b17f138d34dfa7a0260864590d01dd7d2dffac9e8a4feb",
+      "nonce": 18,
+      "blockNumber": 60440321,
+      "runtimeCodeHash": "0xc7e1ff63d61610092b7846db97d9112da92ea56009f6ab3a09ac013237a0a2f2",
+      "canonical": true
+    },
+    {
+      "stepNumber": 20,
+      "logicalName": "sourceCore",
+      "artifactType": "MockAscendSourceCore",
+      "address": "0x08B1A935fecd2D172FCB383239cC48F8Bcccf70d",
+      "deploymentTxHash": "0x0e7a2be0951a9ecde59540f0dca37357d6082d36ec4b4253dac6cd9f3d2415f8",
+      "nonce": 19,
+      "blockNumber": 60440395,
+      "runtimeCodeHash": "0x556e9b2361f0066fbaf15bf82875af27bcd0f16cc66986ec5bcf4edc81e226c8",
+      "canonical": true
+    },
+    {
+      "stepNumber": 21,
+      "logicalName": "queue",
+      "artifactType": "MockAscendWithdrawalQueue",
+      "address": "0x1b1035A8528bb8CF581d97EC7576eD551993f9ab",
+      "deploymentTxHash": "0x5a2ac6928a1844dbf8d0a0f0632a649d2990189176bbef4db9ad68e1ce5194ae",
+      "nonce": 20,
+      "blockNumber": 60440469,
+      "runtimeCodeHash": "0xbb10acfadeb4367cf7fc839c9a1fdbe5c38d629a166b2fcaff2c02f53fff4d28",
+      "canonical": true
+    },
+    {
+      "stepNumber": 23,
+      "logicalName": "ascendAdapter",
+      "artifactType": "AscendProtocolAdapter",
+      "address": "0x25339Ef4E45D9982B7c51631a5C48542210f90Ea",
+      "deploymentTxHash": "0x348b98fe7e9b0da16eae00239b3656160f11ff7541daf95b121de1849ad7d2f4",
+      "nonce": 22,
+      "blockNumber": 60440605,
+      "runtimeCodeHash": "0x30f6abd0c2ccdd6a4c6f61858bdb61e6cf6c3278c131f51f856857eb60598034",
+      "canonical": true
+    }
+  ],
+  "derivedChildContracts": [
+    {
+      "logicalName": "gimoToken",
+      "artifactType": "MockGimoSt0G",
+      "address": "0x44b7B1358EE53FD3CfC98b63941Cb097Bb2Ecb93",
+      "parent": "0x164d402F95D95C034e87EfC376e6e9262118EC89",
+      "runtimeCodeHash": "0x52a1ad798a3ad270e58ef42375a3a651fc2e98cef6f6c281c4e1593c0f7abbd6",
+      "canonical": true,
+      "countedAsPlannedDeployment": false
+    }
+  ],
+  "runtimeVerification": "Current code matches frozen artifact deployed bytecode with committed immutable-reference masking, exact recorded runtime hash, and verified immutable configuration readbacks."
+}

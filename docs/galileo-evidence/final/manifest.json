@@ -1,0 +1,183 @@
+{
+  "version": "GALILEO_POST_DEPLOYMENT_EVIDENCE_V1",
+  "scope": "Galileo entry-and-allocation validation deployment successfully completed.",
+  "status": "33_OF_33_CANONICAL_CONFIRMED",
+  "chain": "0G Galileo",
+  "chainId": 16602,
+  "actor": "0x3e094d9068b48850f09Fc7cc70A7E24E5ed0442a",
+  "sourceLineage": {
+    "originalDeploymentSource": "47c1123a84123a969d1ef7b8399c4788db278c2f",
+    "stage1RecoverySource": "d76f56dc3049a9ee08b9cfd1c27d18c5ff85fd69",
+    "successfulStage2Source": "0d3a3d567ae5f08e9054097710fd783d838f8cbf",
+    "stage2SourceBranch": "feature/galileo-recovery2-tooling",
+    "stage2Parent": "d76f56dc3049a9ee08b9cfd1c27d18c5ff85fd69"
+  },
+  "fingerprints": {
+    "tooling": "010695198d71990cc348e6e09aafc75679cc56fc1ed9f42a4d89d341095b5709",
+    "plan": "8bf82574f675e6ecff0278ae680f87dcaf9c3fb376714b6caf0c7f08714e333f",
+    "artifacts": "1ff4199614bfd3a665ad99f38c0ed0b8be21c43640f28a81e402f7563ff450d1"
+  },
+  "journals": [
+    {
+      "role": "original",
+      "sourcePath": "galileo-local/final-galileo-receipts.json",
+      "copyPath": "raw/original-journal.json",
+      "sha256": "e9e8a7b7c333e577dad322174662db20f8f94f836b55c731e3e9c5e8b946d111"
+    },
+    {
+      "role": "stage1",
+      "sourcePath": "galileo-local/final-galileo-recovery.json",
+      "copyPath": "raw/stage1-recovery-journal.json",
+      "sha256": "87fa795e04221724bbb6c8e7495c57f9907c49f580346257f5af29d76596e3fa"
+    },
+    {
+      "role": "stage2",
+      "sourcePath": "galileo-local/final-galileo-recovery2.json",
+      "copyPath": "raw/stage2-recovery-journal.json",
+      "sha256": "ee67047d21419b165e5946769f11e0b547a37d500e8b97c4afa5e19a16975637"
+    }
+  ],
+  "confirmedTransactions": 33,
+  "nonceSequence": {
+    "first": 0,
+    "last": 32,
+    "unique": true
+  },
+  "plannedDeployments": 19,
+  "resolution": "EXACT_INTENT_REPLAY_CONFIRMED",
+  "step24": {
+    "step": "register0",
+    "transactionHash": "0x328e1c1521d64c0760cab3928645c044fed4f8c888c49d37a3a1407488ce4830",
+    "nonce": 23,
+    "blockNumber": 60456013,
+    "blockHash": "0x5dd721d39866330d2ebc66e4ed4986f9711d5625652f06f85b018f8736d115d9",
+    "gasLimit": "182778",
+    "gasUsed": "147636",
+    "effectiveGasPrice": "8000000014",
+    "gasCostWei": "1181088002066904",
+    "requestHash": "3706666393264b23ac829814f9f8c1612c5405cfe6b4aa7792c0e3919ca8ca05",
+    "calldataKeccak256": "0xc565e52633af0f99716ce6b73be4ff7f31ca2ad9fb9755c90909e402189aa9a1"
+  },
+  "accounting": {
+    "initialBalanceWei": "2109915999999853000",
+    "cumulativeSpendWei": "183118640320440120",
+    "deploymentFinalBalanceWei": "1926797359679412880",
+    "reserveWei": "421983199999970600",
+    "reserveSatisfied": true,
+    "totalNativeValueTransferredWei": "10000000000000",
+    "totalGasCostWei": "183108640320440120",
+    "deploymentFinalPendingNonce": 33,
+    "deploymentFinalMinedNonce": 33
+  },
+  "finalVaultState": {
+    "managerOwner": "0x3e094d9068b48850f09Fc7cc70A7E24E5ed0442a",
+    "vaultOwner": "0x3e094d9068b48850f09Fc7cc70A7E24E5ed0442a",
+    "strategyManagerAddress": "0x4D7C7286936325eE8b47DF7550Ce8475A7B358E7",
+    "strategyCount": "5",
+    "strategies": [
+      {
+        "name": "Native",
+        "id": "0xdd823c4f748efc81bfa8fde64de25e4c4ccb3bafbeeaf78cbfee363137fee226",
+        "configuration": {
+          "adapter": "0x13490b87030b31C5cD7D31408e59407B96e0a0Ec",
+          "inputAsset": "0x0000000000000000000000000000000000000000",
+          "depositCap": "1000000000000000",
+          "maxAllocationBps": "5000",
+          "asynchronous": true,
+          "active": true
+        },
+        "active": true,
+        "adapter": "0x13490b87030b31C5cD7D31408e59407B96e0a0Ec",
+        "shares": "1000000000000",
+        "allocationInputWei": "1000000000000"
+      },
+      {
+        "name": "Gimo",
+        "id": "0x72993f19870f72ed4117469aec468bc3ff513b50b2b80983f971548aaae711c7",
+        "configuration": {
+          "adapter": "0xB854a605367AA275A8DD30809B6AE269d6b8AA03",
+          "inputAsset": "0x0000000000000000000000000000000000000000",
+          "depositCap": "1000000000000000",
+          "maxAllocationBps": "5000",
+          "asynchronous": true,
+          "active": true
+        },
+        "active": true,
+        "adapter": "0xB854a605367AA275A8DD30809B6AE269d6b8AA03",
+        "shares": "1000000000000",
+        "allocationInputWei": "1000000000000"
+      },
+      {
+        "name": "Jaine",
+        "id": "0x7253660b95ad310cd99cddeb410dba54f329248643ff62464764bf29f243568d",
+        "configuration": {
+          "adapter": "0x78109Bc2f07Dd9B88a81681f27EcbD9168221478",
+          "inputAsset": "0x0000000000000000000000000000000000000000",
+          "depositCap": "1000000000000000",
+          "maxAllocationBps": "5000",
+          "asynchronous": false,
+          "active": true
+        },
+        "active": true,
+        "adapter": "0x78109Bc2f07Dd9B88a81681f27EcbD9168221478",
+        "shares": "500000000000",
+        "allocationInputWei": "1000000000000"
+      },
+      {
+        "name": "Oku",
+        "id": "0x435528855366049c96f31ad385432e470b90701e193eddc97b5cae054e7e66e8",
+        "configuration": {
+          "adapter": "0x55f0185f28b9B42A84Ad1E8e2Bb7DbB8a1cD92a7",
+          "inputAsset": "0x0000000000000000000000000000000000000000",
+          "depositCap": "1000000000000000",
+          "maxAllocationBps": "5000",
+          "asynchronous": false,
+          "active": true
+        },
+        "active": true,
+        "adapter": "0x55f0185f28b9B42A84Ad1E8e2Bb7DbB8a1cD92a7",
+        "shares": "500000000000",
+        "allocationInputWei": "1000000000000"
+      },
+      {
+        "name": "Ascend",
+        "id": "0x18934deaa0f9804dd9bbb2b35b1b71760e24f8275506882a246e3e22dd668e1b",
+        "configuration": {
+          "adapter": "0x25339Ef4E45D9982B7c51631a5C48542210f90Ea",
+          "inputAsset": "0x0000000000000000000000000000000000000000",
+          "depositCap": "1000000000000000",
+          "maxAllocationBps": "5000",
+          "asynchronous": true,
+          "active": false
+        },
+        "active": false,
+        "adapter": "0x25339Ef4E45D9982B7c51631a5C48542210f90Ea",
+        "shares": "0",
+        "allocationInputWei": "0"
+      }
+    ],
+    "validatorDelegated": "1000000000000",
+    "vaultIdleWei": "6000000000000",
+    "deploymentFinalWalletBalanceWei": "1926797359679412880",
+    "deploymentFinalPendingNonce": 33,
+    "deploymentFinalMinedNonce": 33,
+    "cumulativeSpendWei": "183118640320440120",
+    "reserveWei": "421983199999970600",
+    "reserveSatisfied": true
+  },
+  "limitations": [
+    "All external protocol dependencies used in this Galileo graph are mocks.",
+    "No production deployment or production readiness claim.",
+    "No live external-protocol integration, real Gimo staking, real Jaine liquidity provision or real Oku liquidity provision claim.",
+    "No live Ascend allocation or Native 0G consensus staking claim.",
+    "No withdrawal lifecycle, reward lifecycle or economic/yield performance proof.",
+    "Ascend remains intentionally inactive with zero shares.",
+    "Reconciliation is a sequence of read-only latest-state observations, anchored by the final verification block; it is not an atomic historical-state snapshot."
+  ],
+  "verificationBlock": {
+    "number": 60458046,
+    "hash": "0x34106b155f6e13c7b2ef398062a4d96ff628a7749549aa900382fd39346ce333",
+    "timestamp": 1792158090
+  },
+  "freezeTimestampUTC": "2026-10-16T13:41:33.198Z"
+}
