@@ -4,15 +4,45 @@ import path from 'node:path';
 
 const BASE_URL = process.env.DEMO_URL ?? 'http://127.0.0.1:3000';
 const OUTPUT_DIR = path.resolve(process.env.DEMO_OUTPUT_DIR ?? 'demo-output');
-const OUTPUT_FILE = path.join(OUTPUT_DIR, 'ascend-optimizer-live-demo.webm');
+const OUTPUT_FILE = path.join(OUTPUT_DIR, 'ascend-optimizer-live-demo-captioned.webm');
 
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+async function showCaption(page, text, holdMs = 2600) {
+  await page.evaluate((captionText) => {
+    document.getElementById('__demo_caption__')?.remove();
+    const caption = document.createElement('div');
+    caption.id = '__demo_caption__';
+    caption.textContent = captionText;
+    Object.assign(caption.style, {
+      position: 'fixed',
+      left: '50%',
+      bottom: '34px',
+      transform: 'translateX(-50%)',
+      zIndex: '2147483647',
+      maxWidth: '86vw',
+      padding: '12px 22px',
+      borderRadius: '10px',
+      background: 'rgba(17, 24, 39, 0.90)',
+      color: '#ffffff',
+      fontFamily: 'Arial, Helvetica, sans-serif',
+      fontSize: '24px',
+      fontWeight: '700',
+      lineHeight: '1.25',
+      textAlign: 'center',
+      letterSpacing: '0.01em',
+      boxShadow: '0 4px 18px rgba(0,0,0,0.28)',
+      pointerEvents: 'none',
+    });
+    document.body.appendChild(caption);
+  }, text);
+  await pause(holdMs);
+  await page.evaluate(() => document.getElementById('__demo_caption__')?.remove());
+  await pause(350);
+}
+
 async function submitAndWait(page, optimize, profileName, modeName) {
   await optimize.click();
-
-  // Wait until the request finishes. The button is disabled and labelled
-  // "Assessing…" while the API call is in flight.
   await page.getByRole('button', { name: 'Optimize Decision Sleeve' })
     .waitFor({ state: 'visible', timeout: 60_000 });
 
@@ -29,7 +59,6 @@ async function submitAndWait(page, optimize, profileName, modeName) {
     throw new Error(`Dashboard API failed for ${profileName} / ${modeName}: ${message}`);
   }
 
-  // Confirm the rendered result corresponds to the requested profile/mode.
   await page.waitForFunction(
     ({ expectedProfile, expectedMode }) => {
       const text = document.body.innerText;
@@ -74,7 +103,8 @@ try {
   console.log(`Opening dashboard: ${BASE_URL}`);
   await page.goto(BASE_URL, { waitUntil: 'networkidle', timeout: 60_000 });
   await page.getByRole('heading', { name: 'Ascend Optimizer' }).waitFor({ timeout: 30_000 });
-  await pause(3000);
+  await pause(1800);
+  await showCaption(page, 'Ascend Optimizer — Live Prototype Demo', 3000);
 
   const amount = page.getByLabel('Decision Amount (0G)');
   const profile = page.getByLabel('Profile');
@@ -87,47 +117,66 @@ try {
   await horizon.fill('90');
   await deadline.fill('');
   await mode.selectOption('SYNTHETIC_EVALUATION_ONLY');
-  await pause(1200);
+  await showCaption(page, 'Common Input: 1,000 0G · 90 Days · Synthetic Evaluation', 2800);
 
-  // Show all three user profiles using the exact same amount and horizon.
   for (const profileName of ['Conservative', 'Balanced', 'Aggressive']) {
     console.log(`Recording synthetic profile: ${profileName}`);
     await profile.selectOption(profileName);
-    await pause(1000);
+    await showCaption(page, `Synthetic Evaluation — ${profileName} Profile`, 2400);
     await submitAndWait(page, optimize, profileName, 'SYNTHETIC_EVALUATION_ONLY');
-    await scrollTo(page, page.getByText('Policy-Aware Amount Optimizer', { exact: true }), 6000);
+    await scrollTo(page, page.getByText('Policy-Aware Amount Optimizer', { exact: true }), 5000);
   }
 
-  // Return to Balanced for the detailed walkthrough.
   console.log('Recording detailed Balanced walkthrough');
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
   await pause(1200);
   await profile.selectOption('Balanced');
+  await showCaption(page, 'Balanced Profile — Detailed Walkthrough', 2400);
   await submitAndWait(page, optimize, 'Balanced', 'SYNTHETIC_EVALUATION_ONLY');
 
-  await scrollTo(page, page.getByRole('heading', { name: 'Expected Economics' }), 5500);
-  await scrollTo(page, page.getByRole('heading', { name: 'Risk & Policy' }), 5500);
-  await scrollTo(page, page.getByRole('heading', { name: 'Liquidity & Exit Timing' }), 5000);
-  await scrollTo(page, page.getByRole('heading', { name: 'Five Strategy Diagnostics' }), 3500);
+  await scrollTo(page, page.getByRole('heading', { name: 'Expected Economics' }), 800);
+  await showCaption(page, 'Balanced Profile — Expected Economics', 2800);
+  await pause(1800);
+
+  await scrollTo(page, page.getByRole('heading', { name: 'Risk & Policy' }), 800);
+  await showCaption(page, 'Balanced Profile — Risk & Policy', 2800);
+  await pause(1800);
+
+  await scrollTo(page, page.getByRole('heading', { name: 'Liquidity & Exit Timing' }), 800);
+  await showCaption(page, 'Balanced Profile — Liquidity & Exit Timing', 2800);
+  await pause(1600);
+
+  await scrollTo(page, page.getByRole('heading', { name: 'Five Strategy Diagnostics' }), 800);
+  await showCaption(page, 'Five Strategy Diagnostics', 2400);
 
   const jaine = page.locator('summary').filter({ hasText: 'Jaine' }).first();
   await jaine.click();
-  await scrollTo(page, jaine, 6500);
+  await scrollTo(page, jaine, 800);
+  await showCaption(page, 'Jaine LP — Strategy Diagnostics', 3000);
+  await pause(2300);
 
-  // Finish by demonstrating the canonical production fail-closed path.
   console.log('Recording production fail-closed result');
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
-  await pause(1500);
+  await pause(1200);
   await mode.selectOption('PRODUCTION');
   await profile.selectOption('Balanced');
-  await pause(1000);
+  await showCaption(page, 'Production Evidence — Fail-Closed Mode', 2800);
   await submitAndWait(page, optimize, 'Balanced', 'PRODUCTION');
-  await scrollTo(page, page.getByRole('heading', { name: 'Production Evidence: Unresolved' }), 5500);
-  await scrollTo(page, page.getByRole('heading', { name: 'Keep 100% Idle' }), 6000);
-  await scrollTo(page, page.getByRole('heading', { name: 'Status & Readiness' }), 5500);
+
+  await scrollTo(page, page.getByRole('heading', { name: 'Production Evidence: Unresolved' }), 700);
+  await showCaption(page, 'Production Evidence Unresolved', 2600);
+
+  await scrollTo(page, page.getByRole('heading', { name: 'Keep 100% Idle' }), 700);
+  await showCaption(page, 'Production Result — Keep 100% Idle', 3000);
+  await pause(2000);
+
+  await scrollTo(page, page.getByRole('heading', { name: 'Status & Readiness' }), 700);
+  await showCaption(page, 'Status & Readiness — Execution Not Established', 3000);
+  await pause(1700);
 
   await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
-  await pause(3500);
+  await pause(1200);
+  await showCaption(page, 'End of Live Demo', 2600);
 } catch (error) {
   console.error(error instanceof Error ? error.message : error);
   console.error('Visible page text at failure:');
@@ -139,4 +188,4 @@ try {
   await browser.close();
 }
 
-console.log(`Saved live browser recording to: ${OUTPUT_FILE}`);
+console.log(`Saved captioned live browser recording to: ${OUTPUT_FILE}`);
